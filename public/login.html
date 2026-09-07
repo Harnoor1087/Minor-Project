@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AI Resume Intelligence</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2><a href="/">🤖 AI Resume Intelligence</a></h2>
+            </div>
+            <div class="nav-links">
+                <a href="/register">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="auth-container">
+        <div class="auth-card">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div id="errorMessage" class="error-message"></div>
+                <button type="submit" class="btn-primary btn-block">Login</button>
+            </form>
+            <div style="margin-top: 15px; padding: 12px; background: #eef2ff; border-radius: 8px; font-size: 0.85rem; color: #4338ca; border: 1px solid #c7d2fe;">
+                <strong>Demo Accounts:</strong><br>
+                • <strong>Admin:</strong> admin@company.com / admin123<br>
+                • <strong>Applicant:</strong> alex.morgan@example.com / alex123
+            </div>
+            <p class="auth-footer">
+                Don't have an account? <a href="/register">Register here</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+</body>
+</html>

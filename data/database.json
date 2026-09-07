@@ -1,0 +1,110 @@
+{
+  "users": [
+    {
+      "_id": "usr_admin_1",
+      "name": "Sarah Jenkins",
+      "email": "admin@company.com",
+      "passwordHash": "$2a$10$I6EmqvTkHfqWhkMdAqAjzedbB7YMneb/VKpBwSloO9jXk2LIz8cwa",
+      "role": "admin",
+      "company": "AIRIS Talent Global",
+      "createdAt": "2026-01-15T09:00:00.000Z"
+    },
+    {
+      "_id": "usr_applicant_1",
+      "name": "Alex Morgan",
+      "email": "alex.morgan@example.com",
+      "passwordHash": "$2a$10$y5zXRyf/aPD7H4L0gho1PuLHndNPksAC4iCdHyEe4fh8scAyVAq22",
+      "role": "applicant",
+      "company": "",
+      "createdAt": "2026-02-01T10:30:00.000Z"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 1,
+      "title": "Full Stack Software Engineer",
+      "description": "We are seeking a talented Full Stack Engineer to build reliable, high-performance web applications using Node.js, JavaScript, and modern web frameworks.",
+      "mandatory_skills": [
+        "javascript",
+        "nodejs",
+        "express",
+        "sql",
+        "git"
+      ],
+      "optional_skills": [
+        "react",
+        "docker",
+        "mongodb",
+        "typescript",
+        "rest api"
+      ],
+      "certification_enabled": true,
+      "certification_weight": 0.2
+    },
+    {
+      "id": 2,
+      "title": "Machine Learning & AI Engineer",
+      "description": "Looking for an AI/ML Engineer to implement NLP pipelines, embedding models, and generative AI solutions for automated intelligence systems.",
+      "mandatory_skills": [
+        "python",
+        "machine learning",
+        "nlp",
+        "sql",
+        "deep learning"
+      ],
+      "optional_skills": [
+        "tensorflow",
+        "pytorch",
+        "llm",
+        "numpy",
+        "pandas",
+        "git"
+      ],
+      "certification_enabled": true,
+      "certification_weight": 0.25
+    },
+    {
+      "id": 3,
+      "title": "Data Scientist / Analyst",
+      "description": "Join our data intelligence team to develop statistical algorithms, analyze resume trends, and extract structured insights from unstructured documents.",
+      "mandatory_skills": [
+        "python",
+        "sql",
+        "pandas",
+        "numpy",
+        "machine learning"
+      ],
+      "optional_skills": [
+        "scikit",
+        "data science",
+        "tableau",
+        "github"
+      ],
+      "certification_enabled": false,
+      "certification_weight": 0.15
+    }
+  ],
+  "applications": [
+    {
+      "_id": "app_1788800097854_etzqj",
+      "applicantId": "usr_applicant_1",
+      "applicantName": "Alex Morgan",
+      "applicantEmail": "alex.morgan@example.com",
+      "jobId": 1,
+      "jobTitle": "Full Stack Software Engineer",
+      "resumePath": "/app/applet/uploads/1788800097849-test_resume.txt",
+      "certificates": [],
+      "scores": {
+        "semantic": 0.41,
+        "skill": 0.76,
+        "experience": 0.85,
+        "certification": 0,
+        "final": 0.64
+      },
+      "category": "Moderate Match",
+      "eligibility": "Eligible",
+      "status": "pending",
+      "appliedAt": "2026-09-07T16:54:57.855Z"
+    }
+  ]
+}

@@ -1,1 +1,0 @@
-r"C:\Users\Harnoor Singh\Downloads\Resume_Harnoor_Wipro.pdf"
