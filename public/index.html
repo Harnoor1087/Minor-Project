@@ -4,77 +4,695 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIRIS - AI Resume Intelligence System</title>
-    <meta name="description" content="Smart resume screening and candidate matching system with AI analysis, semantic skill matching, and role fit evaluation">
+    <meta name="description" content="Enterprise B2B hiring platform and AI talent intelligence engine with automated resume screening, proctored assessments, and calibrated offer generation">
     <meta property="og:title" content="AIRIS - AI Resume Intelligence System">
-    <meta property="og:description" content="Smart resume screening and candidate matching system with AI analysis, semantic skill matching, and role fit evaluation">
+    <meta property="og:description" content="Enterprise B2B hiring platform and AI talent intelligence engine with automated resume screening, proctored assessments, and calibrated offer generation">
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h2>🤖 AI Resume Intelligence</h2>
+                <h2><a href="/">🤖 AIRIS <span class="brand-badge">Intelligence</span></a></h2>
             </div>
             <div class="nav-links">
-                <a href="/login">Login</a>
-                <a href="/register" class="btn-primary">Register</a>
+                <a href="#howItWorksSection" id="navHowItWorksLink">How We Hire</a>
+                <a href="#b2bSection" id="navForCompaniesLink">For Companies</a>
+                <a href="#applicantSection" id="navForApplicantsLink">For Candidates</a>
+                <a href="#testimonialsSection" id="navTestimonialsLink">Testimonials</a>
+                <a href="#faqSection" id="navFaqLink">FAQ</a>
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <a href="/login" id="navLoginLink">Login</a>
+                <a href="/register" id="navRegisterLink" class="btn-primary">Register</a>
             </div>
         </div>
     </nav>
 
+    <!-- Hero Section with Dual-Audience Value Gateway -->
     <section class="hero">
         <div class="container">
-            <h1>Smart Resume Screening with AI</h1>
-            <p>Automated resume analysis and candidate matching powered by Machine Learning</p>
+            <div class="hero-badge">
+                <span>✨ Enterprise B2B Talent Intelligence Platform</span>
+            </div>
+            <h1>Smart Enterprise Hiring with <span class="hero-highlight">AIRIS Intelligence</span></h1>
+            <p>From automated semantic resume screening and anti-cheat proctored interviews to cohort calibration and instant offers—AIRIS empowers companies to hire top talent 78% faster, while delivering a transparent merit-based experience for candidates.</p>
+            
             <div class="hero-buttons">
-                <a href="/register?role=applicant" class="btn-primary btn-large">Apply for Jobs</a>
-                <a href="/register?role=admin" class="btn-secondary btn-large">Post Jobs (Company)</a>
+                <a href="/register?role=admin" id="heroCompanyBtn" class="btn-primary btn-large">Post a Role (Enterprise)</a>
+                <a href="/register?role=applicant" id="heroApplicantBtn" class="btn-secondary btn-large">Explore Open Roles</a>
+            </div>
+
+            <!-- Dual-Audience Gateway Cards -->
+            <div class="hero-dual-gateway">
+                <div id="gatewayCompanyCard" class="hero-persona-card company-card">
+                    <div>
+                        <div class="persona-header">
+                            <div class="persona-icon-badge">🏢</div>
+                            <div>
+                                <h3>For Hiring Teams &amp; Enterprises</h3>
+                                <span class="persona-tagline">Autonomous B2B Recruitment Pipeline</span>
+                            </div>
+                        </div>
+                        <p class="persona-description">Calibrate technical roles, automate multi-vector screening, administer cheat-resilient proctored assessments, and rank candidate cohorts using the Composite Hiring Index (CHI).</p>
+                        <ul class="persona-highlights">
+                            <li><span class="check">✔</span> <strong>78% Faster Screening:</strong> Semantic vector analysis eliminates keyword traps</li>
+                            <li><span class="check">✔</span> <strong>Anti-Cheat Proctoring:</strong> Browser telemetry, tab tracking &amp; webcam flags</li>
+                            <li><span class="check">✔</span> <strong>Calibrated Talent Matrix:</strong> Market leveling (L3–L7) &amp; salary benchmarks</li>
+                            <li><span class="check">✔</span> <strong>1-Click AI Offer Dispatch:</strong> Real-time legally structured corporate offers</li>
+                        </ul>
+                    </div>
+                    <a href="/register?role=admin" id="gatewayCompanyActionBtn" class="btn-primary btn-block">Launch Recruiter Suite &rarr;</a>
+                </div>
+
+                <div id="gatewayApplicantCard" class="hero-persona-card applicant-card">
+                    <div>
+                        <div class="persona-header">
+                            <div class="persona-icon-badge">🎯</div>
+                            <div>
+                                <h3>For Job Seekers &amp; Tech Talent</h3>
+                                <span class="persona-tagline">Fair, Merit-Based Career Portal</span>
+                            </div>
+                        </div>
+                        <p class="persona-description">Apply with your real portfolio and credentials. Bypass traditional ATS black holes with instant skill gap analysis, transparent evaluations, and constructive feedback.</p>
+                        <ul class="persona-highlights">
+                            <li><span class="check">✔</span> <strong>Zero Keyword Black Holes:</strong> Evaluated on actual project competencies</li>
+                            <li><span class="check">✔</span> <strong>Certified Skills Boost:</strong> Automatic credit for verified cloud/code certificates</li>
+                            <li><span class="check">✔</span> <strong>Direct Technical Evaluation:</strong> Showcase problem-solving in a fair environment</li>
+                            <li><span class="check">✔</span> <strong>Transparent Outcomes:</strong> Official digital offer letters or actionable career roadmaps</li>
+                        </ul>
+                    </div>
+                    <a href="/register?role=applicant" id="gatewayApplicantActionBtn" class="btn-secondary btn-block">Create Candidate Profile &rarr;</a>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="features">
+    <!-- Enterprise Performance Metrics Strip -->
+    <section id="metricsSection" class="metrics-strip-section">
         <div class="container">
-            <h2>Features</h2>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📄</div>
-                    <h3>Resume Analysis</h3>
-                    <p>AI-powered resume parsing and skill extraction</p>
+            <div class="metrics-strip-grid">
+                <div id="metricStripTime" class="metric-strip-item">
+                    <div class="metric-strip-value">78%</div>
+                    <div class="metric-strip-label">Faster Screening Cycle</div>
+                    <div class="metric-strip-desc">Reduces time-to-first-interview from 12 days to under 4 hours</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Smart Matching</h3>
-                    <p>Semantic similarity scoring between resume and job description</p>
+                <div id="metricStripIntegrity" class="metric-strip-item">
+                    <div class="metric-strip-value">99.4%</div>
+                    <div class="metric-strip-label">Assessment Integrity</div>
+                    <div class="metric-strip-desc">Browser telemetry, tab-switch detection, and webcam proctoring</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Detailed Scoring</h3>
-                    <p>Comprehensive evaluation with skill, experience, and certification scores</p>
+                <div id="metricStripTriad" class="metric-strip-item">
+                    <div class="metric-strip-value">35 / 45 / 20</div>
+                    <div class="metric-strip-label">Composite Hiring Index</div>
+                    <div class="metric-strip-desc">Calibrated weighting: Resume Fit (35%), Interview (45%), Integrity (20%)</div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🏆</div>
-                    <h3>Certification Validation</h3>
-                    <p>Automatic certificate verification and relevance checking</p>
+                <div id="metricStripOffers" class="metric-strip-item">
+                    <div class="metric-strip-value">1-Click</div>
+                    <div class="metric-strip-label">Offer &amp; Feedback Generation</div>
+                    <div class="metric-strip-desc">Market salary leveling and tailored corporate offer letter dispatch</div>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Comprehensive 5-Step B2B Hiring Process Section -->
+    <section id="howItWorksSection" class="hiring-process-section">
+        <div class="container">
+            <div class="section-header-centered">
+                <div class="section-pill">
+                    <span>🔄 End-to-End Enterprise Hiring Workflow</span>
+                </div>
+                <h2>How We Help Companies Hire Top Talent</h2>
+                <p>A proven, five-stage recruitment pipeline that eliminates screening friction, validates practical engineering competency, and delivers calibrated hiring decisions.</p>
+                
+                <!-- Perspective Switcher -->
+                <div class="audience-toggle-bar" role="tablist" aria-label="Perspective View Switcher">
+                    <button id="toggleBothViewBtn" class="audience-toggle-btn active" data-target-view="both">
+                        <span>⚡</span> Side-by-Side View
+                    </button>
+                    <button id="toggleRecruiterViewBtn" class="audience-toggle-btn" data-target-view="recruiter">
+                        <span>🏢</span> For Companies &amp; Recruiters
+                    </button>
+                    <button id="toggleApplicantViewBtn" class="audience-toggle-btn" data-target-view="applicant">
+                        <span>🎯</span> For Candidates &amp; Applicants
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5 Sequential Hiring Steps -->
+            <div id="hiringStepsWrapper" class="hiring-steps-wrapper" data-view="both">
+                
+                <!-- Step 01 -->
+                <div id="hiringStep1" class="hiring-step-card">
+                    <div class="step-card-top">
+                        <div class="step-number-title">
+                            <div class="step-seq-pill">01</div>
+                            <div>
+                                <h3>Role Calibration &amp; Requisition Setup</h3>
+                            </div>
+                        </div>
+                        <span class="step-badge">Stage 1: Job Calibration</span>
+                    </div>
+
+                    <div class="step-perspectives-grid">
+                        <div class="perspective-col recruiter-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🏢</span> What Hiring Teams Get
+                                </div>
+                                <p class="perspective-body">Recruiters define target job requisitions with precise qualification gating: distinguish mandatory vs. optional skills, specify recognized certificates with bonus weighting, and configure anti-cheat proctoring tiers (Basic, Standard, Strict).</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Mandatory Skills Gating</span>
+                                <span class="perspective-pill">Certificate Multipliers</span>
+                                <span class="perspective-pill">Custom Proctoring Tiers</span>
+                            </div>
+                        </div>
+
+                        <div class="perspective-col applicant-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🎯</span> What Candidates Experience
+                                </div>
+                                <p class="perspective-body">Transparent role expectations with zero ambiguity. Job seekers see exact mandatory requirements, preferred credentials, and evaluation benchmarks before submitting their resume, ensuring perfect alignment.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Clear Role Specs</span>
+                                <span class="perspective-pill">Zero Hidden Filters</span>
+                                <span class="perspective-pill">Explicit Benchmarks</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 02 -->
+                <div id="hiringStep2" class="hiring-step-card">
+                    <div class="step-card-top">
+                        <div class="step-number-title">
+                            <div class="step-seq-pill">02</div>
+                            <div>
+                                <h3>AI Multi-Vector Resume &amp; Credential Screening</h3>
+                            </div>
+                        </div>
+                        <span class="step-badge">Stage 2: Semantic Screening</span>
+                    </div>
+
+                    <div class="step-perspectives-grid">
+                        <div class="perspective-col recruiter-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🏢</span> What Hiring Teams Get
+                                </div>
+                                <p class="perspective-body">Instant resume parsing and semantic competency extraction powered by machine learning. AIRIS verifies uploaded certificates, analyzes project depth, and filters out unqualified applicants automatically without human manual screening lag.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Semantic Embeddings</span>
+                                <span class="perspective-pill">Certificate Authenticity</span>
+                                <span class="perspective-pill">78% Faster Initial Review</span>
+                            </div>
+                        </div>
+
+                        <div class="perspective-col applicant-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🎯</span> What Candidates Experience
+                                </div>
+                                <p class="perspective-body">Instant feedback on application fit. Candidates receive a transparent match scorecard highlighting verified strengths, recognized certifications, and constructive tips on missing competencies rather than waiting weeks in silence.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Instant Scorecard</span>
+                                <span class="perspective-pill">Verified Credential Boost</span>
+                                <span class="perspective-pill">Constructive Skill Gap Tips</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 03 -->
+                <div id="hiringStep3" class="hiring-step-card">
+                    <div class="step-card-top">
+                        <div class="step-number-title">
+                            <div class="step-seq-pill">03</div>
+                            <div>
+                                <h3>Autonomous Proctored Technical Assessment</h3>
+                            </div>
+                        </div>
+                        <span class="step-badge">Stage 3: Anti-Cheat Evaluation</span>
+                    </div>
+
+                    <div class="step-perspectives-grid">
+                        <div class="perspective-col recruiter-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🏢</span> What Hiring Teams Get
+                                </div>
+                                <p class="perspective-body">Shortlisted candidates undergo structured technical evaluations. AIRIS monitors real-time browser integrity—flagging tab-switching, unauthorized copy-pasting, multi-face presence, and audio anomalies—generating an auditable Integrity Score (0–100%).</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Real-Time Browser Telemetry</span>
+                                <span class="perspective-pill">Audio &amp; Webcam Proctoring</span>
+                                <span class="perspective-pill">Tamper-Proof Audit Trail</span>
+                            </div>
+                        </div>
+
+                        <div class="perspective-col applicant-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🎯</span> What Candidates Experience
+                                </div>
+                                <p class="perspective-body">A modern, responsive coding and reasoning environment. Practice warm-up questions ensure audio/webcam readiness, with clear countdown timers and an objective rubric that evaluates engineering logic rather than trivia memorization.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Practice Warm-Up</span>
+                                <span class="perspective-pill">Fair Technical Rubric</span>
+                                <span class="perspective-pill">Immediate Completion Confirmation</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 04 -->
+                <div id="hiringStep4" class="hiring-step-card">
+                    <div class="step-card-top">
+                        <div class="step-number-title">
+                            <div class="step-seq-pill">04</div>
+                            <div>
+                                <h3>Cohort Talent Matrix &amp; Leveling Calibration</h3>
+                            </div>
+                        </div>
+                        <span class="step-badge">Stage 4: Cohort Intelligence</span>
+                    </div>
+
+                    <div class="step-perspectives-grid">
+                        <div class="perspective-col recruiter-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🏢</span> What Hiring Teams Get
+                                </div>
+                                <p class="perspective-body">The candidate pool is stack-ranked on a live Talent Matrix using the Composite Hiring Index (CHI: 35% Resume + 45% Assessment + 20% Integrity). The engine automatically calibrates engineering leveling (L3 Junior to L7 Principal) and market compensation bands.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Composite Hiring Index (CHI)</span>
+                                <span class="perspective-pill">Engineering Leveling (L3–L7)</span>
+                                <span class="perspective-pill">Market Salary Benchmarks</span>
+                            </div>
+                        </div>
+
+                        <div class="perspective-col applicant-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🎯</span> What Candidates Experience
+                                </div>
+                                <p class="perspective-body">Holistic evaluation where practical assessment performance and demonstrated problem-solving carry true weight, shielding talented engineers from being penalized by non-traditional backgrounds or subtle resume gaps.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Merit-First Ranking</span>
+                                <span class="perspective-pill">Fair Level Calibration</span>
+                                <span class="perspective-pill">Transparent Evaluation Metrics</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 05 -->
+                <div id="hiringStep5" class="hiring-step-card">
+                    <div class="step-card-top">
+                        <div class="step-number-title">
+                            <div class="step-seq-pill">05</div>
+                            <div>
+                                <h3>Head-to-Head Comparison &amp; Automated Offer Suite</h3>
+                            </div>
+                        </div>
+                        <span class="step-badge">Stage 5: Final Decision &amp; Offers</span>
+                    </div>
+
+                    <div class="step-perspectives-grid">
+                        <div class="perspective-col recruiter-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🏢</span> What Hiring Teams Get
+                                </div>
+                                <p class="perspective-body">Hiring managers compare finalists side-by-side across scores, skills, and leveling. With 1 click, the system generates customized, legally structured employment offer letters with market compensation, or constructive feedback for non-selected candidates.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Head-to-Head Finalist Compare</span>
+                                <span class="perspective-pill">AI Enterprise Offer Letters</span>
+                                <span class="perspective-pill">1-Click Offer Dispatch</span>
+                            </div>
+                        </div>
+
+                        <div class="perspective-col applicant-perspective">
+                            <div>
+                                <div class="perspective-title">
+                                    <span>🎯</span> What Candidates Experience
+                                </div>
+                                <p class="perspective-body">Successful candidates receive an official digital offer letter complete with base salary, equity percentage, and start dates directly in their portal. Non-selected candidates receive constructive, tailored career growth roadmaps.</p>
+                            </div>
+                            <div class="perspective-pills">
+                                <span class="perspective-pill">Digital Offer Letter</span>
+                                <span class="perspective-pill">Transparent Compensation</span>
+                                <span class="perspective-pill">Career Growth Roadmap</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Deep-Dive Dual Value Proposition Section -->
+    <section class="dual-value-section">
+        <div class="container">
+            <div class="section-header-centered">
+                <div class="section-pill">
+                    <span>💎 Purpose-Built Architecture</span>
+                </div>
+                <h2>Built for Both Sides of Modern Recruitment</h2>
+                <p>Enterprise hiring succeeds when employers get qualified, high-integrity candidates fast, and applicants receive the respect of transparent evaluation.</p>
+            </div>
+
+            <div class="dual-value-grid">
+                <!-- For Companies (B2B) -->
+                <div id="b2bSection" class="value-col-card recruiter-card">
+                    <div class="value-col-header">
+                        <h3>🏢 Why Companies Partner with AIRIS</h3>
+                        <p>Turn technical recruitment from a high-churn cost center into a calibrated, data-backed talent pipeline.</p>
+                    </div>
+
+                    <ul class="value-list">
+                        <li class="value-item">
+                            <div class="value-item-icon">⚡</div>
+                            <div class="value-item-text">
+                                <h4>Zero Screening Backlog</h4>
+                                <p>Automated vector embeddings parse incoming applications within seconds, verifying mandatory skills and eliminating recruiter fatigue.</p>
+                            </div>
+                        </li>
+                        <li class="value-item">
+                            <div class="value-item-icon">🛡️</div>
+                            <div class="value-item-text">
+                                <h4>Cheat-Resilient Proctored Interviews</h4>
+                                <p>Multi-modal telemetry continuously tracks browser focus, audio anomalies, and webcam feeds to guarantee independent candidate work.</p>
+                            </div>
+                        </li>
+                        <li class="value-item">
+                            <div class="value-item-icon">📊</div>
+                            <div class="value-item-text">
+                                <h4>Objective Composite Hiring Index (CHI)</h4>
+                                <p>Make data-backed hiring decisions with unified scoring across resume fit (35%), assessment competency (45%), and integrity (20%).</p>
+                            </div>
+                        </li>
+                        <li class="value-item">
+                            <div class="value-item-icon">📝</div>
+                            <div class="value-item-text">
+                                <h4>Calibrated Offers &amp; Market Leveling</h4>
+                                <p>Generate market-standard compensation packages and official enterprise offer letters with custom company branding and instant dispatch.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <a href="/register?role=admin" id="b2bCtaBtn" class="btn-primary btn-block">Set Up Your Hiring Organization &rarr;</a>
+                </div>
+
+                <!-- For Applicants -->
+                <div id="applicantSection" class="value-col-card applicant-card">
+                    <div class="value-col-header">
+                        <h3>🎯 Why Top Engineers Apply via AIRIS</h3>
+                        <p>Experience a hiring platform built around respect, skill validation, and total transparency at every stage.</p>
+                    </div>
+
+                    <ul class="value-list">
+                        <li class="value-item">
+                            <div class="value-item-icon">🚫</div>
+                            <div class="value-item-text">
+                                <h4>No Opaque ATS Black Holes</h4>
+                                <p>Say goodbye to automated silent rejections. Get immediate visibility into how your profile matches role expectations and skill requirements.</p>
+                            </div>
+                        </li>
+                        <li class="value-item">
+                            <div class="value-item-icon">🏆</div>
+                            <div class="value-item-text">
+                                <h4>Full Credit for Verified Certifications</h4>
+                                <p>Your cloud credentials, security certifications, and technical courses are authenticated and actively boosted in your candidate ranking.</p>
+                            </div>
+                        </li>
+                        <li class="value-item">
+                            <div class="value-item-icon">💻</div>
+                            <div class="value-item-text">
+                                <h4>Fair, Practical Technical Assessments</h4>
+                                <p>Prove your coding and problem-solving skills in an objective proctored environment that levels the playing field for all backgrounds.</p>
+                            </div>
+                        </li>
+                        <li class="value-item">
+                            <div class="value-item-icon">🌱</div>
+                            <div class="value-item-text">
+                                <h4>Official Offers or Growth Roadmaps</h4>
+                                <p>Receive legally structured job offers with clear compensation breakdown, or actionable feedback roadmaps to guide your next career milestone.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <a href="/register?role=applicant" id="applicantCtaBtn" class="btn-secondary btn-block">Find Verified Tech Roles &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Carousel Section -->
+    <section id="testimonialsSection" class="testimonials-section">
+        <div class="container">
+            <h2>Trusted by Recruiters &amp; Candidates</h2>
+            <p class="testimonials-subtitle">See how hiring teams and top engineering talent experience transparent, AI-powered recruitment with AIRIS</p>
+            
+            <div id="carouselWrapper" class="carousel-wrapper">
+                <button id="carouselPrevBtn" class="carousel-nav-btn prev" aria-label="Previous testimonial" title="Previous testimonial">&#10094;</button>
+                <button id="carouselNextBtn" class="carousel-nav-btn next" aria-label="Next testimonial" title="Next testimonial">&#10095;</button>
+
+                <div id="carouselViewport" class="carousel-viewport">
+                    <div id="testimonialTrack" class="carousel-track">
+                        <!-- Slide 1: Recruiter -->
+                        <div id="testimonialSlide0" class="testimonial-slide">
+                            <div id="testimonialCard0" class="testimonial-card">
+                                <div class="testimonial-header">
+                                    <span class="testimonial-badge badge-recruiter">
+                                        <span>🏢</span> Recruiter Verified
+                                    </span>
+                                    <div class="testimonial-stars" aria-label="5 out of 5 stars">★★★★★</div>
+                                </div>
+                                <blockquote class="testimonial-quote">
+                                    "AIRIS cut our initial screening cycle from 12 business days down to less than 4 hours. The semantic skill matching ensures we never disqualify exceptional engineers just because their resumes don't use our exact terminology."
+                                </blockquote>
+                                <div class="testimonial-footer">
+                                    <div class="testimonial-author">
+                                        <div class="author-avatar avatar-blue">ER</div>
+                                        <div class="author-info">
+                                            <h4>Elena Rostova</h4>
+                                            <p>VP of Talent Acquisition, CloudScale Tech</p>
+                                        </div>
+                                    </div>
+                                    <div class="testimonial-metric">
+                                        <span>⏱️</span> 78% faster screening
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 2: Applicant -->
+                        <div id="testimonialSlide1" class="testimonial-slide">
+                            <div id="testimonialCard1" class="testimonial-card">
+                                <div class="testimonial-header">
+                                    <span class="testimonial-badge badge-applicant">
+                                        <span>🎯</span> Hired Applicant
+                                    </span>
+                                    <div class="testimonial-stars" aria-label="5 out of 5 stars">★★★★★</div>
+                                </div>
+                                <blockquote class="testimonial-quote">
+                                    "Applying through AIRIS was a breath of fresh air. Instead of an ATS black hole, I received instant feedback highlighting which of my skills and certificates matched the job requirements. I landed an interview within 48 hours."
+                                </blockquote>
+                                <div class="testimonial-footer">
+                                    <div class="testimonial-author">
+                                        <div class="author-avatar avatar-teal">DC</div>
+                                        <div class="author-info">
+                                            <h4>David Chen</h4>
+                                            <p>Senior ML Engineer &bull; Placed at Nexus Systems</p>
+                                        </div>
+                                    </div>
+                                    <div class="testimonial-metric">
+                                        <span>🚀</span> Interview in 48h
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 3: Recruiter -->
+                        <div id="testimonialSlide2" class="testimonial-slide">
+                            <div id="testimonialCard2" class="testimonial-card">
+                                <div class="testimonial-header">
+                                    <span class="testimonial-badge badge-recruiter">
+                                        <span>🏢</span> Recruiter Verified
+                                    </span>
+                                    <div class="testimonial-stars" aria-label="5 out of 5 stars">★★★★★</div>
+                                </div>
+                                <blockquote class="testimonial-quote">
+                                    "The mandatory vs. optional skill distinction combined with verifiable certificate weighting is a game changer. Our engineering managers now only review candidates who truly meet our non-negotiable tech stack."
+                                </blockquote>
+                                <div class="testimonial-footer">
+                                    <div class="testimonial-author">
+                                        <div class="author-avatar avatar-indigo">MV</div>
+                                        <div class="author-info">
+                                            <h4>Marcus Vance</h4>
+                                            <p>Lead Technical Recruiter, FinTech Horizon</p>
+                                        </div>
+                                    </div>
+                                    <div class="testimonial-metric">
+                                        <span>📈</span> 2x interview-to-offer rate
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slide 4: Applicant -->
+                        <div id="testimonialSlide3" class="testimonial-slide">
+                            <div id="testimonialCard3" class="testimonial-card">
+                                <div class="testimonial-header">
+                                    <span class="testimonial-badge badge-applicant">
+                                        <span>🎯</span> Hired Applicant
+                                    </span>
+                                    <div class="testimonial-stars" aria-label="5 out of 5 stars">★★★★★</div>
+                                </div>
+                                <blockquote class="testimonial-quote">
+                                    "Most automated portals reject you if you miss a specific buzzword. AIRIS understood the depth of my portfolio and validated my cloud certifications immediately. Best application experience I have ever had."
+                                </blockquote>
+                                <div class="testimonial-footer">
+                                    <div class="testimonial-author">
+                                        <div class="author-avatar avatar-rose">PS</div>
+                                        <div class="author-info">
+                                            <h4>Priya Sharma</h4>
+                                            <p>Cloud Solutions Architect &bull; Placed at DataCore</p>
+                                        </div>
+                                    </div>
+                                    <div class="testimonial-metric">
+                                        <span>💯</span> Transparent evaluation
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="carouselDots" class="carousel-dots" role="tablist" aria-label="Testimonial slides">
+                    <button id="carouselDot0" class="carousel-dot active" data-index="0" role="tab" aria-selected="true" aria-label="Testimonial 1 of 4"></button>
+                    <button id="carouselDot1" class="carousel-dot" data-index="1" role="tab" aria-selected="false" aria-label="Testimonial 2 of 4"></button>
+                    <button id="carouselDot2" class="carousel-dot" data-index="2" role="tab" aria-selected="false" aria-label="Testimonial 3 of 4"></button>
+                    <button id="carouselDot3" class="carousel-dot" data-index="3" role="tab" aria-selected="false" aria-label="Testimonial 4 of 4"></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Frequently Asked Questions Section -->
+    <section id="faqSection" class="faq-section">
+        <div class="container">
+            <h2>Frequently Asked Questions</h2>
+            <p class="faq-subtitle">Everything you need to know about our enterprise B2B hiring solutions and candidate evaluation</p>
+            <div id="faqList" class="faq-list">
+                
+                <details id="faqItemB2B" class="faq-item" open>
+                    <summary class="faq-question">
+                        <span>How does AIRIS help companies hire technical employees end-to-end?</span>
+                        <span class="faq-icon">+</span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>AIRIS delivers an autonomous 5-step B2B hiring pipeline: (1) Requisition calibration with mandatory skill gating and proctoring tiers, (2) AI semantic resume parsing and credential verification, (3) Autonomous anti-cheat technical interviews with browser telemetry, (4) Stack-ranked cohort calibration via the Composite Hiring Index (CHI) with salary benchmarks, and (5) Head-to-head candidate comparison with 1-click legal offer letter generation.</p>
+                    </div>
+                </details>
+
+                <details id="faqItem1" class="faq-item">
+                    <summary class="faq-question">
+                        <span>How does AIRIS evaluate candidates beyond simple keywords?</span>
+                        <span class="faq-icon">+</span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Unlike traditional keyword filters that can be gamed or reject qualified talent over phrasing differences, AIRIS employs semantic similarity analysis combined with domain skill lexicons. It analyzes the context of a candidate's projects, responsibilities, and technical proficiencies against the actual job scope.</p>
+                    </div>
+                </details>
+
+                <details id="faqItemProctoring" class="faq-item">
+                    <summary class="faq-question">
+                        <span>How does the anti-cheat proctoring system ensure candidate integrity?</span>
+                        <span class="faq-icon">+</span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>During technical assessments, AIRIS tracks real-time browser focus (tab switching, window minimization), clipboard operations (copy-pasting), and optional webcam/audio telemetry. These events feed into an auditable Integrity Score (0–100%) that weights directly into the candidate's Composite Hiring Index, ensuring fair and trustworthy evaluation.</p>
+                    </div>
+                </details>
+
+                <details id="faqItem2" class="faq-item">
+                    <summary class="faq-question">
+                        <span>How are mandatory and optional skills handled?</span>
+                        <span class="faq-icon">+</span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Recruiters can categorize qualifications into mandatory (must-have) and optional (nice-to-have) skills. If any mandatory skills are missing, AIRIS explicitly flags the application with clear feedback, ensuring recruiters can instantly spot deal-breakers without disqualifying candidates invisibly.</p>
+                    </div>
+                </details>
+
+                <details id="faqItemCHI" class="faq-item">
+                    <summary class="faq-question">
+                        <span>What is the Composite Hiring Index (CHI) and how does it rank cohorts?</span>
+                        <span class="faq-icon">+</span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>The Composite Hiring Index (CHI) is a mathematically balanced metric: <strong>35% Resume &amp; Skill Fit</strong>, <strong>45% Proctored Technical Assessment Performance</strong>, and <strong>20% Integrity Score</strong>. This allows hiring committees to rank entire candidate cohorts on merit rather than subjective bias, calibrated directly against industry compensation bands (L3–L7).</p>
+                    </div>
+                </details>
+
+                <details id="faqItem3" class="faq-item">
+                    <summary class="faq-question">
+                        <span>How does the system validate uploaded certifications?</span>
+                        <span class="faq-icon">+</span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>Candidates can upload verifiable certificates alongside their resume. AIRIS inspects the documents for issuer authenticity and extracts the skills taught, automatically applying recruiter-defined certification weighting to boost candidate rankings for verified credentials.</p>
+                    </div>
+                </details>
+
+                <details id="faqItemFeedback" class="faq-item">
+                    <summary class="faq-question">
+                        <span>What happens when a candidate is not selected for a role?</span>
+                        <span class="faq-icon">+</span>
+                    </summary>
+                    <div class="faq-answer">
+                        <p>AIRIS eliminates the traditional ATS silence. Non-selected candidates receive an AI-generated, constructive Career Growth Roadmap highlighting verified technical strengths and actionable skill growth recommendations, preserving positive employer brand equity.</p>
+                    </div>
+                </details>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
     <section class="cta">
         <div class="container">
-            <h2>Ready to Get Started?</h2>
-            <p>Join thousands of companies and job seekers using AI-powered recruitment</p>
-            <a href="/register" class="btn-primary btn-large">Sign Up Now</a>
+            <h2>Transform Your Hiring Pipeline Today</h2>
+            <p>Join leading tech enterprises and ambitious engineers using AIRIS for intelligent, merit-driven recruitment.</p>
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <a href="/register?role=admin" id="ctaCompanyBtn" class="btn-primary btn-large">Post Roles as Company</a>
+                <a href="/register?role=applicant" id="ctaApplicantBtn" class="btn-secondary btn-large" style="background: rgba(255,255,255,0.15); color: #fff !important; border-color: rgba(255,255,255,0.3);">Apply as Candidate</a>
+            </div>
         </div>
     </section>
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 AI Resume Intelligence. All rights reserved.</p>
+            <p>&copy; 2026 AIRIS Talent Intelligence. All rights reserved.</p>
         </div>
     </footer>
 
     <script src="/js/main.js"></script>
 </body>
 </html>
+

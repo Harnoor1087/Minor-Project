@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - AI Resume Intelligence</title>
+    <title>Register - AIRIS</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h2><a href="/">🤖 AI Resume Intelligence</a></h2>
+                <h2><a href="/">🤖 AIRIS <span class="brand-badge">Create Account</span></a></h2>
             </div>
             <div class="nav-links">
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
                 <a href="/login">Login</a>
             </div>
         </div>
@@ -32,7 +36,59 @@
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required minlength="6">
+                    <div class="password-input-wrapper">
+                        <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Create a strong password">
+                        <button type="button" id="togglePasswordBtn" class="password-toggle-btn" aria-label="Show password" title="Show password">
+                            <span id="passwordToggleIcon">👁️</span>
+                        </button>
+                    </div>
+
+                    <!-- Password Strength Meter -->
+                    <div class="password-strength-container" id="passwordStrengthContainer">
+                        <div class="strength-header">
+                            <span>Password Strength:</span>
+                            <span id="strengthLabel" class="strength-label">Enter password</span>
+                        </div>
+                        <div class="strength-meter-track">
+                            <div id="strengthBar" class="strength-meter-bar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Security Requirements Checklist -->
+                    <div class="password-requirements-card" id="passwordRequirementsCard">
+                        <div class="requirements-title">
+                            <span>🛡️ Security Requirements</span>
+                        </div>
+                        <ul class="requirements-list">
+                            <li id="reqLength" class="req-item">
+                                <span class="req-icon">○</span>
+                                <span>At least <strong>8 characters</strong></span>
+                            </li>
+                            <li id="reqNumber" class="req-item">
+                                <span class="req-icon">○</span>
+                                <span>At least one <strong>numeric digit (0-9)</strong></span>
+                            </li>
+                            <li id="reqSpecial" class="req-item">
+                                <span class="req-icon">○</span>
+                                <span>At least one <strong>special character (!@#$%^&*...)</strong></span>
+                            </li>
+                            <li id="reqCase" class="req-item">
+                                <span class="req-icon">○</span>
+                                <span>Both <strong>uppercase (A-Z)</strong> and <strong>lowercase (a-z)</strong></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" autocomplete="new-password" placeholder="Re-enter your password">
+                        <button type="button" id="toggleConfirmPasswordBtn" class="password-toggle-btn" aria-label="Show confirm password" title="Show password">
+                            <span id="confirmToggleIcon">👁️</span>
+                        </button>
+                    </div>
+                    <div id="passwordMatchFeedback" class="password-match-feedback" aria-live="polite"></div>
                 </div>
                 <div class="form-group">
                     <label for="role">Register as</label>

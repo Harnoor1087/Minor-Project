@@ -17,8 +17,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/companies', require('./routes/companies'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/applications', require('./routes/applications'));
+app.use('/api/interview', require('./routes/interview'));
+app.use('/api/decisions', require('./routes/decisions'));
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -48,6 +51,22 @@ app.get('/applicant', (req, res) => {
 
 app.get('/apply.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'apply.html'));
+});
+
+app.get('/interview', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'interview.html'));
+});
+
+app.get('/interview/:appId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'interview.html'));
+});
+
+app.get('/company/:slug', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'company.html'));
+});
+
+app.get('/companies', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'company.html'));
 });
 
 // SPA fallback for client navigation

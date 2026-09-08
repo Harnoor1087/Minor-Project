@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { applications, jobs } = require('../db/store');
 const { verifyToken } = require('./auth');
-const { analyzeResume } = require('../services/analyzer');
+const { analyzeResume, generateCandidateIntelligence, extractTextFromFile } = require('../services/analyzer');
 
 // Configure multer for file uploads
 const uploadDir = path.join(__dirname, '../uploads');
@@ -67,13 +67,35 @@ router.post(
       const applicantName = req.body.name || req.user.name || analysis.candidate_name || 'Candidate';
       const applicantEmail = req.body.email || req.user.email || 'candidate@example.com';
 
-      // Save application to store
+      // Extract resume text and generate candidate intelligence
+      let resumeText = '';
+      try {
+        resumeText = await extractTextFromFile(resumeFile.path);
+      } catch (err) {
+        console.warn('[Applications] Could not extract resume text:', err.message);
+      }
+
+      const intelligence = await generateCandidateIntelligence({
+        resumeText,
+        candidateName: applicantName,
+        job,
+        scores: analysis.scores,
+        skills: analysis.skills,
+        eligibility: analysis.eligibility,
+        category: analysis.category
+      });
+
+      // Save application to store with intelligence and company scope
       const application = applications.create({
         applicantId: req.user.id,
         applicantName,
         applicantEmail,
         jobId: job.id,
         jobTitle: job.title,
+        companyId: job.companyId || 'comp_airis',
+        companyName: job.companyName || 'AIRIS Talent Global',
+        companySlug: job.companySlug || 'airis',
+        proctoringLevel: job.proctoring?.level || 'medium',
         resumePath: resumeFile.path,
         certificates: certificatePaths,
         scores: analysis.scores,
@@ -82,10 +104,15 @@ router.post(
         status: analysis.eligibility.includes('Rejected') ? 'rejected' : 'pending'
       });
 
+      // Attach intelligence to application
+      applications.updateIntelligence(application._id, intelligence);
+      application.intelligence = intelligence;
+
       res.json({
         message: 'Application submitted successfully',
         application,
-        analysis
+        analysis,
+        intelligence
       });
     } catch (error) {
       console.error('[Applications] Submit error:', error);
@@ -107,14 +134,20 @@ router.get('/my-applications', verifyToken, (req, res) => {
   }
 });
 
-// Get all applications (Admin only)
+// Get all applications (Admin only, optional company filter)
 router.get('/all', verifyToken, (req, res) => {
   try {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 
-    const allApps = applications.getAll();
+    const { companyId } = req.query;
+    const filter = {};
+    if (companyId && companyId !== 'all') {
+      filter.companyId = companyId;
+    }
+
+    const allApps = applications.getAll(filter);
     res.json(allApps);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching applications', error: error.message });
@@ -144,6 +177,140 @@ router.patch('/:id/status', verifyToken, (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error updating status', error: error.message });
+  }
+});
+
+// Get candidate intelligence report
+router.get('/:id/intelligence', verifyToken, async (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Ensure applicant can only view their own, unless admin
+    if (req.user.role !== 'admin' && app.applicantId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const forceRefresh = req.query.refresh === 'true';
+
+    if (app.intelligence && !forceRefresh) {
+      return res.json({
+        applicationId: app._id,
+        candidateName: app.applicantName,
+        jobTitle: app.jobTitle,
+        scores: app.scores,
+        intelligence: app.intelligence
+      });
+    }
+
+    // Generate or refresh intelligence
+    const job = jobs.getById(app.jobId) || {
+      title: app.jobTitle,
+      description: 'Role requirements and competencies',
+      mandatory_skills: [],
+      optional_skills: []
+    };
+
+    let resumeText = '';
+    if (app.resumePath && fs.existsSync(app.resumePath)) {
+      resumeText = await extractTextFromFile(app.resumePath);
+    }
+
+    const intelligence = await generateCandidateIntelligence({
+      resumeText,
+      candidateName: app.applicantName,
+      job,
+      scores: app.scores || {},
+      skills: app.skills || { matched: [], missing: [] },
+      eligibility: app.eligibility,
+      category: app.category
+    });
+
+    applications.updateIntelligence(app._id, intelligence);
+
+    res.json({
+      applicationId: app._id,
+      candidateName: app.applicantName,
+      jobTitle: app.jobTitle,
+      scores: app.scores,
+      intelligence
+    });
+  } catch (error) {
+    console.error('[Applications] Intelligence error:', error);
+    res.status(500).json({ message: 'Error retrieving candidate intelligence', error: error.message });
+  }
+});
+
+// Recruiter AI Assistant: Ask questions about candidate and job
+router.post('/:id/ask-candidate-ai', verifyToken, async (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    if (req.user.role !== 'admin' && app.applicantId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const { question } = req.body;
+    if (!question || !question.trim()) {
+      return res.status(400).json({ message: 'Question prompt is required' });
+    }
+
+    const job = jobs.getById(app.jobId) || { title: app.jobTitle, description: '' };
+    let resumeText = '';
+    if (app.resumePath && fs.existsSync(app.resumePath)) {
+      resumeText = await extractTextFromFile(app.resumePath);
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      try {
+        const { GoogleGenAI } = require('@google/genai');
+        const ai = new GoogleGenAI({
+          apiKey,
+          httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+        });
+
+        const prompt = `You are AIRIS AI Candidate Intelligence Assistant.
+Context:
+Candidate: ${app.applicantName}
+Role Applied: ${app.jobTitle}
+Match Score: ${Math.round((app.scores?.final || 0.6) * 100)}%
+Candidate Category: ${app.category || 'N/A'}
+Resume Text (excerpt):
+${resumeText.slice(0, 3000)}
+
+Recruiter Question: "${question}"
+
+Provide a concise, highly objective, professional talent intelligence response (2 paragraphs max). Focus on verified technical background, evidence, potential risks, and concrete interview guidance.`;
+
+        const response = await Promise.race([
+          ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('AI ask timed out')), 6000))
+        ]);
+
+        return res.json({
+          answer: response.text ? response.text.trim() : 'AI intelligence response generated.',
+          generatedBy: 'AIRIS Gemini Intelligence'
+        });
+      } catch (err) {
+        console.warn('[Applications] AI ask fallback:', err.message);
+      }
+    }
+
+    res.json({
+      answer: `Based on ${app.applicantName}'s profile for ${app.jobTitle} with an overall compatibility score of ${Math.round((app.scores?.final || 0.6) * 100)}%: The candidate demonstrates foundational proficiency aligned with role criteria. Regarding your inquiry ("${question}"), we advise focusing the technical screening on hands-on system implementation and checking production references.`,
+      generatedBy: 'AIRIS Heuristic Intelligence'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error querying candidate AI', error: error.message });
   }
 });
 

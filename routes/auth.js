@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { users } = require('../db/store');
+const bcrypt = require('bcryptjs');
+const { users, otps } = require('../db/store');
+const { generateOtpCode, sendOtpEmail, isSmtpConfigured } = require('../services/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'airis_secret_jwt_key_2026';
 
@@ -23,6 +25,38 @@ const verifyToken = (req, res, next) => {
   }
 };
 
+// Robust password validation helper enforcing length, numeric, special characters, and casing
+const PASSWORD_REQUIREMENTS = {
+  minLength: 8,
+  maxLength: 128,
+  requireNumber: /[0-9]/,
+  requireSpecial: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/,
+  requireLower: /[a-z]/,
+  requireUpper: /[A-Z]/
+};
+
+function validatePasswordPolicy(password) {
+  if (typeof password !== 'string') {
+    return 'Password must be provided as text.';
+  }
+  if (password.length < PASSWORD_REQUIREMENTS.minLength) {
+    return `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters long.`;
+  }
+  if (password.length > PASSWORD_REQUIREMENTS.maxLength) {
+    return `Password cannot exceed ${PASSWORD_REQUIREMENTS.maxLength} characters.`;
+  }
+  if (!PASSWORD_REQUIREMENTS.requireNumber.test(password)) {
+    return 'Password must contain at least one numeric digit (0-9).';
+  }
+  if (!PASSWORD_REQUIREMENTS.requireSpecial.test(password)) {
+    return 'Password must contain at least one special character (e.g. !@#$%^&*).';
+  }
+  if (!PASSWORD_REQUIREMENTS.requireLower.test(password) || !PASSWORD_REQUIREMENTS.requireUpper.test(password)) {
+    return 'Password must contain both uppercase (A-Z) and lowercase (a-z) letters.';
+  }
+  return null;
+}
+
 // Register
 router.post('/register', async (req, res) => {
   try {
@@ -30,6 +64,15 @@ router.post('/register', async (req, res) => {
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+
+    // Enforce password security policy
+    const passwordError = validatePasswordPolicy(password);
+    if (passwordError) {
+      return res.status(400).json({
+        message: passwordError,
+        requirement: 'Password must be 8+ chars with at least 1 number, 1 special character, and uppercase/lowercase letters.'
+      });
     }
 
     const existing = users.findByEmail(email);

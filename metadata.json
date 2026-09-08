@@ -1,7 +1,10 @@
 {
   "name": "AIRIS - AI Resume Intelligence System",
-  "description": "Smart resume screening and candidate matching system with AI analysis, semantic skill matching, and role fit evaluation",
-  "requestFramePermissions": [],
+  "description": "Enterprise B2B hiring platform and AI talent intelligence engine with automated resume screening, proctored assessments, and calibrated offer generation",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]

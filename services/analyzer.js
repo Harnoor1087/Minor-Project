@@ -10,12 +10,29 @@ function getGeminiClient() {
   if (!apiKey) return null;
   try {
     const { GoogleGenAI } = require('@google/genai');
-    geminiClient = new GoogleGenAI({ apiKey });
+    geminiClient = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build'
+        }
+      }
+    });
     return geminiClient;
   } catch (err) {
     console.warn('[Gemini] Could not initialize @google/genai:', err.message);
     return null;
   }
+}
+
+// Resilient Gemini generator with strict timeout to prevent hangs
+async function generateGeminiContentWithTimeout(ai, params, timeoutMs = 7000) {
+  return Promise.race([
+    ai.models.generateContent(params),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`Gemini request exceeded timeout of ${timeoutMs}ms`)), timeoutMs)
+    )
+  ]);
 }
 
 // Broad skill lexicon for robust NLP extraction
@@ -190,10 +207,10 @@ Return strictly valid JSON:
   "issuer": "organization or platform",
   "is_valid_certificate": true
 }`;
-      const response = await ai.models.generateContent({
+      const response = await generateGeminiContentWithTimeout(ai, {
         model: 'gemini-2.5-flash',
         contents: prompt
-      });
+      }, 5000);
       const responseText = response.text ? response.text.trim() : '';
       const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanJson);
@@ -328,8 +345,147 @@ async function analyzeResume({ resumePath, certificatePaths = [], job }) {
   };
 }
 
+async function generateCandidateIntelligence({ resumeText = '', candidateName = 'Candidate', job, scores = {}, skills = {}, eligibility = 'Eligible', category = 'Average' }) {
+  const ai = getGeminiClient();
+  const mandatorySkills = job.mandatory_skills || [];
+  const optionalSkills = job.optional_skills || [];
+  const matchedSkills = skills?.matched || [];
+  const missingSkills = skills?.missing || [];
+
+  const finalScoreNum = typeof scores.final === 'number' ? scores.final : 0.6;
+  const semanticScoreNum = typeof scores.semantic === 'number' ? scores.semantic : 0.6;
+  const skillScoreNum = typeof scores.skill === 'number' ? scores.skill : 0.6;
+  const expScoreNum = typeof scores.experience === 'number' ? scores.experience : 0.6;
+
+  if (ai && resumeText && resumeText.trim().length > 30) {
+    try {
+      const prompt = `You are an elite talent acquisition AI partner for AIRIS (AI Resume Intelligence System).
+Analyze this candidate's resume for the role "${job.title}".
+
+JOB DETAILS:
+${job.description}
+Mandatory Skills: ${mandatorySkills.join(', ')}
+Optional Skills: ${optionalSkills.join(', ')}
+
+CANDIDATE:
+Name: ${candidateName}, Category: ${category}, Match: ${(finalScoreNum * 100).toFixed(0)}%, Matched: ${matchedSkills.slice(0, 5).join(', ') || 'None'}, Missing: ${missingSkills.slice(0, 3).join(', ') || 'None'}
+
+RESUME SNIPPET:
+${resumeText.slice(0, 1200)}
+
+Respond with strictly valid JSON only:
+{
+  "executiveSummary": "2 concise sentences on candidate suitability and technical background.",
+  "coreStrengths": ["Strength 1", "Strength 2", "Strength 3"],
+  "skillGaps": ["Gap or ramp-up area 1", "Gap or ramp-up area 2"],
+  "interviewQuestions": [
+    { "question": "Question 1", "focus": "Architecture", "expectedSignals": "Strong signals" },
+    { "question": "Question 2", "focus": "Problem Solving", "expectedSignals": "Signals" }
+  ],
+  "hiringRecommendation": {
+    "decision": "Strong Advance",
+    "reasoning": "1 sentence recommendation rationale."
+  },
+  "applicantFeedback": {
+    "resumeTips": ["Actionable tip 1", "Actionable tip 2"],
+    "suggestedActions": ["Suggested certification or milestone project"]
+  }
+}`;
+
+      const response = await generateGeminiContentWithTimeout(ai, {
+        model: 'gemini-2.5-flash',
+        contents: prompt
+      }, 7000);
+
+      const responseText = response.text ? response.text.trim() : '';
+      const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleanJson);
+      if (parsed.executiveSummary && Array.isArray(parsed.interviewQuestions)) {
+        return {
+          ...parsed,
+          generatedBy: 'AIRIS Gemini Intelligence Engine',
+          generatedAt: new Date().toISOString()
+        };
+      }
+    } catch (err) {
+      console.warn('[Analyzer] Gemini candidate intelligence generation fallback:', err.message);
+    }
+  }
+
+  // Deterministic intelligent fallback
+  const isHighMatch = finalScoreNum >= 0.7;
+  const isMidMatch = finalScoreNum >= 0.5;
+
+  const decision = isHighMatch
+    ? 'Strong Advance'
+    : isMidMatch
+    ? 'Advance to Technical Screening'
+    : 'Hold / Realign for Alternative Openings';
+
+  const defaultSummary = `${candidateName} demonstrates a ${(finalScoreNum * 100).toFixed(0)}% overall compatibility score for the ${job.title} opening. The profile shows ${matchedSkills.length > 0 ? `active proficiency in ${matchedSkills.slice(0, 4).join(', ')}` : 'solid technical fundamentals'} with a ${(semanticScoreNum * 100).toFixed(0)}% semantic context alignment with role responsibilities.`;
+
+  const coreStrengths = [
+    `Demonstrated capability in required core competencies: ${matchedSkills.slice(0, 3).join(', ') || 'core software engineering concepts'}.`,
+    `Relevant domain background evaluated at ${(expScoreNum * 100).toFixed(0)}% depth for ${job.title}.`,
+    `Structured professional resume with demonstrated project delivery in modern technology stacks.`
+  ];
+
+  const skillGaps = missingSkills.length > 0
+    ? missingSkills.map(s => `Requires evaluation or ramp-up in mandatory competency: "${s}" (Moderate Risk)`)
+    : [
+        `No critical mandatory skill deficiencies detected; candidate matches all required core tech stacks.`,
+        `Recommend probing practical depth in optional tooling: ${(optionalSkills.slice(0, 2)).join(', ') || 'cloud deployment pipelines'}.`
+      ];
+
+  const interviewQuestions = [
+    {
+      question: `In your recent work, how have you architected and scaled systems using ${matchedSkills[0] || 'core technologies'} to handle real-world latency and concurrent load?`,
+      focus: `${matchedSkills[0] || 'Core Architecture'} & Systems Design`,
+      expectedSignals: 'Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes.'
+    },
+    {
+      question: missingSkills.length > 0
+        ? `This position relies on ${missingSkills[0]}. While your background shows strong parallels, how would you approach ramping up and applying this in production within the first 30 days?`
+        : `Walk us through a scenario where a critical feature broke unexpectedly in production. How did you triage, resolve, and prevent recurrence?`,
+      focus: missingSkills.length > 0 ? `Adaptability & ${missingSkills[0]}` : 'Incident Triaging & Observability',
+      expectedSignals: 'Candidate articulates structured debugging methodology and fast-learning engineering mindset.'
+    },
+    {
+      question: `How do you approach automated testing, continuous delivery, and code review standards when shipping under tight deadlines?`,
+      focus: 'Engineering Rigor & Team Velocity',
+      expectedSignals: 'Demonstrates balanced velocity with code quality, automated test pipelines, and constructive peer collaboration.'
+    }
+  ];
+
+  return {
+    executiveSummary: defaultSummary,
+    coreStrengths,
+    skillGaps,
+    interviewQuestions,
+    hiringRecommendation: {
+      decision,
+      reasoning: isHighMatch
+        ? `The candidate possesses the necessary skill baseline and high semantic alignment. Recommended to proceed directly to technical screening.`
+        : `The candidate demonstrates solid potential but has specific competency gaps that should be validated during technical screening.`
+    },
+    applicantFeedback: {
+      resumeTips: [
+        `Quantify project achievements with measurable business impact (e.g., reduced response times by 30%, served 50k+ daily users).`,
+        `Ensure explicit keywords for core target skills like ${mandatorySkills.slice(0, 3).join(', ')} appear prominently in recent role bullet points.`
+      ],
+      suggestedActions: [
+        `Highlight hands-on open-source repositories or demonstrable portfolio projects featuring ${missingSkills[0] || optionalSkills[0] || 'modern distributed architecture'}.`,
+        `Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority.`
+      ]
+    },
+    generatedBy: 'AIRIS AI Screening Engine (Deterministic Heuristic)',
+    generatedAt: new Date().toISOString()
+  };
+}
+
 module.exports = {
   analyzeResume,
   extractSkills,
-  extractTextFromFile
+  extractTextFromFile,
+  generateCandidateIntelligence
 };

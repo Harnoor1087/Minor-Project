@@ -3,10 +3,11 @@ const router = express.Router();
 const { jobs } = require('../db/store');
 const { verifyToken } = require('./auth');
 
-// Get all jobs
+// Get all jobs (with optional companyId/companySlug query filter)
 router.get('/', (req, res) => {
   try {
-    const allJobs = jobs.getAll();
+    const { companyId, companySlug } = req.query;
+    const allJobs = jobs.getAll({ companyId, companySlug });
     res.json({
       total_jobs: allJobs.length,
       jobs: allJobs
@@ -28,10 +29,18 @@ router.get('/:id', (req, res) => {
       id: job.id,
       title: job.title,
       description: job.description,
+      companyId: job.companyId,
+      companyName: job.companyName,
+      companySlug: job.companySlug,
+      department: job.department || 'General',
+      location: job.location || 'Remote',
+      employmentType: job.employmentType || 'Full-time',
+      experienceLevel: job.experienceLevel || 'Mid Level',
       mandatory_skills: job.mandatory_skills,
       optional_skills: job.optional_skills,
       certification_enabled: job.certification_enabled,
-      certification_weight: job.certification_weight
+      certification_weight: job.certification_weight,
+      proctoring: job.proctoring
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching job', error: error.message });
@@ -45,11 +54,29 @@ router.post('/', verifyToken, (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 
-    const { title, description, mandatory_skills, optional_skills, certification_enabled, certification_weight } = req.body;
+    const {
+      title,
+      description,
+      mandatory_skills,
+      optional_skills,
+      certification_enabled,
+      certification_weight,
+      companyId,
+      department,
+      location,
+      employmentType,
+      experienceLevel,
+      proctoring,
+      proctoring_level
+    } = req.body;
 
     if (!title || !description) {
       return res.status(400).json({ message: 'Title and description are required' });
     }
+
+    // Default companyId to authenticated admin's company if available
+    const resolvedCompanyId = companyId || req.user.companyId || 'comp_airis';
+    const resolvedProctoring = req.body.proctoring_config || proctoring || (proctoring_level ? { level: proctoring_level } : null);
 
     const newJob = jobs.create({
       title,
@@ -57,7 +84,14 @@ router.post('/', verifyToken, (req, res) => {
       mandatory_skills,
       optional_skills,
       certification_enabled,
-      certification_weight
+      certification_weight,
+      companyId: resolvedCompanyId,
+      department,
+      location,
+      employmentType,
+      experienceLevel,
+      proctoring: resolvedProctoring,
+      proctoring_level
     });
 
     res.status(201).json({
@@ -77,7 +111,12 @@ router.put('/:id', verifyToken, (req, res) => {
       return res.status(403).json({ message: 'Access denied. Admin only.' });
     }
 
-    const updated = jobs.update(req.params.id, req.body);
+    const payload = { ...req.body };
+    if (payload.proctoring_config) {
+      payload.proctoring = payload.proctoring_config;
+    }
+
+    const updated = jobs.update(req.params.id, payload);
     if (!updated) {
       return res.status(404).json({ message: 'Job not found' });
     }

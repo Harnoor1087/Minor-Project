@@ -91,7 +91,22 @@ applyForm.addEventListener('submit', async (e) => {
     // Hide form and show analysis container
     document.getElementById('applicationForm').style.display = 'none';
     document.getElementById('analysisContainer').classList.add('active');
-    document.getElementById('analyzingLoader').style.display = 'block';
+    const loaderEl = document.getElementById('analyzingLoader');
+    if (loaderEl) loaderEl.style.display = 'block';
+
+    // Progressive status updates during analysis
+    const loaderDetailEl = document.getElementById('loaderDetail');
+    const statusMessages = [
+        'Parsing resume structure and credentials...',
+        'Scanning mandatory & optional skill proficiencies...',
+        'Evaluating semantic alignment with role responsibilities...',
+        'Synthesizing AI candidate intelligence and recommendations...'
+    ];
+    let msgIdx = 0;
+    const progressInterval = setInterval(() => {
+        msgIdx = (msgIdx + 1) % statusMessages.length;
+        if (loaderDetailEl) loaderDetailEl.textContent = statusMessages[msgIdx];
+    }, 1800);
     
     try {
         const response = await fetch('/api/applications/submit', {
@@ -103,19 +118,22 @@ applyForm.addEventListener('submit', async (e) => {
         });
         
         const data = await response.json();
+        clearInterval(progressInterval);
         
         if (response.ok) {
-            // Wait a bit for effect
+            // Smooth reveal
             setTimeout(() => {
-                displayAnalysis(data.analysis, certFiles.length);
-            }, 2000);
+                displayAnalysis(data.analysis, certFiles.length, data.intelligence);
+            }, 300);
         } else {
             throw new Error(data.message || 'Error submitting application');
         }
     } catch (error) {
+        clearInterval(progressInterval);
+        if (loaderEl) loaderEl.style.display = 'none';
         document.getElementById('analysisContainer').classList.remove('active');
         document.getElementById('applicationForm').style.display = 'block';
-        errorDiv.textContent = error.message;
+        errorDiv.textContent = error.message || 'Could not process resume. Please try again.';
         errorDiv.classList.add('show');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Application';
@@ -123,76 +141,137 @@ applyForm.addEventListener('submit', async (e) => {
 });
 
 // Display analysis results with animation
-function displayAnalysis(analysis, certCount) {
-    // Hide loader
-    document.getElementById('analyzingLoader').style.display = 'none';
-    
-    // Show results
-    const resultsDiv = document.getElementById('analysisResults');
-    resultsDiv.classList.add('active');
-    
-    // Animate final score
-    animateScore('finalScore', analysis.scores.final * 100);
-    
-    // Set eligibility
-    const eligibilityBadge = document.getElementById('eligibilityBadge');
-    eligibilityBadge.textContent = analysis.eligibility;
-    if (analysis.eligibility.includes('Rejected')) {
-        eligibilityBadge.classList.add('rejected');
-        eligibilityBadge.classList.remove('eligible');
-    } else {
-        eligibilityBadge.classList.add('eligible');
-        eligibilityBadge.classList.remove('rejected');
-    }
-    
-    // Animate score bars
-    setTimeout(() => {
-        animateBar('semantic', analysis.scores.semantic * 100);
-    }, 300);
-    
-    setTimeout(() => {
-        animateBar('skill', analysis.scores.skill * 100);
-    }, 600);
-    
-    setTimeout(() => {
-        animateBar('experience', analysis.scores.experience * 100);
-    }, 900);
-    
-    // Show certification if available
-    if (analysis.scores.certification && analysis.scores.certification > 0) {
-        document.getElementById('certificationBarItem').style.display = 'block';
-        setTimeout(() => {
-            animateBar('certification', analysis.scores.certification * 100);
-        }, 1200);
+function displayAnalysis(analysis, certCount = 0, intelligence = null) {
+    try {
+        // Hide loader
+        const loaderEl = document.getElementById('analyzingLoader');
+        if (loaderEl) loaderEl.style.display = 'none';
         
-        // Show certificate info
-        if (certCount > 0) {
-            document.getElementById('certificateInfo').style.display = 'block';
-            document.getElementById('totalCerts').textContent = analysis.certifications.total_uploaded;
-            document.getElementById('relevantCerts').textContent = analysis.certifications.relevant;
+        // Show results
+        const resultsDiv = document.getElementById('analysisResults');
+        if (resultsDiv) resultsDiv.classList.add('active');
+        
+        const safeScores = analysis?.scores || {
+            final: 0.6,
+            semantic: 0.6,
+            skill: 0.6,
+            experience: 0.6,
+            certification: 0
+        };
+
+        const finalScoreVal = typeof safeScores.final === 'number' ? safeScores.final : 0.6;
+        const semanticVal = typeof safeScores.semantic === 'number' ? safeScores.semantic : 0.6;
+        const skillVal = typeof safeScores.skill === 'number' ? safeScores.skill : 0.6;
+        const expVal = typeof safeScores.experience === 'number' ? safeScores.experience : 0.6;
+        const certVal = typeof safeScores.certification === 'number' ? safeScores.certification : 0;
+
+        // Animate final score
+        animateScore('finalScore', Math.round(finalScoreVal * 100));
+        
+        // Set eligibility
+        const eligibilityBadge = document.getElementById('eligibilityBadge');
+        if (eligibilityBadge) {
+            const eligibilityText = analysis?.eligibility || 'Eligible';
+            eligibilityBadge.textContent = eligibilityText;
+            if (eligibilityText.includes('Rejected')) {
+                eligibilityBadge.classList.add('rejected');
+                eligibilityBadge.classList.remove('eligible');
+            } else {
+                eligibilityBadge.classList.add('eligible');
+                eligibilityBadge.classList.remove('rejected');
+            }
         }
-    }
-    
-    // Display matched skills
-    const matchedSkillsDiv = document.getElementById('matchedSkills');
-    if (analysis.skills.matched && analysis.skills.matched.length > 0) {
-        matchedSkillsDiv.innerHTML = analysis.skills.matched
-            .filter(skill => skill && skill.trim()) // Filter out empty skills
-            .map(skill => `<div class="skill-item matched">✓ ${skill}</div>`)
-            .join('');
-    } else {
-        matchedSkillsDiv.innerHTML = '<p>No matched skills found</p>';
-    }
-    
-    // Display missing skills
-    const missingSkillsDiv = document.getElementById('missingSkills');
-    if (analysis.skills.missing && analysis.skills.missing.length > 0) {
-        missingSkillsDiv.innerHTML = analysis.skills.missing
-            .filter(skill => skill && skill.trim()) // Filter out empty skills
-            .map(skill => `<div class="skill-item missing">✗ ${skill}</div>`)
-            .join('');
-    } else {
-        missingSkillsDiv.innerHTML = '<p>All required skills matched!</p>';
+        
+        // Animate score bars
+        setTimeout(() => {
+            animateBar('semantic', Math.round(semanticVal * 100));
+        }, 200);
+        
+        setTimeout(() => {
+            animateBar('skill', Math.round(skillVal * 100));
+        }, 400);
+        
+        setTimeout(() => {
+            animateBar('experience', Math.round(expVal * 100));
+        }, 600);
+        
+        // Show certification if available
+        if (certVal > 0) {
+            const certBarItem = document.getElementById('certificationBarItem');
+            if (certBarItem) certBarItem.style.display = 'block';
+            setTimeout(() => {
+                animateBar('certification', Math.round(certVal * 100));
+            }, 800);
+            
+            // Show certificate info
+            if (certCount > 0 && analysis?.certifications) {
+                const certInfo = document.getElementById('certificateInfo');
+                if (certInfo) certInfo.style.display = 'block';
+                const totalCertsEl = document.getElementById('totalCerts');
+                const relCertsEl = document.getElementById('relevantCerts');
+                if (totalCertsEl) totalCertsEl.textContent = analysis.certifications.total_uploaded || certCount;
+                if (relCertsEl) relCertsEl.textContent = analysis.certifications.relevant || 0;
+            }
+        }
+        
+        // Display matched skills
+        const matchedSkillsDiv = document.getElementById('matchedSkills');
+        if (matchedSkillsDiv) {
+            const matched = analysis?.skills?.matched || [];
+            if (matched.length > 0) {
+                matchedSkillsDiv.innerHTML = matched
+                    .filter(skill => skill && skill.trim())
+                    .map(skill => `<div class="skill-item matched">✓ ${skill}</div>`)
+                    .join('');
+            } else {
+                matchedSkillsDiv.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">No direct mandatory skills matched</p>';
+            }
+        }
+        
+        // Display missing skills
+        const missingSkillsDiv = document.getElementById('missingSkills');
+        if (missingSkillsDiv) {
+            const missing = analysis?.skills?.missing || [];
+            if (missing.length > 0) {
+                missingSkillsDiv.innerHTML = missing
+                    .filter(skill => skill && skill.trim())
+                    .map(skill => `<div class="skill-item missing">✗ ${skill}</div>`)
+                    .join('');
+            } else {
+                missingSkillsDiv.innerHTML = '<p style="color: var(--success); font-size: 0.9rem; font-weight: 600;">✓ All mandatory skills matched!</p>';
+            }
+        }
+
+        // Display AI Intelligence Insights
+        const intelBlock = document.getElementById('aiIntelligenceBlock');
+        const summaryText = document.getElementById('aiExecutiveSummaryText');
+        const recPill = document.getElementById('aiRecommendationPill');
+        const tipsSection = document.getElementById('aiTipsSection');
+        const tipsList = document.getElementById('aiTipsList');
+
+        if (intelligence && intelBlock) {
+            intelBlock.style.display = 'block';
+
+            if (summaryText) {
+                summaryText.textContent = intelligence.executiveSummary || 'Your resume has been comprehensively indexed and evaluated by the AIRIS AI Screening Engine.';
+            }
+
+            if (recPill && intelligence.hiringRecommendation) {
+                recPill.textContent = intelligence.hiringRecommendation.decision || 'Screened';
+            }
+
+            if (tipsSection && tipsList && intelligence.applicantFeedback && Array.isArray(intelligence.applicantFeedback.resumeTips)) {
+                tipsSection.style.display = 'block';
+                tipsList.innerHTML = intelligence.applicantFeedback.resumeTips.map(t => `<li style="margin-bottom: 0.35rem;">${t}</li>`).join('');
+            }
+        }
+    } catch (renderErr) {
+        console.error('Error rendering analysis results:', renderErr);
+        // Ensure loader is closed and results visible even if a subcomponent fails
+        const loaderEl = document.getElementById('analyzingLoader');
+        if (loaderEl) loaderEl.style.display = 'none';
+        const resultsDiv = document.getElementById('analysisResults');
+        if (resultsDiv) resultsDiv.classList.add('active');
     }
 }
 

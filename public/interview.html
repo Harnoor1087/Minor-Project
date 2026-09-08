@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Proctored Technical Interview - AIRIS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2><a href="/applicant">🤖 AIRIS <span class="brand-badge" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); color: white;">AI Interview Engine</span></a></h2>
+            </div>
+            <div class="nav-links">
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <span id="navCandidateName" class="user-chip">Candidate</span>
+                <button onclick="confirmExitInterview()" class="btn-secondary" style="border-color: rgba(239, 68, 68, 0.4); color: var(--danger);">Exit</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="interview-container">
+
+        <!-- STAGE 1: PRE-FLIGHT SYSTEM & PROCTORING CHECK -->
+        <div id="preflightStage" class="interview-main-panel" style="max-width: 820px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <span style="font-size: 3rem; display: inline-block; margin-bottom: 0.5rem;">🛡️</span>
+                <h1 style="margin: 0 0 0.5rem 0; font-size: 1.85rem;" id="preflightRoleTitle">AI Technical Assessment</h1>
+                <p style="margin: 0; color: var(--text-secondary); font-size: 1.05rem;" id="preflightCompanySubtitle">Context-Aware AI Technical Evaluation & Live Anti-Malpractice Proctoring</p>
+                <div style="margin-top: 1rem;" id="preflightTierBadge">
+                    <span class="badge badge-primary" style="font-size: 0.9rem; padding: 0.4rem 1rem;">Proctoring: Standard ATS</span>
+                </div>
+            </div>
+
+            <!-- Sensor Checklist Cards -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.75rem;">
+                <!-- Camera & Face Check -->
+                <div style="background: var(--bg-subtle); border-radius: 14px; padding: 1.25rem; border: 1px solid var(--border-color); text-align: center;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📹</div>
+                    <h3 style="margin: 0 0 0.25rem 0; font-size: 1rem;">Video & Face Presence</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Requires front-facing webcam for continuous face verification</p>
+                    <div id="cameraStatusPill" class="hud-sensor-pill">Checking Camera...</div>
+                </div>
+
+                <!-- Mic & Audio Check -->
+                <div style="background: var(--bg-subtle); border-radius: 14px; padding: 1.25rem; border: 1px solid var(--border-color); text-align: center;">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎙️</div>
+                    <h3 style="margin: 0 0 0.25rem 0; font-size: 1rem;">Microphone & Audio</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Enables voice dictation and ambient acoustic monitoring</p>
+                    <div id="micStatusPill" class="hud-sensor-pill">Checking Microphone...</div>
+                </div>
+            </div>
+
+            <!-- Device Permission Trigger Tile -->
+            <div style="background: var(--bg-surface); border-radius: 14px; padding: 1.5rem; border: 1.5px dashed var(--border-focus); margin-bottom: 1.75rem; text-align: center;">
+                <p style="margin: 0 0 1rem 0; font-weight: 600; color: var(--text-primary);">Click below to authorize and calibrate your camera & microphone feed:</p>
+                <button type="button" class="btn-secondary" id="calibrateMediaBtn" onclick="calibrateMediaStream()" style="border-color: var(--primary); color: var(--primary); font-weight: 700;">
+                    🔌 Grant Camera & Microphone Access
+                </button>
+                <div id="preflightVideoPreviewContainer" style="display: none; margin-top: 1.25rem; max-width: 280px; margin-left: auto; margin-right: auto;">
+                    <video id="preflightVideo" autoplay playsinline muted style="width: 100%; border-radius: 10px; border: 2px solid var(--success); transform: scaleX(-1);"></video>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.8rem; color: var(--success);">✅ Camera & Audio stream active!</p>
+                </div>
+            </div>
+
+            <!-- Proctoring Rules & Candidate Honor Pledge -->
+            <div style="background: rgba(245, 158, 11, 0.08); border-radius: 12px; padding: 1.25rem; border-left: 4px solid var(--warning); margin-bottom: 1.75rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: var(--warning-text); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                    <span>⚠️</span> Anti-Malpractice Rules & Assessment Integrity
+                </h4>
+                <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary);">
+                    <li><strong>Fullscreen Enforcement:</strong> The assessment runs in fullscreen mode. Exiting fullscreen will be logged as an infraction.</li>
+                    <li><strong>Browser Tab Locking:</strong> Navigating away or switching to another window/tab will instantly trigger a violation alert.</li>
+                    <li><strong>Continuous Face Monitoring:</strong> Your face must remain centered in front of the camera. Multiple persons in the frame will be flagged.</li>
+                    <li><strong>Maximum Infractions:</strong> Exceeding allowed infractions will automatically disqualify the assessment submission.</li>
+                </ul>
+            </div>
+
+            <div style="margin-bottom: 2rem;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.92rem; color: var(--text-primary);">
+                    <input type="checkbox" id="honorPledgeCheck" style="margin-top: 3px;">
+                    <span>I pledge that I am the sole applicant, and will complete this AI technical assessment independently without external assistance, secondary tabs, or unauthorized aids.</span>
+                </label>
+            </div>
+
+            <div style="text-align: center;">
+                <button type="button" class="btn-primary" id="beginAssessmentBtn" onclick="startInterviewSession()" style="padding: 0.9rem 2.5rem; font-size: 1.05rem; font-weight: 700; width: 100%; max-width: 360px;" disabled>
+                    🚀 Enter Proctored Assessment
+                </button>
+            </div>
+        </div>
+
+        <!-- STAGE 2: ACTIVE PROCTORED INTERVIEW -->
+        <div id="activeInterviewStage" style="display: none;">
+
+            <!-- Proctoring HUD Header -->
+            <div class="proctoring-hud" id="proctoringHud">
+                <div class="hud-left">
+                    <span class="hud-sensor-pill active" id="hudCameraPill">📹 Camera: Streaming</span>
+                    <span class="hud-sensor-pill active" id="hudMicPill">🎙️ Mic: Active</span>
+                    <span class="hud-sensor-pill" id="hudFullscreenPill">🖥️ Fullscreen: Enforced</span>
+                    <div class="hud-infractions-badge" id="hudInfractionsBadge">
+                        <span>⚠️ Infractions:</span>
+                        <strong id="hudInfractionCount">0</strong> / <span id="hudMaxInfractions">3</span>
+                    </div>
+                </div>
+                <div class="hud-right">
+                    <span id="hudRolePill" style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary);">Role: Full Stack</span>
+                    <span id="hudQuestionProgress" class="badge badge-info" style="font-size: 0.85rem; padding: 0.35rem 0.8rem;">Question 1 of 4</span>
+                </div>
+            </div>
+
+            <!-- Main Stage Grid -->
+            <div class="interview-stage-grid">
+
+                <!-- Left Column: Question & Candidate Answer -->
+                <div class="interview-main-panel">
+                    <div class="question-meta-bar">
+                        <span class="question-category-tag" id="questionCategoryTag">Core Competency Alignment</span>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;" id="questionTimer">⏱️ Suggested Time: ~3-4 mins</span>
+                    </div>
+
+                    <div class="question-rationale-box" id="questionRationaleBox">
+                        <strong>🎯 Targeting Identified Skill Gap:</strong> <span id="questionRationaleText">Probing microservices containerization identified from candidate resume review.</span>
+                    </div>
+
+                    <h2 class="question-text-title" id="questionTitleText">Loading question prompt...</h2>
+
+                    <div style="margin-bottom: 1.25rem;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem;">Key Evaluation Dimensions:</span>
+                        <div class="key-points-list" id="keyPointsList"></div>
+                    </div>
+
+                    <!-- Answer Area -->
+                    <div class="answer-area-wrapper">
+                        <textarea id="candidateAnswerText" class="answer-textarea" placeholder="Type your technical response here, or click '🎙️ Voice Dictation' below to dictate your answer using speech-to-text..."></textarea>
+                    </div>
+
+                    <div class="answer-actions-row">
+                        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                            <button type="button" class="speech-dictate-btn" id="voiceDictateBtn" onclick="toggleVoiceDictation()">
+                                <span id="dictateIcon">🎙️</span>
+                                <span id="dictateLabel">Voice Dictation</span>
+                            </button>
+                            <span id="wordCountLabel" style="font-size: 0.85rem; color: var(--text-muted);">0 words</span>
+                        </div>
+
+                        <button type="button" class="btn-primary" id="submitAnswerBtn" onclick="submitCurrentAnswer()" style="padding: 0.75rem 1.75rem; font-weight: 700;">
+                            ✨ Submit Answer & Evaluate
+                        </button>
+                    </div>
+
+                    <!-- AI Instant Feedback Panel (Visible after submit) -->
+                    <div id="aiEvaluationPanel" class="eval-feedback-panel" style="display: none;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <h3 style="margin: 0; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+                                <span>🧠</span> AI Technical Evaluation
+                            </h3>
+                            <span id="evalOverallScorePill" style="padding: 0.35rem 0.85rem; border-radius: 9999px; font-weight: 800; font-size: 0.95rem; background: var(--primary-light); color: var(--primary);">Score: 85%</span>
+                        </div>
+
+                        <div class="eval-score-grid">
+                            <div class="eval-score-box">
+                                <div class="eval-score-val" id="evalAccuracyScore">--</div>
+                                <div class="eval-score-lbl">Technical Accuracy</div>
+                            </div>
+                            <div class="eval-score-box">
+                                <div class="eval-score-val" id="evalDepthScore">--</div>
+                                <div class="eval-score-lbl">Depth & Implementation</div>
+                            </div>
+                            <div class="eval-score-box">
+                                <div class="eval-score-val" id="evalClarityScore">--</div>
+                                <div class="eval-score-lbl">Clarity & Structure</div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-surface); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                            <p id="evalFeedbackText" style="margin: 0; line-height: 1.6; font-size: 0.92rem; color: var(--text-primary);"></p>
+                        </div>
+
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button type="button" class="btn-primary" id="nextQuestionBtn" onclick="advanceToNextQuestion()" style="padding: 0.7rem 1.5rem;">
+                                Next Question ➔
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Live Video Monitor & Telemetry -->
+                <div class="proctoring-sidebar">
+
+                    <!-- Video Feed Card -->
+                    <div class="video-monitor-card">
+                        <h3 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; text-align: left; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Live Proctoring Monitor</span>
+                            <span id="faceTrackingBadge" class="feed-status-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">🟢 Face Verified</span>
+                        </h3>
+
+                        <div class="video-feed-wrapper">
+                            <video id="proctoringVideo" autoplay playsinline muted class="proctoring-video"></video>
+                            <canvas id="proctoringCanvas" class="proctoring-canvas"></canvas>
+                            <div class="feed-watermark">
+                                <span class="feed-watermark-dot"></span>
+                                <span id="watermarkTime">LIVE REC</span>
+                            </div>
+                        </div>
+
+                        <!-- Audio Meter -->
+                        <div class="audio-meter-wrapper">
+                            <div class="audio-meter-label">
+                                <span>Acoustic Ambient Meter:</span>
+                                <span id="audioLevelLabel">Normal</span>
+                            </div>
+                            <div class="audio-level-track">
+                                <div id="audioLevelBar" class="audio-level-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Proctoring Telemetry Feed -->
+                    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.25rem; box-shadow: var(--card-shadow);">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.88rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">Proctoring Telemetry Log</h4>
+                        <div id="proctoringEventLog" style="max-height: 180px; overflow-y: auto; font-family: monospace; font-size: 0.78rem; line-height: 1.5; color: var(--text-secondary);">
+                            <div style="color: var(--success);">[System] In-browser proctoring initialized.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- STAGE 3: INTERVIEW SUMMARY & DEBRIEF -->
+        <div id="summaryStage" class="interview-main-panel" style="display: none; max-width: 840px; margin: 0 auto; text-align: center;">
+            <div style="font-size: 3.5rem; margin-bottom: 0.5rem;" id="summaryEmoji">🎉</div>
+            <h1 style="margin: 0 0 0.5rem 0; font-size: 2rem;">Technical Assessment Complete</h1>
+            <p style="margin: 0 0 2rem 0; color: var(--text-secondary); font-size: 1.05rem;">Your responses and proctoring telemetry have been verified and submitted to the hiring team.</p>
+
+            <!-- Score Hero Card -->
+            <div style="background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); color: white; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: var(--card-shadow);">
+                <div style="font-size: 3.5rem; font-weight: 800; line-height: 1;" id="summaryOverallScore">--%</div>
+                <div style="font-size: 1.1rem; opacity: 0.9; margin-top: 0.5rem;">Overall Technical Evaluation Score</div>
+                <div style="margin-top: 1rem;">
+                    <span id="summaryRecommendationPill" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); padding: 0.4rem 1.2rem; border-radius: 9999px; font-weight: 700; font-size: 0.95rem;">Strong Hire</span>
+                </div>
+            </div>
+
+            <!-- Proctoring Audit Summary -->
+            <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 14px; padding: 1.5rem; text-align: left; margin-bottom: 2rem;">
+                <h3 style="margin: 0 0 1rem 0; font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="display: flex; align-items: center; gap: 8px;"><span>🛡️</span> Proctoring & Integrity Audit</span>
+                    <span id="summaryIntegrityBadge" class="badge badge-success">Verified Clean</span>
+                </h3>
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-secondary);">
+                    <strong>Recorded Infractions:</strong> <span id="summaryInfractionCount">0</span>
+                </p>
+                <div id="summaryInfractionDetails" style="font-size: 0.85rem; color: var(--text-muted);">
+                    No browser tab-switches or malpractice events recorded during the session.
+                </div>
+            </div>
+
+            <!-- Question by Question Breakdown -->
+            <div style="text-align: left; margin-bottom: 2rem;">
+                <h3 style="margin: 0 0 1rem 0; font-size: 1.1rem;">Detailed Question Evaluation</h3>
+                <div id="summaryQuestionsList" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+                <button type="button" class="btn-primary" onclick="window.location.href='/applicant'" style="padding: 0.85rem 2.25rem;">
+                    Return to Applicant Dashboard
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MALPRACTICE INFRACTION WARNING OVERLAY MODAL -->
+    <div id="malpracticeOverlay" class="malpractice-overlay">
+        <div class="malpractice-card">
+            <div class="malpractice-icon">🚨</div>
+            <h2 style="margin: 0 0 0.5rem 0; color: var(--danger); font-size: 1.6rem;" id="malpracticeTitle">Malpractice Alert</h2>
+            <p style="margin: 0 0 1.25rem 0; font-size: 1.05rem; color: var(--text-primary);" id="malpracticeMessage">
+                Tab switch detected! You navigated away from the assessment window.
+            </p>
+            <div style="background: rgba(239, 68, 68, 0.1); border-radius: 10px; padding: 0.85rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--danger-text);">
+                Infraction logged: <strong id="modalInfractionCount">1</strong> / <span id="modalMaxInfractions">3</span> allowed.
+                Exceeding this threshold will trigger immediate disqualification.
+            </div>
+            <button type="button" class="btn-primary" onclick="dismissMalpracticeAlert()" style="background: var(--danger); border-color: var(--danger); width: 100%; padding: 0.85rem;">
+                I Understand & Resume Assessment
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/interview.js"></script>
+</body>
+</html>

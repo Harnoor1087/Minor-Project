@@ -7,7 +7,8 @@
       "passwordHash": "$2a$10$I6EmqvTkHfqWhkMdAqAjzedbB7YMneb/VKpBwSloO9jXk2LIz8cwa",
       "role": "admin",
       "company": "AIRIS Talent Global",
-      "createdAt": "2026-01-15T09:00:00.000Z"
+      "createdAt": "2026-01-15T09:00:00.000Z",
+      "companyId": "comp_airis"
     },
     {
       "_id": "usr_applicant_1",
@@ -17,6 +18,66 @@
       "role": "applicant",
       "company": "",
       "createdAt": "2026-02-01T10:30:00.000Z"
+    },
+    {
+      "_id": "usr_1788833949660_ndmt8",
+      "name": "Manpreet Kaur",
+      "email": "manpreet89726@gmail.com",
+      "passwordHash": "$2a$10$excrxdaKVOytfonHl4P.0OsKSdpHkj8SgbgewQV8N./boDphmVYiW",
+      "role": "admin",
+      "company": "Infosys",
+      "createdAt": "2026-09-08T02:19:09.660Z",
+      "companyId": "comp_airis"
+    },
+    {
+      "_id": "usr_1788872448626_56rsk",
+      "name": "Infosys Recruiter Test",
+      "email": "test_infosys_1788872448546@example.com",
+      "passwordHash": "$2a$10$QuRIEQN6/GCgc0qIBgTaR.7JyzeVipa5.uD3WUrmYFv/xAIocZn9O",
+      "role": "admin",
+      "company": "Infosys Technologies",
+      "companyId": "comp_infosys",
+      "createdAt": "2026-09-08T13:00:48.627Z"
+    },
+    {
+      "_id": "usr_1788877613556_cbr0b",
+      "name": "Harnoor Singh",
+      "email": "harnoorsinghjee@gmail.com",
+      "passwordHash": "$2a$10$68GE06AlOsMz.Eo14aFhqe6qnYvfZp8Su3I8aO74TF3rbW3Pmgb5S",
+      "role": "admin",
+      "company": "Infosys Technologies",
+      "companyId": "comp_infosys",
+      "createdAt": "2026-09-08T14:26:53.556Z"
+    },
+    {
+      "_id": "usr_1788877730839_azye1",
+      "name": "Kamaljeet Singh",
+      "email": "kamal89726@gmail.com",
+      "passwordHash": "$2a$10$IvQJ6ezUbjTWBweqZS.tcu8Z0BXgCSktbeaSl0zDiylYQscgtp3Lq",
+      "role": "applicant",
+      "company": "",
+      "companyId": "",
+      "createdAt": "2026-09-08T14:28:50.839Z"
+    },
+    {
+      "_id": "usr_1788881523874_2ye3a",
+      "name": "Manpreet Kaur",
+      "email": "manpreet89728@gmail.com",
+      "passwordHash": "$2a$10$Ws7ALHQlJcmoR9H.Wyvue.TEhou/uE/x0mScMStmXgCSfRJSCU8vK",
+      "role": "admin",
+      "company": "Wipro",
+      "companyId": "comp_1788881523874_d2rw",
+      "createdAt": "2026-09-08T15:32:03.874Z"
+    },
+    {
+      "_id": "usr_1788881825200_c69y9",
+      "name": "Test Candidate",
+      "email": "candidate_1788881824952@example.com",
+      "passwordHash": "$2a$10$VJKrSnDNxQHbOUA0YnrhOuEJ51D/J7qD.qXbq2KUjS4qVsppd8r5a",
+      "role": "applicant",
+      "company": "",
+      "companyId": "",
+      "createdAt": "2026-09-08T15:37:05.200Z"
     }
   ],
   "jobs": [
@@ -39,7 +100,26 @@
         "rest api"
       ],
       "certification_enabled": true,
-      "certification_weight": 0.2
+      "certification_weight": 0.2,
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "department": "Engineering",
+      "location": "Remote",
+      "employmentType": "Full-time",
+      "experienceLevel": "Mid Level",
+      "proctoring": {
+        "level": "medium",
+        "require_camera": true,
+        "require_microphone": false,
+        "face_detection": true,
+        "multi_face_detection": true,
+        "tab_switch_detection": true,
+        "head_pose_detection": false,
+        "enforce_fullscreen": false,
+        "max_infractions": 5,
+        "label": "Standard ATS (Face & Tab-Switch Monitored)"
+      }
     },
     {
       "id": 2,
@@ -61,27 +141,106 @@
         "git"
       ],
       "certification_enabled": true,
-      "certification_weight": 0.25
+      "certification_weight": 0.25,
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "department": "Engineering",
+      "location": "Remote",
+      "employmentType": "Full-time",
+      "experienceLevel": "Mid Level",
+      "proctoring": {
+        "level": "medium",
+        "require_camera": true,
+        "require_microphone": false,
+        "face_detection": true,
+        "multi_face_detection": true,
+        "tab_switch_detection": true,
+        "head_pose_detection": false,
+        "enforce_fullscreen": false,
+        "max_infractions": 5,
+        "label": "Standard ATS (Face & Tab-Switch Monitored)"
+      }
     },
     {
       "id": 3,
-      "title": "Data Scientist / Analyst",
-      "description": "Join our data intelligence team to develop statistical algorithms, analyze resume trends, and extract structured insights from unstructured documents.",
+      "title": "Enterprise Cloud Architect",
+      "description": "Join Infosys Digital to architect scalable multi-cloud microservices, CI/CD automation, and high-availability database solutions for Fortune 500 enterprises.",
       "mandatory_skills": [
-        "python",
-        "sql",
-        "pandas",
-        "numpy",
-        "machine learning"
+        "aws",
+        "kubernetes",
+        "docker",
+        "terraform",
+        "ci/cd"
       ],
       "optional_skills": [
-        "scikit",
-        "data science",
-        "tableau",
-        "github"
+        "gcp",
+        "python",
+        "security",
+        "microservices",
+        "kafka"
+      ],
+      "certification_enabled": true,
+      "certification_weight": 0.3,
+      "companyId": "comp_infosys",
+      "companyName": "Infosys Technologies",
+      "companySlug": "infosys",
+      "department": "Cloud Solutions",
+      "location": "Hybrid / Bangalore & US",
+      "employmentType": "Full-time",
+      "experienceLevel": "Lead / Staff",
+      "proctoring": {
+        "level": "medium",
+        "require_camera": true,
+        "require_microphone": false,
+        "face_detection": true,
+        "multi_face_detection": true,
+        "tab_switch_detection": true,
+        "head_pose_detection": false,
+        "enforce_fullscreen": false,
+        "max_infractions": 5,
+        "label": "Standard ATS (Face & Tab-Switch Monitored)"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Autonomous Robotics Software Engineer",
+      "description": "Design real-time robotic motion planning, ROS2 nodes, sensor fusion, and computer vision drivers for next-gen warehouse mobile robots.",
+      "mandatory_skills": [
+        "c++",
+        "python",
+        "ros",
+        "linux",
+        "git"
+      ],
+      "optional_skills": [
+        "opencv",
+        "cuda",
+        "control systems",
+        "slam",
+        "docker"
       ],
       "certification_enabled": false,
-      "certification_weight": 0.15
+      "certification_weight": 0.15,
+      "companyId": "comp_nexus",
+      "companyName": "Nexus AI Robotics",
+      "companySlug": "nexus",
+      "department": "Robotics & Perception",
+      "location": "Seattle, WA / Remote",
+      "employmentType": "Full-time",
+      "experienceLevel": "Mid - Senior",
+      "proctoring": {
+        "level": "high",
+        "require_camera": true,
+        "require_microphone": true,
+        "face_detection": true,
+        "multi_face_detection": true,
+        "tab_switch_detection": true,
+        "head_pose_detection": true,
+        "enforce_fullscreen": true,
+        "max_infractions": 3,
+        "label": "Strict Enterprise (Anti-Malpractice Active)"
+      }
     }
   ],
   "applications": [
@@ -92,19 +251,492 @@
       "applicantEmail": "alex.morgan@example.com",
       "jobId": 1,
       "jobTitle": "Full Stack Software Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
       "resumePath": "/app/applet/uploads/1788800097849-test_resume.txt",
       "certificates": [],
       "scores": {
-        "semantic": 0.41,
-        "skill": 0.76,
+        "semantic": 0.76,
+        "skill": 0.88,
         "experience": 0.85,
-        "certification": 0,
-        "final": 0.64
+        "certification": 0.8,
+        "final": 0.84
+      },
+      "skills": {
+        "matched": [
+          "javascript",
+          "nodejs",
+          "express",
+          "sql",
+          "react",
+          "git"
+        ],
+        "missing": [
+          "docker",
+          "mongodb"
+        ]
+      },
+      "category": "Strong Match",
+      "eligibility": "Eligible",
+      "status": "accepted",
+      "proctoringLevel": "medium",
+      "interview": {
+        "status": "completed",
+        "overallScore": 88,
+        "recommendation": "Strongly Recommended (Tier 1 Talent)",
+        "completedAt": "2026-09-08T05:15:00.000Z",
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "maxInfractions": 5,
+          "infractions": []
+        },
+        "questions": [
+          {
+            "category": "Core Competency",
+            "targetArea": "Node.js Concurrency & Event Loop",
+            "question": "How do you avoid blocking the Node.js event loop when processing computationally heavy I/O workloads?",
+            "candidateAnswer": "I offload CPU-intensive tasks using Worker Threads or background queues, while keeping the main loop asynchronous using non-blocking streams and cluster workers.",
+            "evaluation": {
+              "score": 92,
+              "technicalAccuracy": 95,
+              "depthAndPracticality": 90,
+              "clarityAndCommunication": 92,
+              "feedback": "Outstanding explanation citing Node worker threads, libuv loop architecture, and cluster execution."
+            }
+          },
+          {
+            "category": "System Architecture",
+            "targetArea": "High Availability Microservices",
+            "question": "Describe your strategy for state caching and connection pooling in a multi-tenant PostgreSQL/Express backend.",
+            "candidateAnswer": "We use Redis as a distributed cache layer with TTL invalidation, coupled with PgBouncer connection pooling to prevent DB thread saturation during traffic spikes.",
+            "evaluation": {
+              "score": 85,
+              "technicalAccuracy": 88,
+              "depthAndPracticality": 84,
+              "clarityAndCommunication": 86,
+              "feedback": "Strong architecture design referencing PgBouncer connection pooling and cache eviction patterns."
+            }
+          }
+        ]
+      },
+      "decision": {
+        "verdict": "STRONG_HIRE",
+        "verdictLabel": "🟢 Strong Hire (Top Talent Cohort)",
+        "compositeHiringIndex": 87,
+        "leveling": "L5 - Senior Full Stack Engineer",
+        "salaryBenchmark": "$155,000 - $175,000 USD",
+        "percentile": 94,
+        "decisionLetter": {
+          "type": "offer",
+          "title": "Formal Offer of Employment: Full Stack Software Engineer",
+          "date": "September 8, 2026",
+          "subject": "Offer of Employment — Full Stack Software Engineer at AIRIS Talent Global",
+          "compensation": "$162,000 USD",
+          "equity": "0.20% Stock Options",
+          "startDate": "2026-10-15",
+          "sentAt": "2026-09-08T05:30:00.000Z",
+          "sentBy": "Sarah Jenkins (Lead Recruiter)",
+          "body": "Dear Alex,\n\nOn behalf of AIRIS Talent Global, we are thrilled to formally extend an offer of employment for the role of Senior Full Stack Software Engineer. Your performance in the technical assessment was exemplary, reflecting high technical accuracy (88%) and clean proctoring integrity.\n\nWe look forward to welcoming you aboard!"
+        }
+      },
+      "appliedAt": "2026-09-07T16:54:57.855Z"
+    },
+    {
+      "_id": "app_elena_rostova_01",
+      "applicantId": "usr_elena_rostova",
+      "applicantName": "Elena Rostova",
+      "applicantEmail": "elena.rostova@techmail.io",
+      "jobId": 1,
+      "jobTitle": "Full Stack Software Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "",
+      "certificates": [],
+      "scores": {
+        "semantic": 0.88,
+        "skill": 0.94,
+        "experience": 0.9,
+        "certification": 0.85,
+        "final": 0.91
+      },
+      "skills": {
+        "matched": [
+          "javascript",
+          "nodejs",
+          "express",
+          "sql",
+          "git",
+          "react",
+          "typescript",
+          "docker",
+          "mongodb"
+        ],
+        "missing": []
+      },
+      "category": "Exceptional Fit",
+      "eligibility": "Eligible",
+      "status": "reviewed",
+      "proctoringLevel": "medium",
+      "interview": {
+        "status": "completed",
+        "overallScore": 94,
+        "recommendation": "Top 1% Exceptional Talent",
+        "completedAt": "2026-09-08T04:20:00.000Z",
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "maxInfractions": 5,
+          "infractions": []
+        },
+        "questions": [
+          {
+            "category": "System Architecture",
+            "targetArea": "Distributed Systems & Event-Driven Pipelines",
+            "question": "How do you guarantee idempotency in a distributed payment ledger built with Kafka and Node.js?",
+            "candidateAnswer": "I implement an idempotent consumer pattern utilizing unique idempotency keys stored in an atomic Redis transaction or PostgreSQL transactional outbox table with strict row-level locking.",
+            "evaluation": {
+              "score": 96,
+              "technicalAccuracy": 98,
+              "depthAndPracticality": 95,
+              "clarityAndCommunication": 96,
+              "feedback": "World-class architectural clarity covering transactional outbox and distributed deduplication keys."
+            }
+          }
+        ]
+      },
+      "decision": {
+        "verdict": "STRONG_HIRE",
+        "verdictLabel": "🟢 Strong Hire (Top Talent Cohort)",
+        "compositeHiringIndex": 93,
+        "leveling": "L5 - Staff / Senior Lead Engineer",
+        "salaryBenchmark": "$165,000 - $190,000 USD",
+        "percentile": 99
+      },
+      "appliedAt": "2026-09-07T14:10:00.000Z"
+    },
+    {
+      "_id": "app_devon_vance_02",
+      "applicantId": "usr_devon_vance",
+      "applicantName": "Devon Vance",
+      "applicantEmail": "devon.vance@codehub.dev",
+      "jobId": 1,
+      "jobTitle": "Full Stack Software Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "",
+      "certificates": [],
+      "scores": {
+        "semantic": 0.52,
+        "skill": 0.65,
+        "experience": 0.5,
+        "certification": 0.4,
+        "final": 0.58
+      },
+      "skills": {
+        "matched": [
+          "javascript",
+          "git",
+          "react"
+        ],
+        "missing": [
+          "nodejs",
+          "express",
+          "sql",
+          "docker"
+        ]
       },
       "category": "Moderate Match",
       "eligibility": "Eligible",
+      "status": "reviewed",
+      "proctoringLevel": "medium",
+      "interview": {
+        "status": "completed",
+        "overallScore": 64,
+        "recommendation": "Conditional Review Advised",
+        "completedAt": "2026-09-08T03:45:00.000Z",
+        "proctoringReport": {
+          "integrityStatus": "FLAGGED",
+          "infractionCount": 1,
+          "maxInfractions": 5,
+          "infractions": [
+            {
+              "id": "inf_sample_1",
+              "type": "TAB_SWITCH_SUSPICIOUS",
+              "message": "Candidate unfocused test window for 8 seconds.",
+              "timestamp": "2026-09-08T03:48:10.000Z"
+            }
+          ]
+        },
+        "questions": [
+          {
+            "category": "Core Competency",
+            "targetArea": "Database Queries & Performance",
+            "question": "How do you diagnose and optimize an N+1 query problem in an Express ORM?",
+            "candidateAnswer": "I would check the query logs and add an index to the table to make it faster.",
+            "evaluation": {
+              "score": 62,
+              "technicalAccuracy": 60,
+              "depthAndPracticality": 62,
+              "clarityAndCommunication": 65,
+              "feedback": "Surface-level answer. Missed eager loading, JOIN FETCH, and DataLoader batching strategies."
+            }
+          }
+        ]
+      },
+      "decision": {
+        "verdict": "CONSIDER_WITH_RESERVATIONS",
+        "verdictLabel": "🟡 Consider with Reservations",
+        "compositeHiringIndex": 63,
+        "leveling": "L3 - Associate Software Engineer",
+        "salaryBenchmark": "$105,000 - $120,000 USD",
+        "percentile": 58
+      },
+      "appliedAt": "2026-09-07T18:00:00.000Z"
+    },
+    {
+      "_id": "app_1788834760613_y6sld",
+      "applicantId": "usr_applicant_1",
+      "applicantName": "Alex Morgan",
+      "applicantEmail": "alex.morgan@example.com",
+      "jobId": 4,
+      "jobTitle": "Forward Deployed Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "/app/applet/uploads/1788834760294-Resume_HarnoorSingh.pdf",
+      "certificates": [
+        "/app/applet/uploads/1788834760295-certificate__1_.pdf"
+      ],
+      "scores": {
+        "semantic": 0.72,
+        "skill": 0.85,
+        "experience": 0.65,
+        "certification": 0.8,
+        "final": 0.76
+      },
+      "category": "Strong Match",
+      "eligibility": "Eligible",
       "status": "pending",
-      "appliedAt": "2026-09-07T16:54:57.855Z"
+      "appliedAt": "2026-09-08T02:32:40.613Z"
+    },
+    {
+      "_id": "app_1788878063975_vf6im",
+      "applicantId": "usr_1788877730839_azye1",
+      "applicantName": "Kamaljeet Singh",
+      "applicantEmail": "kamal89726@gmail.com",
+      "jobId": 2,
+      "jobTitle": "Machine Learning & AI Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "/app/applet/uploads/1788877778778-Resume_HarnoorSingh.pdf",
+      "certificates": [
+        "/app/applet/uploads/1788877778779-certificate__1_.pdf"
+      ],
+      "scores": {
+        "semantic": 0.56,
+        "skill": 0.76,
+        "experience": 0.65,
+        "certification": 0,
+        "final": 0.66
+      },
+      "category": "Moderate Match",
+      "eligibility": "Rejected - Missing Mandatory Skills",
+      "status": "rejected",
+      "proctoringLevel": "medium",
+      "interview": {
+        "status": "not_started",
+        "overallScore": null,
+        "recommendation": null,
+        "questions": [],
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "infractions": []
+        },
+        "completedAt": null
+      },
+      "appliedAt": "2026-09-08T14:34:23.975Z",
+      "intelligence": {
+        "executiveSummary": "Kamaljeet Singh demonstrates a 66% overall compatibility score for the Machine Learning & AI Engineer opening. The profile shows active proficiency in python, machine learning, nlp, sql with a 56% semantic context alignment with role responsibilities.",
+        "coreStrengths": [
+          "Demonstrated capability in required core competencies: python, machine learning, nlp.",
+          "Relevant domain background evaluated at 65% depth for Machine Learning & AI Engineer.",
+          "Structured professional resume with demonstrated project delivery in modern technology stacks."
+        ],
+        "skillGaps": [
+          "Requires evaluation or ramp-up in mandatory competency: \"deep learning\" (Moderate Risk)"
+        ],
+        "interviewQuestions": [
+          {
+            "question": "In your recent work, how have you architected and scaled systems using python to handle real-world latency and concurrent load?",
+            "focus": "python & Systems Design",
+            "expectedSignals": "Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes."
+          },
+          {
+            "question": "This position relies on deep learning. While your background shows strong parallels, how would you approach ramping up and applying this in production within the first 30 days?",
+            "focus": "Adaptability & deep learning",
+            "expectedSignals": "Candidate articulates structured debugging methodology and fast-learning engineering mindset."
+          },
+          {
+            "question": "How do you approach automated testing, continuous delivery, and code review standards when shipping under tight deadlines?",
+            "focus": "Engineering Rigor & Team Velocity",
+            "expectedSignals": "Demonstrates balanced velocity with code quality, automated test pipelines, and constructive peer collaboration."
+          }
+        ],
+        "hiringRecommendation": {
+          "decision": "Advance to Technical Screening",
+          "reasoning": "The candidate demonstrates solid potential but has specific competency gaps that should be validated during technical screening."
+        },
+        "applicantFeedback": {
+          "resumeTips": [
+            "Quantify project achievements with measurable business impact (e.g., reduced response times by 30%, served 50k+ daily users).",
+            "Ensure explicit keywords for core target skills like python, machine learning, nlp appear prominently in recent role bullet points."
+          ],
+          "suggestedActions": [
+            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring deep learning.",
+            "Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority."
+          ]
+        },
+        "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
+        "generatedAt": "2026-09-08T14:34:23.975Z"
+      }
+    },
+    {
+      "_id": "app_1788878523645_oxkox",
+      "applicantId": "usr_harnoor",
+      "applicantName": "Harnoor Singh",
+      "applicantEmail": "harnoorsinghjee@gmail.com",
+      "jobId": 1,
+      "jobTitle": "Full Stack Software Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "/app/applet/uploads/1788878516635-Harnoor_Singh_Resume.txt",
+      "certificates": [],
+      "scores": {
+        "semantic": 0.7,
+        "skill": 0.94,
+        "experience": 0.95,
+        "certification": 0,
+        "final": 0.85
+      },
+      "category": "Strong Match",
+      "eligibility": "Eligible",
+      "status": "pending",
+      "proctoringLevel": "medium",
+      "interview": {
+        "status": "not_started",
+        "overallScore": null,
+        "recommendation": null,
+        "questions": [],
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "infractions": []
+        },
+        "completedAt": null
+      },
+      "appliedAt": "2026-09-08T14:42:03.645Z",
+      "intelligence": {
+        "executiveSummary": "Harnoor Singh demonstrates a 85% overall compatibility score for the Full Stack Software Engineer opening. The profile shows active proficiency in javascript, nodejs, express, sql with a 70% semantic context alignment with role responsibilities.",
+        "coreStrengths": [
+          "Demonstrated capability in required core competencies: javascript, nodejs, express.",
+          "Relevant domain background evaluated at 95% depth for Full Stack Software Engineer.",
+          "Structured professional resume with demonstrated project delivery in modern technology stacks."
+        ],
+        "skillGaps": [
+          "No critical mandatory skill deficiencies detected; candidate matches all required core tech stacks.",
+          "Recommend probing practical depth in optional tooling: react, docker."
+        ],
+        "interviewQuestions": [
+          {
+            "question": "In your recent work, how have you architected and scaled systems using javascript to handle real-world latency and concurrent load?",
+            "focus": "javascript & Systems Design",
+            "expectedSignals": "Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes."
+          },
+          {
+            "question": "Walk us through a scenario where a critical feature broke unexpectedly in production. How did you triage, resolve, and prevent recurrence?",
+            "focus": "Incident Triaging & Observability",
+            "expectedSignals": "Candidate articulates structured debugging methodology and fast-learning engineering mindset."
+          },
+          {
+            "question": "How do you approach automated testing, continuous delivery, and code review standards when shipping under tight deadlines?",
+            "focus": "Engineering Rigor & Team Velocity",
+            "expectedSignals": "Demonstrates balanced velocity with code quality, automated test pipelines, and constructive peer collaboration."
+          }
+        ],
+        "hiringRecommendation": {
+          "decision": "Strong Advance",
+          "reasoning": "The candidate possesses the necessary skill baseline and high semantic alignment. Recommended to proceed directly to technical screening."
+        },
+        "applicantFeedback": {
+          "resumeTips": [
+            "Quantify project achievements with measurable business impact (e.g., reduced response times by 30%, served 50k+ daily users).",
+            "Ensure explicit keywords for core target skills like javascript, nodejs, express appear prominently in recent role bullet points."
+          ],
+          "suggestedActions": [
+            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring react.",
+            "Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority."
+          ]
+        },
+        "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
+        "generatedAt": "2026-09-08T14:42:03.644Z"
+      }
+    }
+  ],
+  "companies": [
+    {
+      "id": "comp_airis",
+      "name": "AIRIS Talent Global",
+      "slug": "airis",
+      "logo": "🤖",
+      "industry": "AI & Enterprise HR Tech",
+      "website": "https://airis.ai",
+      "location": "San Francisco, CA (Hybrid)",
+      "tagline": "Autonomous AI Candidate Screening & Intelligent Proctoring",
+      "description": "AIRIS provides cutting-edge enterprise recruitment infrastructure powered by deep semantic evaluation, adaptive AI interviewers, and live integrity proctoring.",
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "comp_infosys",
+      "name": "Infosys Technologies",
+      "slug": "infosys",
+      "logo": "🌐",
+      "industry": "Global IT & Digital Consulting",
+      "website": "https://infosys.com",
+      "location": "Bangalore & Global Centers",
+      "tagline": "Navigate your next with enterprise digital transformation",
+      "description": "Global leader in next-generation digital services, software consulting, and enterprise cloud modernization.",
+      "createdAt": "2026-01-10T00:00:00.000Z"
+    },
+    {
+      "id": "comp_nexus",
+      "name": "Nexus AI Robotics",
+      "slug": "nexus",
+      "logo": "🚀",
+      "industry": "Robotics & Autonomous Systems",
+      "website": "https://nexus-robotics.io",
+      "location": "Seattle, WA (Remote-Friendly)",
+      "tagline": "Intelligent perception and embodied AI shaping autonomous industries",
+      "description": "Engineering cutting-edge robotics perception, real-time edge computing, and autonomous machine learning workflows.",
+      "createdAt": "2026-02-01T00:00:00.000Z"
+    },
+    {
+      "id": "comp_1788881523874_d2rw",
+      "name": "Wipro",
+      "slug": "wipro",
+      "logo": "🏢",
+      "industry": "Technology & Software",
+      "website": "",
+      "location": "Remote",
+      "tagline": "",
+      "description": "",
+      "createdAt": "2026-09-08T15:32:03.874Z"
     }
   ]
 }

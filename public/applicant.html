@@ -3,31 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Applicant Dashboard - AI Resume Intelligence</title>
+    <title>Applicant Dashboard - AIRIS</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h2>🤖 AI Resume Intelligence - Applicant</h2>
+                <h2><a href="/">🤖 AIRIS <span class="brand-badge">Applicant</span></a></h2>
             </div>
             <div class="nav-links">
-                <span id="userName"></span>
-                <button onclick="logout()" class="btn-secondary">Logout</button>
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <span id="userName" class="user-chip"></span>
+                <button onclick="logout()" class="btn-secondary" id="logoutBtn">Logout</button>
             </div>
         </div>
     </nav>
 
     <div class="dashboard-container">
+        <!-- Applicant Stats Overview Bar -->
+        <div id="applicantStatsBar" class="stats-overview-grid">
+            <div class="stat-card" id="appStatJobs">
+                <div class="stat-icon stat-icon-indigo">💼</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="appTotalJobs">0</div>
+                    <div class="stat-label">Open Positions</div>
+                </div>
+            </div>
+            <div class="stat-card" id="appStatApplied">
+                <div class="stat-icon stat-icon-emerald">📋</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="appTotalApplied">0</div>
+                    <div class="stat-label">My Submissions</div>
+                </div>
+            </div>
+            <div class="stat-card" id="appStatAvgScore">
+                <div class="stat-icon stat-icon-blue">📊</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="appAvgScore">--</div>
+                    <div class="stat-label">Average Match Score</div>
+                </div>
+            </div>
+        </div>
+
         <div class="tabs">
-            <button class="tab-btn active" onclick="showTab('browse')">Browse Jobs</button>
-            <button class="tab-btn" onclick="showTab('myapps')">My Applications</button>
+            <button class="tab-btn active" id="tabBtnBrowse" onclick="showTab('browse')">🔍 Browse Jobs</button>
+            <button class="tab-btn" id="tabBtnMyApps" onclick="showTab('myapps')">📂 My Applications</button>
         </div>
 
         <!-- Browse Jobs Tab -->
         <div id="browseTab" class="tab-content active">
-            <h2>Available Jobs</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <h2>Available Jobs</h2>
+                <div class="dashboard-filters" style="margin-bottom: 0;">
+                    <input type="text" id="applicantJobSearchInput" class="filter-input" placeholder="Search roles or skills..." oninput="filterApplicantJobs()">
+                </div>
+            </div>
             <div id="jobsList"></div>
         </div>
 
@@ -93,10 +127,144 @@
 
         <!-- View Application Details Modal -->
         <div id="detailsModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content" style="max-width: 760px; max-height: 88vh; overflow-y: auto;">
                 <span class="close" onclick="closeDetailsModal()">&times;</span>
-                <h2>Application Details</h2>
-                <div id="applicationDetails"></div>
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <h2 style="margin: 0;" id="detailJobTitle">Application Intelligence</h2>
+                        <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.95rem;" id="detailJobSubtitle">AI Evaluation & Coaching</p>
+                    </div>
+                    <div id="detailStatusBadge"></div>
+                </div>
+
+                <!-- Scores -->
+                <div class="score-grid" id="detailScoreGrid" style="margin-bottom: 1.5rem;"></div>
+
+                <!-- AI Overview -->
+                <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                        <span>📋</span> AI Resume Assessment
+                    </h3>
+                    <p id="detailExecutiveSummary" style="line-height: 1.6; margin: 0; color: var(--text-primary); font-size: 0.95rem;"></p>
+                </div>
+
+                <!-- Key Strengths -->
+                <div style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; color: var(--success);">
+                        <span>✅</span> Strengths Detected in Your Profile
+                    </h3>
+                    <ul id="detailStrengthsList" style="margin: 0; padding-left: 1.25rem; font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+                </div>
+
+                <!-- AI Resume Optimization Tips -->
+                <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; color: var(--accent);">
+                        <span>✨</span> Actionable Resume Optimization Tips
+                    </h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Tailored recommendations by AIRIS to elevate your match potential for future openings:</p>
+                    <ul id="detailTipsList" style="margin: 0; padding-left: 1.25rem; font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+                </div>
+
+                <!-- Suggested Next Actions -->
+                <div style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                        <span>🚀</span> Recommended Upskilling & Next Steps
+                    </h3>
+                    <ul id="detailActionsList" style="margin: 0; padding-left: 1.25rem; font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                    <button class="btn-primary" onclick="closeDetailsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 5: Official Job Offer Modal for Applicant -->
+        <div id="applicantOfferModal" class="modal">
+            <div class="modal-content" style="max-width: 780px; max-height: 88vh; overflow-y: auto;">
+                <span class="close" onclick="closeApplicantOfferModal()">&times;</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.6rem;">🎉</span>
+                            <h2 style="margin: 0; font-size: 1.4rem;">Official Offer of Employment</h2>
+                        </div>
+                        <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.92rem;" id="applicantOfferCompanySub">
+                            Issued by AIRIS Talent Global
+                        </p>
+                    </div>
+                    <button class="btn-secondary" onclick="printApplicantOffer()" style="padding: 0.4rem 0.9rem; font-size: 0.85rem;">
+                        🖨️ Print / Save PDF
+                    </button>
+                </div>
+
+                <div class="offer-letter-document" id="applicantOfferDocument">
+                    <div class="offer-header">
+                        <div>
+                            <h3 id="appOfferCompanyTitle" style="margin: 0; font-size: 1.25rem;">AIRIS Talent Global</h3>
+                            <p id="appOfferDateText" style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">September 8, 2026</p>
+                        </div>
+                        <div>
+                            <span class="badge" style="background: var(--success); color: #fff; font-weight: 700;">CONGRATULATIONS</span>
+                        </div>
+                    </div>
+
+                    <div class="compensation-callout-grid">
+                        <div class="compensation-item">
+                            <span class="comp-lbl">Base Compensation</span>
+                            <span class="comp-val" id="appOfferSalaryVal">$162,000 USD</span>
+                        </div>
+                        <div class="compensation-item">
+                            <span class="comp-lbl">Equity Options</span>
+                            <span class="comp-val" id="appOfferEquityVal">0.20%</span>
+                        </div>
+                        <div class="compensation-item">
+                            <span class="comp-lbl">Effective Start Date</span>
+                            <span class="comp-val" id="appOfferDateVal">October 15, 2026</span>
+                        </div>
+                    </div>
+
+                    <div id="appOfferBodyText" style="white-space: pre-line; line-height: 1.7; font-size: 0.95rem; color: var(--text-primary); margin: 1.5rem 0;"></div>
+
+                    <div class="offer-signature-block">
+                        <div>
+                            <div class="signature-line"></div>
+                            <strong id="appOfferSignerName">Executive Hiring Committee</strong>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);" id="appOfferSignerOrg">AIRIS Talent Global</div>
+                        </div>
+                        <div style="text-align: right; font-size: 0.8rem; color: var(--text-muted);">
+                            Verified Electronic Decision
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; padding-top: 1rem; margin-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
+                    <button class="btn-primary" onclick="closeApplicantOfferModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 5: Constructive Career Coaching & Growth Roadmap Modal -->
+        <div id="applicantFeedbackModal" class="modal">
+            <div class="modal-content" style="max-width: 720px; max-height: 88vh; overflow-y: auto;">
+                <span class="close" onclick="closeApplicantFeedbackModal()">&times;</span>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+                    <span style="font-size: 1.6rem;">🌱</span>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.4rem;">Application Feedback & Growth Roadmap</h2>
+                        <p style="margin: 0.2rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;" id="appFeedbackSub">
+                            Technical assessment insights & development guidance
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+                    <div id="appFeedbackBodyText" style="white-space: pre-line; line-height: 1.7; font-size: 0.95rem; color: var(--text-primary);"></div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                    <button class="btn-primary" onclick="closeApplicantFeedbackModal()">Close</button>
+                </div>
             </div>
         </div>
     </div>

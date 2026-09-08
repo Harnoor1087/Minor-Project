@@ -3,93 +3,529 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - AI Resume Intelligence</title>
+    <title>Admin Dashboard - AIRIS</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h2>🤖 AI Resume Intelligence - Admin</h2>
+                <h2><a href="/">🤖 AIRIS <span class="brand-badge">Recruiter</span></a></h2>
             </div>
             <div class="nav-links">
-                <span id="userName"></span>
-                <button onclick="logout()" class="btn-secondary">Logout</button>
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <span id="userName" class="user-chip"></span>
+                <button onclick="logout()" class="btn-secondary" id="logoutBtn">Logout</button>
             </div>
         </div>
     </nav>
 
     <div class="dashboard-container">
+        <!-- Company Workspace Banner -->
+        <div id="companyWorkspaceBanner" class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%); border: 1px solid var(--border-color); padding: 1.5rem 2rem; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div id="adminCompLogo" style="width: 56px; height: 56px; border-radius: 14px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 1px solid var(--border-color); box-shadow: var(--card-shadow);">
+                        🏢
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <h2 id="adminCompName" style="margin: 0; font-size: 1.45rem;">Company Workspace</h2>
+                            <span id="adminCompIndustryBadge" style="font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 9999px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary);">Tech</span>
+                        </div>
+                        <p id="adminCompTagline" style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.92rem;">Autonomous Talent Screening & Proctored Interview Suite</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <button onclick="openCompanySettingsModal()" class="btn-secondary" style="font-size: 0.88rem; padding: 0.5rem 1rem; display: inline-flex; align-items: center; gap: 6px;">
+                        <span>⚙️</span> Company Settings
+                    </button>
+                    <a id="adminPublicCareersLink" href="/companies" target="_blank" class="btn-primary" style="font-size: 0.88rem; padding: 0.5rem 1.15rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <span>🌐</span> View Public Careers Page ➔
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Metrics Summary Bar -->
+        <div id="adminStatsBar" class="stats-overview-grid">
+            <div class="stat-card" id="statCardJobs">
+                <div class="stat-icon stat-icon-indigo">💼</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statTotalJobs">0</div>
+                    <div class="stat-label">Active Job Openings</div>
+                </div>
+            </div>
+            <div class="stat-card" id="statCardApplications">
+                <div class="stat-icon stat-icon-blue">👥</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statTotalApps">0</div>
+                    <div class="stat-label">Total Applications</div>
+                </div>
+            </div>
+            <div class="stat-card" id="statCardMatches">
+                <div class="stat-icon stat-icon-emerald">🎯</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statStrongMatches">0</div>
+                    <div class="stat-label">High Match Candidates (≥70%)</div>
+                </div>
+            </div>
+            <div class="stat-card" id="statCardPending">
+                <div class="stat-icon stat-icon-amber">⏳</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statPendingApps">0</div>
+                    <div class="stat-label">Pending Reviews</div>
+                </div>
+            </div>
+        </div>
+
         <div class="tabs">
-            <button class="tab-btn active" onclick="showTab('jobs')">Job Listings</button>
-            <button class="tab-btn" onclick="showTab('applications')">Applications</button>
-            <button class="tab-btn" onclick="showTab('create')">Create Job</button>
+            <button class="tab-btn active" id="tabBtnJobs" onclick="showTab('jobs')">💼 Job Listings</button>
+            <button class="tab-btn" id="tabBtnApplications" onclick="showTab('applications')">📋 Candidate Applications</button>
+            <button class="tab-btn" id="tabBtnMatrix" onclick="showTab('matrix')">🏆 Talent Matrix & Calibration</button>
+            <button class="tab-btn" id="tabBtnCreate" onclick="showTab('create')">➕ Create Job</button>
         </div>
 
         <!-- Jobs Tab -->
         <div id="jobsTab" class="tab-content active">
-            <h2>Job Listings</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <h2>Job Listings</h2>
+                <div class="dashboard-filters" style="margin-bottom: 0;">
+                    <select id="jobCompanyFilter" class="filter-select" onchange="filterJobsList()">
+                        <option value="all">All Companies</option>
+                    </select>
+                    <input type="text" id="jobSearchInput" class="filter-input" placeholder="Search jobs by title or skill..." oninput="filterJobsList()">
+                </div>
+            </div>
             <div id="jobsList"></div>
         </div>
 
         <!-- Applications Tab -->
         <div id="applicationsTab" class="tab-content">
-            <h2>All Applications</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <h2>Candidate Applications</h2>
+                <div class="dashboard-filters" style="margin-bottom: 0;">
+                    <select id="appCompanyFilter" class="filter-select" onchange="filterApplicationsList()">
+                        <option value="all">All Companies</option>
+                    </select>
+                    <input type="text" id="appSearchInput" class="filter-input" placeholder="Search candidate or job..." oninput="filterApplicationsList()">
+                    <select id="appStatusFilter" class="filter-select" onchange="filterApplicationsList()">
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="reviewed">Reviewed</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <select id="appMatchFilter" class="filter-select" onchange="filterApplicationsList()">
+                        <option value="all">All Match Scores</option>
+                        <option value="high">High Match (≥ 70%)</option>
+                        <option value="mid">Mid Match (50% - 69%)</option>
+                        <option value="low">Low Match (&lt; 50%)</option>
+                    </select>
+                </div>
+            </div>
             <div id="applicationsList"></div>
         </div>
 
-        <!-- Create Job Tab -->
+        <!-- Create Job Tab with Configurable Proctoring Suite -->
         <div id="createTab" class="tab-content">
-            <h2>Create New Job</h2>
+            <h2>Create New Job Opening</h2>
+            <p style="color: var(--text-secondary); margin-top: -0.5rem; margin-bottom: 1.5rem;">Configure role requirements, candidate scoring weights, and automated video proctoring strictness.</p>
+
             <form id="createJobForm" class="job-form">
-                <div class="form-group">
-                    <label for="title">Job Title *</label>
-                    <input type="text" id="title" name="title" required>
+                <!-- Role Details Group -->
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.1rem; margin-bottom: 1rem;">1. Role & Organization Information</h3>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="create_companyId">Hiring Company *</label>
+                            <select id="create_companyId" name="companyId" class="filter-select" style="width: 100%; height: 42px;" required></select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="department">Department / Team *</label>
+                            <input type="text" id="department" name="department" placeholder="e.g. Engineering, AI Research" value="Engineering" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">Job Title *</label>
+                        <input type="text" id="title" name="title" placeholder="e.g., Senior Full Stack Software Engineer" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="location">Location / Work Mode *</label>
+                            <input type="text" id="location" name="location" placeholder="e.g., San Francisco, CA (Hybrid) or Remote" value="Remote" required>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="employmentType">Employment Type</label>
+                            <select id="employmentType" name="employmentType" class="filter-select" style="width: 100%; height: 42px;">
+                                <option value="Full-time">Full-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Internship">Internship</option>
+                                <option value="Part-time">Part-time</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="experienceLevel">Experience Seniority</label>
+                            <select id="experienceLevel" name="experienceLevel" class="filter-select" style="width: 100%; height: 42px;">
+                                <option value="Entry Level">Entry Level</option>
+                                <option value="Mid Level" selected>Mid Level</option>
+                                <option value="Senior">Senior</option>
+                                <option value="Lead / Staff">Lead / Staff</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="description">Job Description *</label>
+                        <textarea id="description" name="description" rows="4" placeholder="Outline key role responsibilities, architectural focus, and team objectives..." required></textarea>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="description">Job Description *</label>
-                    <textarea id="description" name="description" rows="5" required></textarea>
+
+                <!-- Technical Skills Group -->
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin-top: 0; font-size: 1.1rem; margin-bottom: 1rem;">2. Technical Competencies & Certification Scoring</h3>
+                    <div class="form-group">
+                        <label for="mandatory_skills">Mandatory Skills (comma-separated) *</label>
+                        <input type="text" id="mandatory_skills" name="mandatory_skills" 
+                               placeholder="e.g., JavaScript, Node.js, PostgreSQL, System Design" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="optional_skills">Preferred / Optional Skills (comma-separated)</label>
+                        <input type="text" id="optional_skills" name="optional_skills" 
+                               placeholder="e.g., Docker, Kubernetes, AWS, GraphQL">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="certification_enabled" name="certification_enabled">
+                            Enable Verified Certification Scoring
+                        </label>
+                    </div>
+                    <div class="form-group" id="certWeightGroup" style="display: none;">
+                        <label for="certification_weight">Certification Weight (0 - 1)</label>
+                        <input type="number" id="certification_weight" name="certification_weight" 
+                               min="0" max="1" step="0.05" value="0.2">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="mandatory_skills">Mandatory Skills (comma-separated) *</label>
-                    <input type="text" id="mandatory_skills" name="mandatory_skills" 
-                           placeholder="e.g., Python, Machine Learning, TensorFlow" required>
+
+                <!-- Configurable Video Proctoring Suite -->
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                        <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                            <span>🛡️</span> Automated AI Video Proctoring Strictness
+                        </h3>
+                        <span style="font-size: 0.8rem; background: rgba(99, 102, 241, 0.1); color: var(--accent); padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700;">
+                            Phase 2 Enterprise Feature
+                        </span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">Select the automated computer vision & anti-cheat compliance tier required for candidate interviews.</p>
+
+                    <!-- Proctoring Tier Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+                        <!-- Low Tier Card -->
+                        <div class="proctoring-tier-card" id="tierCard-low" onclick="selectProctoringTier('low')" style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.2s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 700; color: #10b981;">🟢 Permissive (Low)</span>
+                                <input type="radio" name="proctoring_level" value="low" id="tierRadio-low">
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 0.75rem 0;">Basic webcam identity snapshot and tab-switch logging. Ideal for asynchronous screening.</p>
+                            <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                                <li>Webcam verification check</li>
+                                <li>Tab blur notice</li>
+                                <li>Up to 10 infractions threshold</li>
+                            </ul>
+                        </div>
+
+                        <!-- Medium Tier Card (Default) -->
+                        <div class="proctoring-tier-card selected-tier" id="tierCard-medium" onclick="selectProctoringTier('medium')" style="border: 2px solid var(--accent); background: rgba(99, 102, 241, 0.05); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.2s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 700; color: #f59e0b;">🟡 Standard (Medium)</span>
+                                <input type="radio" name="proctoring_level" value="medium" id="tierRadio-medium" checked>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 0.75rem 0;">Real-time face presence tracking & multi-face alerts. Standard for mid-level technical roles.</p>
+                            <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                                <li>Single-face verification</li>
+                                <li>Multi-face anomaly alert</li>
+                                <li>Copy-paste disabled</li>
+                                <li>5 infractions threshold</li>
+                            </ul>
+                        </div>
+
+                        <!-- High Tier Card -->
+                        <div class="proctoring-tier-card" id="tierCard-high" onclick="selectProctoringTier('high')" style="border: 2px solid var(--border-color); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.2s ease;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 700; color: #ef4444;">🔴 Strict Enterprise (High)</span>
+                                <input type="radio" name="proctoring_level" value="high" id="tierRadio-high">
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 0.75rem 0;">Continuous face & gaze tracking, enforced fullscreen, and audio stream verification.</p>
+                            <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+                                <li>Gaze / head-turn tracking</li>
+                                <li>Enforced fullscreen sandbox</li>
+                                <li>Microphone noise verification</li>
+                                <li>Strict 3 infractions auto-flag</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Fine-Tuning Advanced Toggles -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer;">
+                            <input type="checkbox" id="proctor_fullscreen" name="proctor_fullscreen">
+                            Enforce Fullscreen Mode
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer;">
+                            <input type="checkbox" id="proctor_microphone" name="proctor_microphone">
+                            Require Microphone Audio
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer;">
+                            <input type="checkbox" id="proctor_multi_face" name="proctor_multi_face" checked>
+                            Multi-Face Detection
+                        </label>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="optional_skills">Optional Skills (comma-separated)</label>
-                    <input type="text" id="optional_skills" name="optional_skills" 
-                           placeholder="e.g., Docker, AWS, Kubernetes">
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="certification_enabled" name="certification_enabled">
-                        Enable Certification Scoring
-                    </label>
-                </div>
-                <div class="form-group" id="certWeightGroup" style="display: none;">
-                    <label for="certification_weight">Certification Weight (0-1)</label>
-                    <input type="number" id="certification_weight" name="certification_weight" 
-                           min="0" max="1" step="0.1" value="0.2">
-                </div>
+
                 <div id="createJobError" class="error-message"></div>
-                <button type="submit" class="btn-primary">Create Job</button>
+                <button type="submit" class="btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">Publish Job Opening</button>
             </form>
+        </div>
+
+        <!-- Phase 5: Talent Matrix & Calibration Tab -->
+        <div id="matrixTab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                        <span>🏆</span> Enterprise Talent Matrix & Calibration
+                    </h2>
+                    <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                        Multi-candidate cohort calibration, stack-ranked Composite Hiring Index (CHI), and automated offer generation.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn-secondary" onclick="exportCohortSummaryReport()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        📊 Export Cohort Summary
+                    </button>
+                    <button class="btn-primary" onclick="loadTalentMatrix()" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        🔄 Refresh Matrix
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cohort KPI Grid -->
+            <div class="matrix-stats-grid">
+                <div class="matrix-stat-card">
+                    <div class="stat-icon stat-icon-indigo">👥</div>
+                    <div>
+                        <div class="stat-number" id="cohortTotalCandidates">0</div>
+                        <div class="stat-label">Cohort Candidates</div>
+                    </div>
+                </div>
+                <div class="matrix-stat-card">
+                    <div class="stat-icon stat-icon-emerald">🎙️</div>
+                    <div>
+                        <div class="stat-number" id="cohortCompletedAssessments">0</div>
+                        <div class="stat-label">Assessments Completed</div>
+                    </div>
+                </div>
+                <div class="matrix-stat-card">
+                    <div class="stat-icon stat-icon-blue">⚡</div>
+                    <div>
+                        <div class="stat-number" id="cohortAvgChi">--</div>
+                        <div class="stat-label">Cohort Average CHI</div>
+                    </div>
+                </div>
+                <div class="matrix-stat-card">
+                    <div class="stat-icon stat-icon-amber">🥇</div>
+                    <div>
+                        <div class="stat-number" id="cohortTopCandidate" style="font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;">--</div>
+                        <div class="stat-label">Top Calibrated Talent</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar & Filter Controls -->
+            <div class="matrix-container">
+                <div class="matrix-toolbar">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex: 1;">
+                        <select id="matrixJobFilter" class="filter-select" onchange="loadTalentMatrix()" style="min-width: 220px;">
+                            <option value="all">All Job Openings</option>
+                        </select>
+                        <select id="matrixCompanyFilter" class="filter-select" onchange="loadTalentMatrix()">
+                            <option value="all">All Companies</option>
+                        </select>
+                        <select id="matrixMinChiFilter" class="filter-select" onchange="filterMatrixCandidates()">
+                            <option value="0">All Scores (0%+)</option>
+                            <option value="70">Strong Fits (70%+ CHI)</option>
+                            <option value="80">Top Tier (80%+ CHI)</option>
+                            <option value="90">Elite (90%+ CHI)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <input type="text" id="matrixSearchInput" class="filter-input" placeholder="Search candidate by name or skill..." oninput="filterMatrixCandidates()" style="min-width: 240px; margin: 0;">
+                    </div>
+                </div>
+
+                <!-- Stack Ranked Table -->
+                <div class="matrix-table-wrapper">
+                    <table class="matrix-table" id="matrixTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 44px; text-align: center;">
+                                    <input type="checkbox" id="selectAllMatrixCheck" onchange="toggleSelectAllMatrix(this.checked)" title="Select all for comparison">
+                                </th>
+                                <th style="width: 60px; text-align: center;">Rank</th>
+                                <th>Candidate</th>
+                                <th>Role & Company</th>
+                                <th style="min-width: 170px;">Composite Hiring Index (CHI)</th>
+                                <th>Score Triad (Resume | Assessment | Integrity)</th>
+                                <th>AI Leveling & Benchmark</th>
+                                <th>Decision Status</th>
+                                <th style="text-align: right; min-width: 180px;">Hiring Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrixTableBody">
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                    Loading cohort talent matrix...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sticky Bottom Cohort Action Bar -->
+            <div id="matrixBottomBar" class="cohort-action-bar" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 1.25rem;">⚖️</span>
+                    <div>
+                        <strong id="selectedCompareCount">0 candidates selected</strong>
+                        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.7);">Select 2 to 3 candidates for multi-attribute head-to-head comparison</div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn-secondary" onclick="clearSelectedComparisons()" style="background: rgba(255,255,255,0.15); color: #fff; border: none;">Clear</button>
+                    <button class="btn-primary" id="launchCompareBtn" onclick="openHeadToHeadComparison()" style="background: var(--accent); color: #0f172a; font-weight: 700;">Compare Head-to-Head ➔</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Workspace Settings Modal -->
+        <div id="companySettingsModal" class="modal">
+            <div class="modal-content" style="max-width: 620px;">
+                <span class="close" onclick="closeCompanySettingsModal()">&times;</span>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+                    <span style="font-size: 1.75rem;">⚙️</span>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.4rem;">Company Workspace Settings</h2>
+                        <p style="margin: 0; font-size: 0.88rem; color: var(--text-secondary);">Manage company brand identity and public careers portal details</p>
+                    </div>
+                </div>
+
+                <form id="companySettingsForm" class="job-form">
+                    <div style="display: grid; grid-template-columns: 80px 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="comp_logo">Logo Emoji</label>
+                            <input type="text" id="comp_logo" name="logo" maxlength="4" style="text-align: center; font-size: 1.5rem;" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="comp_name">Company Name *</label>
+                            <input type="text" id="comp_name" name="name" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label for="comp_industry">Industry</label>
+                            <input type="text" id="comp_industry" name="industry" placeholder="e.g. AI & Cloud Computing">
+                        </div>
+                        <div class="form-group">
+                            <label for="comp_location">HQ Location</label>
+                            <input type="text" id="comp_location" name="location" placeholder="e.g. San Francisco, CA">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comp_website">Official Website URL</label>
+                        <input type="url" id="comp_website" name="website" placeholder="https://company.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comp_tagline">Company Tagline</label>
+                        <input type="text" id="comp_tagline" name="tagline" placeholder="Short impactful mission slogan">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comp_description">About Culture & Mission</label>
+                        <textarea id="comp_description" name="description" rows="3" placeholder="Describe company values, products, and culture for prospective applicants..."></textarea>
+                    </div>
+
+                    <div id="companySettingsError" class="error-message"></div>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+                        <button type="button" class="btn-secondary" onclick="closeCompanySettingsModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Edit Job Modal -->
         <div id="editModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content" style="max-width: 680px; max-height: 90vh; overflow-y: auto;">
                 <span class="close" onclick="closeEditModal()">&times;</span>
-                <h2>Edit Job</h2>
+                <h2>Edit Job Opening</h2>
                 <form id="editJobForm" class="job-form">
                     <input type="hidden" id="edit_job_id">
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+                        <div class="form-group">
+                            <label for="edit_companyId">Hiring Company *</label>
+                            <select id="edit_companyId" name="companyId" class="filter-select" style="width: 100%; height: 42px;" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_department">Department / Team *</label>
+                            <input type="text" id="edit_department" name="department" required>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="edit_title">Job Title *</label>
                         <input type="text" id="edit_title" name="title" required>
                     </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;">
+                        <div class="form-group">
+                            <label for="edit_location">Location / Work Mode *</label>
+                            <input type="text" id="edit_location" name="location" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_employmentType">Employment Type</label>
+                            <select id="edit_employmentType" name="employmentType" class="filter-select" style="width: 100%; height: 42px;">
+                                <option value="Full-time">Full-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Internship">Internship</option>
+                                <option value="Part-time">Part-time</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_experienceLevel">Seniority</label>
+                            <select id="edit_experienceLevel" name="experienceLevel" class="filter-select" style="width: 100%; height: 42px;">
+                                <option value="Entry Level">Entry Level</option>
+                                <option value="Mid Level">Mid Level</option>
+                                <option value="Senior">Senior</option>
+                                <option value="Lead / Staff">Lead / Staff</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="edit_description">Job Description *</label>
-                        <textarea id="edit_description" name="description" rows="5" required></textarea>
+                        <textarea id="edit_description" name="description" rows="4" required></textarea>
                     </div>
                     <div class="form-group">
                         <label for="edit_mandatory_skills">Mandatory Skills (comma-separated) *</label>
@@ -105,14 +541,347 @@
                             Enable Certification Scoring
                         </label>
                     </div>
-                    <div class="form-group">
-                        <label for="edit_certification_weight">Certification Weight (0-1)</label>
+                    <div class="form-group" id="editCertWeightGroup">
+                        <label for="edit_certification_weight">Certification Weight (0 - 1)</label>
                         <input type="number" id="edit_certification_weight" name="certification_weight" 
-                               min="0" max="1" step="0.1" value="0.2">
+                               min="0" max="1" step="0.05" value="0.2">
                     </div>
+
+                    <!-- Proctoring Settings in Edit Modal -->
+                    <div style="background: var(--bg-subtle); border-radius: 10px; padding: 1.25rem; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                            <span>🛡️</span> Video Proctoring Configuration
+                        </h4>
+                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                            <label for="edit_proctoring_level">Proctoring Strictness Tier</label>
+                            <select id="edit_proctoring_level" name="proctoring_level" class="filter-select" style="width: 100%; height: 42px;">
+                                <option value="low">🟢 Permissive (Low) - Basic Webcam & Tab Logs</option>
+                                <option value="medium">🟡 Standard (Medium) - Face Tracking & Multi-face Alerts</option>
+                                <option value="high">🔴 Strict Enterprise (High) - Gaze, Audio & Fullscreen Sandbox</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+                                <input type="checkbox" id="edit_proctor_fullscreen"> Fullscreen Lockdown
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+                                <input type="checkbox" id="edit_proctor_microphone"> Microphone Required
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+                                <input type="checkbox" id="edit_proctor_multi_face"> Multi-Face Anomaly
+                            </label>
+                        </div>
+                    </div>
+
                     <div id="editJobError" class="error-message"></div>
                     <button type="submit" class="btn-primary">Update Job</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- AI Candidate Intelligence Modal -->
+        <div id="intelligenceModal" class="modal">
+            <div class="modal-content" style="max-width: 840px; max-height: 90vh; overflow-y: auto;">
+                <span class="close" onclick="closeIntelligenceModal()">&times;</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.5rem;">🧠</span>
+                            <h2 style="margin: 0; font-size: 1.4rem;" id="intelModalCandidateName">Candidate Intelligence</h2>
+                        </div>
+                        <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.95rem;" id="intelModalRoleTitle">Role: Full Stack Engineer</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn-secondary" onclick="exportCandidateDossierPrint()" style="padding: 0.4rem 0.85rem; font-size: 0.82rem;" title="Print executive briefing sheet">
+                            📄 Print Dossier
+                        </button>
+                        <button class="btn-primary" onclick="openDecisionModalFromIntel()" style="padding: 0.4rem 0.85rem; font-size: 0.82rem; background: var(--accent); color: #0f172a; font-weight: 700;">
+                            📝 Decision & Offer
+                        </button>
+                        <div id="intelRecommendationBadge"></div>
+                    </div>
+                </div>
+
+                <!-- Score Ribbons -->
+                <div class="score-grid" id="intelScoreGrid" style="margin-bottom: 1.5rem;"></div>
+
+                <!-- Executive Summary -->
+                <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                        <span>📋</span> Executive AI Dossier
+                    </h3>
+                    <p id="intelExecutiveSummary" style="line-height: 1.6; margin: 0; color: var(--text-primary); font-size: 0.95rem;"></p>
+                </div>
+
+                <!-- Phase 3 & 4: Proctored AI Interview & Anti-Malpractice Telemetry Report -->
+                <div id="intelInterviewSection" style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1.5px solid var(--border-color);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+                        <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                            <span>🎙️</span> AI Proctored Interview & Malpractice Telemetry
+                        </h3>
+                        <div id="intelInterviewHeaderBadges" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;"></div>
+                    </div>
+
+                    <div id="intelInterviewContent">
+                        <div style="color: var(--text-muted); font-size: 0.9rem;">Checking interview session status...</div>
+                    </div>
+                </div>
+
+                <!-- Two-Column Strengths vs Gaps -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                    <div style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 0.75rem 0; color: var(--success); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                            <span>✅</span> Core Strengths & Capabilities
+                        </h4>
+                        <ul id="intelStrengthsList" style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+                    </div>
+                    <div style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 0.75rem 0; color: #eab308; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                            <span>⚠️</span> Competency Gaps & Ramp-up Areas
+                        </h4>
+                        <ul id="intelGapsList" style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+                    </div>
+                </div>
+
+                <!-- Tailored Interview Guide -->
+                <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <h3 style="margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <span>🎙️</span> Tailored Technical & Behavioral Interview Guide
+                        </h3>
+                        <button class="btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;" onclick="copyInterviewKit()">📋 Copy Interview Kit</button>
+                    </div>
+                    <div id="intelQuestionsList" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+                </div>
+
+                <!-- Interactive Recruiter Co-Pilot Chat / Ask -->
+                <div style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                        <span>💬</span> AIRIS Recruiter Co-Pilot
+                    </h3>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">Ask AI about this candidate: leadership potential, technical depth, or request a custom scenario challenge.</p>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="recruiterAskInput" class="filter-input" placeholder="e.g., How would this candidate perform in a high-traffic microservices role?" style="flex: 1;" onkeydown="if(event.key==='Enter') submitRecruiterAsk()">
+                        <button class="btn-primary" id="recruiterAskBtn" style="white-space: nowrap;" onclick="submitRecruiterAsk()">Ask AI</button>
+                    </div>
+                    <div id="recruiterAskResponse" style="display: none; margin-top: 1rem; padding: 1rem; background: var(--bg-subtle); border-radius: 8px; border-left: 3px solid var(--accent); font-size: 0.9rem; line-height: 1.6;"></div>
+                </div>
+
+                <!-- Phase 5: Enterprise Hiring Decision & Leveling Calibration -->
+                <div id="intelDecisionSection" style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; border: 1.5px solid var(--border-color); margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <h3 style="margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <span>🏆</span> Enterprise Decision Calibration & Market Benchmark
+                        </h3>
+                        <div id="intelChiBadgeContainer"></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+                        <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px;">
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Calibrated Level</div>
+                            <div id="intelCalibratedLevel" style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">--</div>
+                        </div>
+                        <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px;">
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Compensation Benchmark</div>
+                            <div id="intelSalaryBenchmark" style="font-weight: 700; font-size: 1rem; color: var(--primary);">--</div>
+                        </div>
+                        <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px;">
+                            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Ramp-up Velocity</div>
+                            <div id="intelRampUpWeeks" style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">--</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                        <div id="intelCurrentDecisionStatus" style="font-size: 0.88rem; color: var(--text-secondary);">No formal offer or decision dispatched yet.</div>
+                        <button class="btn-primary" onclick="openDecisionModalFromIntel()" style="padding: 0.45rem 1rem; font-size: 0.88rem;">
+                            📝 Launch Decision & Offer Suite
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                    <span id="intelGeneratedByText" style="font-size: 0.8rem; color: var(--text-muted);">Powered by AIRIS Intelligence Engine</span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn-secondary" style="padding: 0.45rem 1rem;" onclick="refreshCandidateIntelligence()">🔄 Refresh Analysis</button>
+                        <button class="btn-primary" style="padding: 0.45rem 1rem;" onclick="closeIntelligenceModal()">Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 5: Head-to-Head Candidate Comparison Modal -->
+        <div id="comparisonModal" class="modal">
+            <div class="modal-content" style="max-width: 1080px; max-height: 90vh; overflow-y: auto;">
+                <span class="close" onclick="closeComparisonModal()">&times;</span>
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.6rem;">⚖️</span>
+                            <h2 style="margin: 0; font-size: 1.45rem;">Head-to-Head Candidate Calibration</h2>
+                        </div>
+                        <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.95rem;">
+                            Side-by-side comparative analysis of technical competence, assessment performance, and integrity audit.
+                        </p>
+                    </div>
+                    <button class="btn-secondary" onclick="exportComparisonPrint()" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
+                        🖨️ Print Comparison
+                    </button>
+                </div>
+
+                <div id="comparisonModalContent" class="comparison-grid">
+                    <!-- Dynamic multi-column comparison cards -->
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                    <button class="btn-primary" onclick="closeComparisonModal()">Close Comparison</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 5: Enterprise Decision & Automated Offer Suite Modal -->
+        <div id="decisionModal" class="modal">
+            <div class="modal-content" style="max-width: 860px; max-height: 90vh; overflow-y: auto;">
+                <span class="close" onclick="closeDecisionModal()">&times;</span>
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 1.6rem;">📝</span>
+                            <h2 style="margin: 0; font-size: 1.45rem;" id="decisionModalTitle">Candidate Decision & Offer Suite</h2>
+                        </div>
+                        <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.95rem;" id="decisionCandidateSub">
+                            Calibrating Alex Morgan for Full Stack Software Engineer
+                        </p>
+                    </div>
+                    <div id="decisionChiHeaderBadge"></div>
+                </div>
+
+                <!-- Step 1: Hiring Verdict Selection -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; display: block;">1. Select Hiring Verdict & Decision Outcome</label>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;">
+                        <label class="decision-verdict-card" id="verdictCardOffer" style="border: 2px solid var(--success); background: var(--success-light); border-radius: 10px; padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <input type="radio" name="decisionVerdict" value="STRONG_HIRE" checked onchange="toggleDecisionForm('offer')">
+                            <div>
+                                <strong style="color: var(--success-text); display: block;">🟢 Extend Formal Offer</strong>
+                                <span style="font-size: 0.78rem; color: var(--text-secondary);">Candidate exceeds standard bar (Strong Hire)</span>
+                            </div>
+                        </label>
+                        <label class="decision-verdict-card" id="verdictCardConsider" style="border: 2px solid var(--border-color); background: var(--bg-card); border-radius: 10px; padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <input type="radio" name="decisionVerdict" value="CONSIDER_WITH_RESERVATIONS" onchange="toggleDecisionForm('consider')">
+                            <div>
+                                <strong style="color: var(--warning-text); display: block;">🟡 Consider with Reservations</strong>
+                                <span style="font-size: 0.78rem; color: var(--text-secondary);">Borderline performance, second round or reference check</span>
+                            </div>
+                        </label>
+                        <label class="decision-verdict-card" id="verdictCardReject" style="border: 2px solid var(--border-color); background: var(--bg-card); border-radius: 10px; padding: 1rem; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                            <input type="radio" name="decisionVerdict" value="REJECT" onchange="toggleDecisionForm('reject')">
+                            <div>
+                                <strong style="color: var(--danger-text); display: block;">🔴 Send Constructive Feedback</strong>
+                                <span style="font-size: 0.78rem; color: var(--text-secondary);">Respectful rejection with actionable career growth points</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Step 2: Configurable Compensation & Terms Form (Visible for Offer) -->
+                <div id="offerTermsContainer" style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                    <h4 style="margin: 0 0 1rem 0; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                        <span>💼</span> Compensation, Equity & Timeline Calibration
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="offerBaseSalary">Annual Base Salary</label>
+                            <input type="text" id="offerBaseSalary" class="filter-input" placeholder="e.g. $155,000 USD" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="offerEquity">Equity / Options Package</label>
+                            <input type="text" id="offerEquity" class="filter-input" placeholder="e.g. 0.15% Options" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="offerStartDate">Target Start Date</label>
+                            <input type="date" id="offerStartDate" class="filter-input" style="width: 100%;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label for="offerCustomNotes">Hiring Manager Praise / Custom Notes (Optional)</label>
+                        <input type="text" id="offerCustomNotes" class="filter-input" placeholder="e.g. Highlighted stellar performance on distributed concurrency question" style="width: 100%;">
+                    </div>
+                </div>
+
+                <!-- Rejection Notes Form (Visible for Rejection) -->
+                <div id="rejectionTermsContainer" style="display: none; background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                    <h4 style="margin: 0 0 0.5rem 0; font-size: 1rem; color: var(--danger);">
+                        🌱 Constructive Growth Guidance Focus
+                    </h4>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">Specify any personalized tips or areas of development for candidate coaching:</p>
+                    <input type="text" id="rejectionCustomNotes" class="filter-input" placeholder="e.g. Encourage more deep hands-on practice with Kafka and high-scale caching" style="width: 100%;">
+                </div>
+
+                <!-- Step 3: AI Generated Official Letter Editor & Live Document Preview -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <label style="font-weight: 700; font-size: 0.95rem; margin: 0;">
+                            2. Review & Customize Official Letter
+                        </label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-secondary" onclick="regenerateDecisionLetterAI()" style="padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+                                🤖 Regenerate with Gemini
+                            </button>
+                            <button class="btn-secondary" onclick="copyDecisionLetterText()" style="padding: 0.35rem 0.85rem; font-size: 0.82rem;">
+                                📋 Copy Text
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="offer-letter-document">
+                        <div class="offer-header">
+                            <div>
+                                <h3 id="letterCompanyBrand" style="margin: 0; font-size: 1.3rem;">AIRIS Talent Global</h3>
+                                <p id="letterDate" style="margin: 0.2rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">September 8, 2026</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="badge" id="letterBadgeType" style="background: var(--success); color: #fff; font-weight: 700;">OFFICIAL OFFER</span>
+                            </div>
+                        </div>
+
+                        <div id="letterCompensationGrid" class="compensation-callout-grid">
+                            <div class="compensation-item">
+                                <span class="comp-lbl">Base Compensation</span>
+                                <span class="comp-val" id="previewCompSalary">$155,000 USD</span>
+                            </div>
+                            <div class="compensation-item">
+                                <span class="comp-lbl">Equity Options</span>
+                                <span class="comp-val" id="previewCompEquity">0.15%</span>
+                            </div>
+                            <div class="compensation-item">
+                                <span class="comp-lbl">Effective Start Date</span>
+                                <span class="comp-val" id="previewCompStartDate">Oct 15, 2026</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin: 0;">
+                            <textarea id="decisionLetterBody" rows="12" style="width: 100%; font-family: inherit; font-size: 0.95rem; line-height: 1.6; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; background: var(--bg-surface); color: var(--text-primary); resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="offer-signature-block">
+                            <div>
+                                <div class="signature-line"></div>
+                                <strong id="signatureName">Executive Hiring Committee</strong>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);" id="signatureCompany">AIRIS Talent Global</div>
+                            </div>
+                            <div style="text-align: right; font-size: 0.8rem; color: var(--text-muted);">
+                                Authenticated via AIRIS Protocol
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Actions -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                    <button class="btn-secondary" onclick="closeDecisionModal()">Cancel</button>
+                    <button class="btn-primary" id="finalizeDecisionBtn" onclick="finalizeDecisionAction()" style="background: var(--primary); padding: 0.65rem 1.75rem; font-size: 1rem; font-weight: 700;">
+                        📨 Dispatch Official Decision & Update Status
+                    </button>
+                </div>
             </div>
         </div>
     </div>

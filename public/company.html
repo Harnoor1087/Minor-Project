@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Careers Portal - AIRIS Enterprise</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        .company-hero {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .company-badge-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .proctoring-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .proctor-high {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .proctor-medium {
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .proctor-low {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .company-directory-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .company-directory-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -10px rgba(0,0,0,0.15);
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 1120px; padding: 2rem 1.25rem;">
+        <!-- Top Navbar -->
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <a href="/" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 1.2rem;">A</div>
+                    <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.3rem; color: var(--text-primary);">AIRIS</span>
+                </a>
+                <span style="color: var(--text-muted); font-size: 0.9rem;">/ Company Careers</span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <button id="themeToggleBtn" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+                <a href="/login" class="btn-secondary" style="padding: 0.45rem 1rem; font-size: 0.9rem;">Portal Login</a>
+                <a href="/register" class="btn-primary" style="padding: 0.45rem 1rem; font-size: 0.9rem;">Sign Up</a>
+            </div>
+        </header>
+
+        <!-- Loading state -->
+        <div id="loadingView" style="text-align: center; padding: 4rem 1rem;">
+            <div class="spinner" style="margin: 0 auto 1.5rem auto;"></div>
+            <h3 style="color: var(--text-secondary);">Loading Company Portal...</h3>
+        </div>
+
+        <!-- Single Company View -->
+        <div id="companyProfileView" style="display: none;">
+            <!-- Hero Banner -->
+            <div class="company-hero">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+                    <div style="display: flex; gap: 1.25rem; align-items: center;">
+                        <div id="compLogoBox" style="width: 76px; height: 76px; border-radius: 18px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                            🏢
+                        </div>
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <h1 id="compName" style="margin: 0; font-size: 2rem; font-weight: 800;">Company Name</h1>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 9999px; background: rgba(16, 185, 129, 0.15); color: var(--success); font-size: 0.75rem; font-weight: 700;">
+                                    ✓ Verified Employer
+                                </span>
+                            </div>
+                            <p id="compTagline" style="margin: 0.35rem 0 0 0; color: var(--text-secondary); font-size: 1.05rem;">Empowering talent globally</p>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <a id="compWebsiteBtn" href="#" target="_blank" class="btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1rem; display: inline-flex; align-items: center; gap: 6px;">
+                            <span>🌐</span> Visit Website
+                        </a>
+                        <button onclick="shareCareersPage()" class="btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1rem; display: inline-flex; align-items: center; gap: 6px;">
+                            <span>🔗</span> Share Portal
+                        </button>
+                    </div>
+                </div>
+
+                <div class="company-badge-row">
+                    <span class="pill-badge" id="compIndustryBadge">💼 Industry</span>
+                    <span class="pill-badge" id="compLocationBadge">📍 Location</span>
+                    <span class="pill-badge" id="compJobsCountBadge">🎯 0 Active Roles</span>
+                    <span class="pill-badge" style="background: rgba(99, 102, 241, 0.1); color: var(--accent); border-color: rgba(99, 102, 241, 0.3);">
+                        🛡️ AIRIS AI & Anti-Malpractice Protected
+                    </span>
+                </div>
+
+                <div style="margin-top: 1.25rem; max-width: 850px;">
+                    <h3 style="font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem;">About Our Team & Mission</h3>
+                    <p id="compDescription" style="margin: 0; line-height: 1.65; color: var(--text-primary); font-size: 0.98rem;"></p>
+                </div>
+            </div>
+
+            <!-- Jobs Section Header & Filters -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.5rem;">Open Career Opportunities</h2>
+                    <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.95rem;">Join our team and experience fair, transparent AI-guided screening</p>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <input type="text" id="roleSearchInput" class="filter-input" placeholder="Search roles by keyword..." style="width: 240px;" oninput="filterCompanyRoles()">
+                    <select id="departmentFilter" class="filter-select" onchange="filterCompanyRoles()">
+                        <option value="all">All Departments</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Roles Grid -->
+            <div id="companyRolesGrid" style="display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 3rem;"></div>
+        </div>
+
+        <!-- All Companies Directory View (fallback when no slug provided) -->
+        <div id="allCompaniesDirectoryView" style="display: none;">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h1 style="font-size: 2.4rem; font-weight: 800; margin-bottom: 0.5rem;">Enterprise Hiring Partners</h1>
+                <p style="color: var(--text-secondary); font-size: 1.15rem; max-width: 680px; margin: 0 auto;">Explore innovative companies actively hiring through AIRIS autonomous screening and proctored technical evaluations.</p>
+            </div>
+
+            <div id="companiesDirectoryGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // Theme initialization
+        function initTheme() {
+            const savedTheme = localStorage.getItem('airis_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('airis_theme', next);
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+        }
+        initTheme();
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
+        let companyData = null;
+        let companyJobsList = [];
+
+        // Parse route slug
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const isCompanySlugRoute = pathParts[0] === 'company' && pathParts[1];
+        const targetSlug = isCompanySlugRoute ? pathParts[1] : (new URLSearchParams(window.location.search).get('slug'));
+
+        async function loadData() {
+            const loading = document.getElementById('loadingView');
+            const profileView = document.getElementById('companyProfileView');
+            const dirView = document.getElementById('allCompaniesDirectoryView');
+
+            if (targetSlug) {
+                try {
+                    const res = await fetch(`/api/companies/${targetSlug}`);
+                    if (!res.ok) throw new Error('Company not found');
+                    const data = await res.json();
+                    companyData = data.company;
+                    companyJobsList = data.jobs || [];
+
+                    renderCompanyProfile(data.company, companyJobsList);
+                    loading.style.display = 'none';
+                    profileView.style.display = 'block';
+                } catch (err) {
+                    loading.innerHTML = `
+                        <div style="background: var(--bg-card); padding: 2rem; border-radius: 14px; border: 1px solid var(--border-color); max-width: 500px; margin: 0 auto;">
+                            <h3 style="color: var(--danger);">Company Not Found</h3>
+                            <p style="color: var(--text-secondary); margin: 0.5rem 0 1.5rem 0;">We couldn't locate a verified company workspace matching "${targetSlug}".</p>
+                            <a href="/companies" class="btn-primary">Browse All Companies</a>
+                        </div>
+                    `;
+                }
+            } else {
+                try {
+                    const res = await fetch('/api/companies');
+                    const data = await res.json();
+                    renderCompaniesDirectory(data.companies || []);
+                    loading.style.display = 'none';
+                    dirView.style.display = 'block';
+                } catch (err) {
+                    loading.innerHTML = `<p class="error-message show">Error loading companies directory.</p>`;
+                }
+            }
+        }
+
+        function renderCompanyProfile(company, jobs) {
+            document.title = `${company.name} Careers & Openings - AIRIS`;
+            document.getElementById('compLogoBox').textContent = company.logo || '🏢';
+            document.getElementById('compName').textContent = company.name;
+            document.getElementById('compTagline').textContent = company.tagline || 'Verified AIRIS Hiring Partner';
+            document.getElementById('compDescription').textContent = company.description || 'Welcome to our careers portal. We look forward to evaluating your capabilities.';
+            document.getElementById('compIndustryBadge').textContent = `💼 ${company.industry || 'Technology'}`;
+            document.getElementById('compLocationBadge').textContent = `📍 ${company.location || 'Remote'}`;
+            document.getElementById('compJobsCountBadge').textContent = `🎯 ${jobs.length} Active Role${jobs.length === 1 ? '' : 's'}`;
+
+            const webBtn = document.getElementById('compWebsiteBtn');
+            if (company.website) {
+                webBtn.href = company.website;
+            } else {
+                webBtn.style.display = 'none';
+            }
+
+            // Populate department filter
+            const departments = Array.from(new Set(jobs.map(j => j.department || 'Engineering'))).filter(Boolean);
+            const deptSelect = document.getElementById('departmentFilter');
+            deptSelect.innerHTML = '<option value="all">All Departments</option>' + departments.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            renderRoles(jobs);
+        }
+
+        function renderRoles(jobs) {
+            const grid = document.getElementById('companyRolesGrid');
+            if (!jobs || jobs.length === 0) {
+                grid.innerHTML = `
+                    <div style="text-align: center; padding: 3.5rem 1.5rem; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-color);">
+                        <p style="font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem;">No active openings match your filter.</p>
+                        <p style="color: var(--text-secondary); margin: 0;">Check back soon or clear filters to view all listings.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = jobs.map(job => {
+                const proctoring = job.proctoring || { level: 'medium', label: 'Standard Proctoring' };
+                const pLevel = (proctoring.level || 'medium').toLowerCase();
+                const pClass = pLevel === 'high' ? 'proctor-high' : (pLevel === 'low' ? 'proctor-low' : 'proctor-medium');
+                const pIcon = pLevel === 'high' ? '🛡️' : (pLevel === 'low' ? '👁️' : '⚖️');
+                const pLabel = proctoring.label || `${pLevel.toUpperCase()} PROCTORING`;
+
+                const skills = (job.mandatory_skills || []).slice(0, 5);
+
+                return `
+                    <div class="job-card" style="padding: 1.75rem; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--card-shadow);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <h3 style="margin: 0; font-size: 1.25rem;">${job.title}</h3>
+                                    <span class="proctoring-pill ${pClass}">${pIcon} ${pLabel}</span>
+                                </div>
+                                <div style="display: flex; gap: 0.75rem; color: var(--text-secondary); font-size: 0.88rem; margin-top: 0.35rem; flex-wrap: wrap;">
+                                    <span>📁 ${job.department || 'Engineering'}</span>
+                                    <span>•</span>
+                                    <span>📍 ${job.location || 'Remote'}</span>
+                                    <span>•</span>
+                                    <span>⏱️ ${job.employmentType || 'Full-time'}</span>
+                                    <span>•</span>
+                                    <span>🎓 ${job.experienceLevel || 'Mid Level'}</span>
+                                </div>
+                            </div>
+                            <a href="/apply.html?jobId=${job.id}" class="btn-primary" style="padding: 0.55rem 1.25rem; font-size: 0.92rem; text-decoration: none; white-space: nowrap;">
+                                Apply with AIRIS ➔
+                            </a>
+                        </div>
+
+                        <p style="margin: 0.75rem 0 1.25rem 0; line-height: 1.6; color: var(--text-secondary); font-size: 0.95rem;">
+                            ${job.description}
+                        </p>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
+                                <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-right: 4px;">Top Skills:</span>
+                                ${skills.map(s => `<span style="padding: 0.2rem 0.55rem; border-radius: 6px; background: var(--bg-subtle); color: var(--text-primary); font-size: 0.82rem; border: 1px solid var(--border-subtle);">${s}</span>`).join('')}
+                            </div>
+                            <span style="font-size: 0.82rem; color: var(--text-muted);">
+                                ${job.certification_enabled ? '📜 Certifications Valued (+20%)' : '⚡ Instant Semantic Scoring'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterCompanyRoles() {
+            const query = (document.getElementById('roleSearchInput')?.value || '').toLowerCase().trim();
+            const dept = document.getElementById('departmentFilter')?.value || 'all';
+
+            const filtered = companyJobsList.filter(job => {
+                const matchesQuery = !query || job.title.toLowerCase().includes(query) || job.description.toLowerCase().includes(query);
+                const matchesDept = dept === 'all' || (job.department || 'Engineering').toLowerCase() === dept.toLowerCase();
+                return matchesQuery && matchesDept;
+            });
+
+            renderRoles(filtered);
+        }
+
+        function renderCompaniesDirectory(companies) {
+            const grid = document.getElementById('companiesDirectoryGrid');
+            grid.innerHTML = companies.map(c => `
+                <div class="company-directory-card">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;">
+                            <div style="width: 52px; height: 52px; border-radius: 12px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; border: 1px solid var(--border-color);">
+                                ${c.logo || '🏢'}
+                            </div>
+                            <div>
+                                <h3 style="margin: 0; font-size: 1.2rem;">${c.name}</h3>
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">${c.industry || 'Tech'}</span>
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.55; margin: 0 0 1.25rem 0;">
+                            ${c.tagline || c.description?.slice(0, 120) || 'Verified hiring partner.'}
+                        </p>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                        <span style="font-weight: 700; font-size: 0.88rem; color: var(--accent);">
+                            ${c.activeJobsCount || 0} Open Position${c.activeJobsCount === 1 ? '' : 's'}
+                        </span>
+                        <a href="/company/${c.slug}" class="btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.85rem; text-decoration: none;">
+                            View Careers ➔
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function shareCareersPage() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showToast('Careers portal URL copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Failed to copy link', 'error');
+            });
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
