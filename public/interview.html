@@ -205,6 +205,12 @@
                         <div class="video-feed-wrapper">
                             <video id="proctoringVideo" autoplay playsinline muted class="proctoring-video"></video>
                             <canvas id="proctoringCanvas" class="proctoring-canvas"></canvas>
+                            <div id="faceAbsentWarningBox" class="face-absent-warning-box" style="display: none;">
+                                <div class="face-absent-banner">
+                                    <strong>⚠️ FACE NOT DETECTED</strong>
+                                    <p id="faceAbsentSubtext">Return to frame (Violation in 3s)</p>
+                                </div>
+                            </div>
                             <div class="feed-watermark">
                                 <span class="feed-watermark-dot"></span>
                                 <span id="watermarkTime">LIVE REC</span>

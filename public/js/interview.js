@@ -177,7 +177,12 @@ async function startInterviewSession() {
 
     // Attach stream to active proctoring video
     const videoElem = document.getElementById('proctoringVideo');
-    videoElem.srcObject = mediaStream;
+    if (videoElem && mediaStream) {
+        videoElem.srcObject = mediaStream;
+        videoElem.play().catch(e => console.warn('[Video] Proctoring video play warning:', e));
+    }
+    lastFaceDetectedTime = Date.now();
+    faceAbsentWarningSent = false;
 
     // Initialize HUD
     document.getElementById('hudRolePill').textContent = `Role: ${sessionData.job?.title || 'Engineer'}`;
@@ -640,102 +645,284 @@ function dismissMalpracticeAlert() {
     }
 }
 
-// Lightweight In-Browser Computer Vision Face & Movement Tracker
+// Enterprise-Grade In-Browser Computer Vision Face & Proctoring Tracker
 function initComputerVisionFaceTracker() {
     const video = document.getElementById('proctoringVideo');
     const canvas = document.getElementById('proctoringCanvas');
+    const warningBox = document.getElementById('faceAbsentWarningBox');
+    const subtextEl = document.getElementById('faceAbsentSubtext');
+    const badge = document.getElementById('faceTrackingBadge');
     if (!video || !canvas) return;
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-    proctoringInterval = setInterval(() => {
-        if (!isAssessmentActive || !video.videoWidth) return;
+    // Optional Native Hardware Face Detection API
+    let nativeFaceDetector = null;
+    if (typeof window.FaceDetector === 'function') {
+        try {
+            nativeFaceDetector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 4 });
+        } catch (e) {
+            nativeFaceDetector = null;
+        }
+    }
 
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+    let prevLuminance = null;
+    let consecutiveAbsentTicks = 0;
+    let consecutivePresentTicks = 0;
+
+    // Run high-frequency vision checks every 400ms for immediate responsiveness
+    proctoringInterval = setInterval(async () => {
+        if (!isAssessmentActive) return;
+
+        // Ensure video dimensions are initialized
+        if (!video.videoWidth || !video.videoHeight || video.paused || video.ended) {
+            return;
+        }
+
+        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        }
 
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Sample frame pixels for luminance and skin tone centroids
-        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = frame.data;
-        const totalPixels = data.length / 4;
+        let faceDetected = false;
+        let multipleFacesDetected = false;
+        let box = null;
 
-        let skinPixelCount = 0;
-        let sumX = 0;
-        let sumY = 0;
+        // 1. Check Native Hardware Face Detector if supported
+        if (nativeFaceDetector) {
+            try {
+                const detectedFaces = await nativeFaceDetector.detect(canvas);
+                if (detectedFaces && detectedFaces.length > 0) {
+                    faceDetected = true;
+                    if (detectedFaces.length > 1) {
+                        multipleFacesDetected = true;
+                    }
+                    const b = detectedFaces[0].boundingBox;
+                    box = {
+                        x: Math.max(10, b.x),
+                        y: Math.max(10, b.y),
+                        w: Math.min(canvas.width - 20, b.width),
+                        h: Math.min(canvas.height - 20, b.height)
+                    };
+                }
+            } catch (detectorErr) {
+                // Fallback to computer vision algorithm
+            }
+        }
 
-        // Skip pixels for real-time 60fps-equivalent canvas sampling speed
-        const step = 8;
-        for (let y = 0; y < canvas.height; y += step) {
-            for (let x = 0; x < canvas.width; x += step) {
-                const i = (y * canvas.width + x) * 4;
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
+        // 2. High-Performance Universal Computer Vision Algorithm
+        // Extracts YCbCr skin chrominance + spatial clustering + temporal motion
+        if (!faceDetected) {
+            const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = frame.data;
 
-                // Standard skin tone chroma heuristic
-                if (r > 60 && g > 40 && b > 20 && r > g && r > b && (r - g) >= 15 && Math.abs(r - g) > 15) {
-                    skinPixelCount++;
-                    sumX += x;
-                    sumY += y;
+            const step = 6;
+            const sampledCols = Math.floor(canvas.width / step);
+            const sampledRows = Math.floor(canvas.height / step);
+            const totalSampled = sampledCols * sampledRows;
+
+            let skinPixelCount = 0;
+            let sumX = 0;
+            let sumY = 0;
+            let sumSqX = 0;
+            let sumSqY = 0;
+
+            let motionFluxCount = 0;
+            const currentLuminance = new Uint8Array(totalSampled);
+            let sampleIdx = 0;
+
+            for (let y = 0; y < canvas.height; y += step) {
+                for (let x = 0; x < canvas.width; x += step) {
+                    const i = (y * canvas.width + x) * 4;
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+
+                    // Convert RGB to YCbCr space (standard universal skin locus)
+                    const Y = 0.299 * r + 0.587 * g + 0.114 * b;
+                    const Cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+                    const Cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+
+                    currentLuminance[sampleIdx] = Y;
+
+                    if (prevLuminance && Math.abs(Y - prevLuminance[sampleIdx]) > 10) {
+                        motionFluxCount++;
+                    }
+
+                    // Strict Skin Chrominance Locus (invariant to light skin, dark skin, and ambient white balance)
+                    const isSkinChroma = (
+                        Cb >= 77 && Cb <= 135 &&
+                        Cr >= 130 && Cr <= 175 &&
+                        r > 40 && g > 30 && b > 20 &&
+                        (r - g) >= 8 &&
+                        Math.abs(r - g) < 100
+                    );
+
+                    if (isSkinChroma) {
+                        skinPixelCount++;
+                        sumX += x;
+                        sumY += y;
+                        sumSqX += x * x;
+                        sumSqY += y * y;
+                    }
+
+                    sampleIdx++;
+                }
+            }
+
+            prevLuminance = currentLuminance;
+
+            // Compute Spatial Cluster Statistics
+            if (skinPixelCount > 0) {
+                const meanX = sumX / skinPixelCount;
+                const meanY = sumY / skinPixelCount;
+                const varX = (sumSqX / skinPixelCount) - (meanX * meanX);
+                const varY = (sumSqY / skinPixelCount) - (meanY * meanY);
+                const stdX = Math.sqrt(Math.max(0, varX));
+                const stdY = Math.sqrt(Math.max(0, varY));
+
+                const skinRatio = skinPixelCount / totalSampled;
+
+                // Threshold criteria for a localized human face vs a plain background wall:
+                // 1. Skin ratio: 2.5% to 42% of frame
+                // 2. Spatial localization: std deviation must be compact (not spread edge-to-edge across the whole room)
+                // 3. Central alignment: face is generally inside the 10% to 90% view corridor
+                const isSkinRatioValid = skinRatio >= 0.025 && skinRatio <= 0.42;
+                const isCompactCluster = (
+                    stdX >= canvas.width * 0.05 &&
+                    stdX <= canvas.width * 0.34 &&
+                    stdY >= canvas.height * 0.05 &&
+                    stdY <= canvas.height * 0.38
+                );
+                const isCentered = (
+                    meanX >= canvas.width * 0.10 &&
+                    meanX <= canvas.width * 0.90 &&
+                    meanY >= canvas.height * 0.06 &&
+                    meanY <= canvas.height * 0.90
+                );
+
+                if (isSkinRatioValid && isCompactCluster && isCentered) {
+                    faceDetected = true;
+                    const w = Math.max(90, Math.min(canvas.width * 0.6, stdX * 3.2));
+                    const h = Math.max(110, Math.min(canvas.height * 0.7, stdY * 3.6));
+                    box = {
+                        x: Math.max(10, Math.min(canvas.width - w - 10, meanX - (w / 2))),
+                        y: Math.max(10, Math.min(canvas.height - h - 10, meanY - (h / 2))),
+                        w,
+                        h
+                    };
+                } else if (skinRatio > 0.46) {
+                    // Overwhelming skin pixels (multiple persons crowding the frame)
+                    multipleFacesDetected = true;
                 }
             }
         }
 
+        // Clear canvas to draw clean HUD brackets over live stream
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const badge = document.getElementById('faceTrackingBadge');
+        // State Machine Handling
+        if (multipleFacesDetected) {
+            badge.style.background = 'rgba(239, 68, 68, 0.25)';
+            badge.style.color = 'var(--danger)';
+            badge.textContent = '🔴 Alert: Multiple Faces';
 
-        // Minimum threshold of skin pixels to represent a human face
-        const minSkinThreshold = (totalPixels / (step * step)) * 0.04;
-        const maxMultiFaceThreshold = (totalPixels / (step * step)) * 0.45;
+            if (warningBox) warningBox.style.display = 'flex';
+            if (subtextEl) subtextEl.textContent = 'Multiple persons or silhouettes detected';
 
-        if (skinPixelCount >= minSkinThreshold && skinPixelCount <= maxMultiFaceThreshold) {
+            if (sessionData.job?.proctoring?.multi_face_detection) {
+                triggerMalpracticeViolation('MULTIPLE_FACES', 'Multiple Persons Detected', 'Secondary face or silhouette detected in proctored camera view.');
+            }
+        } else if (faceDetected && box) {
+            consecutivePresentTicks++;
+            consecutiveAbsentTicks = 0;
             lastFaceDetectedTime = Date.now();
             faceAbsentWarningSent = false;
 
-            const avgX = sumX / skinPixelCount;
-            const avgY = sumY / skinPixelCount;
+            // Hide warning box immediately upon return
+            if (warningBox) warningBox.style.display = 'none';
 
-            // Draw clean proctoring bounding box overlay
+            // Draw clean High-Tech HUD brackets matching mirrored canvas coordinates
             ctx.strokeStyle = '#10b981';
             ctx.lineWidth = 3;
-            ctx.strokeRect(avgX - 70, avgY - 90, 140, 180);
+            const bracketSize = Math.min(24, box.w * 0.2);
 
-            ctx.fillStyle = '#10b981';
-            ctx.font = '12px sans-serif';
-            ctx.fillText('FACE VERIFIED', avgX - 65, avgY - 100);
+            // Top-left bracket
+            ctx.beginPath();
+            ctx.moveTo(box.x, box.y + bracketSize);
+            ctx.lineTo(box.x, box.y);
+            ctx.lineTo(box.x + bracketSize, box.y);
+            ctx.stroke();
+
+            // Top-right bracket
+            ctx.beginPath();
+            ctx.moveTo(box.x + box.w - bracketSize, box.y);
+            ctx.lineTo(box.x + box.w, box.y);
+            ctx.lineTo(box.x + box.w, box.y + bracketSize);
+            ctx.stroke();
+
+            // Bottom-left bracket
+            ctx.beginPath();
+            ctx.moveTo(box.x, box.y + box.h - bracketSize);
+            ctx.lineTo(box.x, box.y + box.h);
+            ctx.lineTo(box.x + bracketSize, box.y + box.h);
+            ctx.stroke();
+
+            // Bottom-right bracket
+            ctx.beginPath();
+            ctx.moveTo(box.x + box.w - bracketSize, box.y + box.h);
+            ctx.lineTo(box.x + box.w, box.y + box.h);
+            ctx.lineTo(box.x + box.w, box.y + box.h - bracketSize);
+            ctx.stroke();
+
+            // Center subtle reticle
+            const centerX = box.x + box.w / 2;
+            const centerY = box.y + box.h / 2;
+            ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 8, centerY);
+            ctx.lineTo(centerX + 8, centerY);
+            ctx.moveTo(centerX, centerY - 8);
+            ctx.lineTo(centerX, centerY + 8);
+            ctx.stroke();
 
             badge.style.background = 'rgba(16, 185, 129, 0.2)';
             badge.style.color = 'var(--success)';
             badge.textContent = '🟢 Face Verified';
-        } else if (skinPixelCount > maxMultiFaceThreshold) {
-            // Potential multiple faces in camera
-            badge.style.background = 'rgba(239, 68, 68, 0.2)';
-            badge.style.color = 'var(--danger)';
-            badge.textContent = '🔴 Alert: Multiple Faces';
-
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
-
-            if (sessionData.job?.proctoring?.multi_face_detection) {
-                triggerMalpracticeViolation('MULTIPLE_FACES', 'Multiple Persons Detected', 'Secondary face or silhouette detected in camera frame.');
-            }
         } else {
-            // Face missing
-            badge.style.background = 'rgba(245, 158, 11, 0.2)';
-            badge.style.color = 'var(--warning)';
-            badge.textContent = '🟡 Face Missing';
+            // Face Missing / Moved out of frame
+            consecutiveAbsentTicks++;
+            consecutivePresentTicks = 0;
 
             const absentDurationMs = Date.now() - lastFaceDetectedTime;
-            if (absentDurationMs > 6000 && !faceAbsentWarningSent) {
+            const remainingSec = Math.max(0, Math.ceil((3500 - absentDurationMs) / 1000));
+
+            badge.style.background = 'rgba(239, 68, 68, 0.25)';
+            badge.style.color = 'var(--danger)';
+            badge.textContent = remainingSec > 0 ? `🔴 Face Absent (${remainingSec}s)` : '🔴 Face Absent (Infraction)';
+
+            if (warningBox) warningBox.style.display = 'flex';
+            if (subtextEl) {
+                subtextEl.textContent = remainingSec > 0
+                    ? `Please return to camera view immediately (Violation in ${remainingSec}s)`
+                    : 'Malpractice Recorded: Candidate departed from camera frame';
+            }
+
+            // Trigger official violation after 3.5 seconds of absence
+            if (absentDurationMs >= 3500 && !faceAbsentWarningSent) {
                 faceAbsentWarningSent = true;
-                triggerMalpracticeViolation('FACE_ABSENT', 'Candidate Face Not Visible', 'No face detected in webcam stream for over 5 seconds.');
+                logProctoringTelemetry('🔴 Malpractice: Candidate face moved out of camera frame.');
+                triggerMalpracticeViolation(
+                    'FACE_ABSENT',
+                    'Candidate Face Not Visible',
+                    'No face detected in the proctored webcam stream for over 3 seconds during active assessment.'
+                );
             }
         }
-    }, 1500);
+    }, 400);
 }
 
 // Acoustic visualizer via Web Audio API

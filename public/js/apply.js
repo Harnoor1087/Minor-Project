@@ -126,14 +126,30 @@ applyForm.addEventListener('submit', async (e) => {
                 displayAnalysis(data.analysis, certFiles.length, data.intelligence);
             }, 300);
         } else {
-            throw new Error(data.message || 'Error submitting application');
+            const err = new Error(data.message || 'Error submitting application');
+            err.identityMismatch = data.identityMismatch;
+            err.claimedName = data.claimedName;
+            err.resumeName = data.resumeName;
+            throw err;
         }
     } catch (error) {
         clearInterval(progressInterval);
         if (loaderEl) loaderEl.style.display = 'none';
         document.getElementById('analysisContainer').classList.remove('active');
         document.getElementById('applicationForm').style.display = 'block';
-        errorDiv.textContent = error.message || 'Could not process resume. Please try again.';
+        if (error.identityMismatch) {
+            errorDiv.innerHTML = `
+                <div style="display: flex; gap: 0.75rem; align-items: flex-start; text-align: left;">
+                    <span style="font-size: 1.6rem; line-height: 1;">🛑</span>
+                    <div>
+                        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem; color: #ef4444;">Identity Verification Failed</strong>
+                        <p style="margin: 0; font-size: 0.88rem; line-height: 1.4; color: var(--text-secondary);">${error.message}</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            errorDiv.textContent = error.message || 'Could not process resume. Please try again.';
+        }
         errorDiv.classList.add('show');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Submit Application';

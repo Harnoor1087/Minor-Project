@@ -561,6 +561,8 @@ const applications = {
       eligibility: appData.eligibility || 'Eligible',
       status: appData.status || 'pending',
       proctoringLevel: appData.proctoringLevel || 'medium',
+      identityVerification: appData.identityVerification || null,
+      certifications: appData.certifications || null,
       interview: appData.interview || {
         status: 'not_started', // not_started, in_progress, completed, disqualified
         overallScore: null,

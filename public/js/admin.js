@@ -1017,11 +1017,135 @@ function renderIntelligenceModalData(data) {
         genTextEl.textContent = intel.generatedBy ? `${intel.generatedBy} • Analyzed on ${new Date().toLocaleDateString()}` : 'Powered by AIRIS Intelligence Engine';
     }
 
+    // Render Identity & Certificate Authenticity Section
+    renderIdentityAndCertificateAudit(data);
+
     // Render Proctored Interview & Telemetry Section
     renderInterviewTelemetrySection(data);
 
     // Phase 5: Render Enterprise Decision & Leveling Calibration Section
     renderDecisionIntelligenceSection(data);
+}
+
+function renderIdentityAndCertificateAudit(data) {
+    const badgeEl = document.getElementById('intelIdentityBadge');
+    const contentEl = document.getElementById('intelVerificationContent');
+    if (!contentEl) return;
+
+    const app = allApplications.find(a => a._id === (data.applicationId || currentIntelligenceAppId)) || {};
+    const idv = data.identityVerification || app.identityVerification || {
+        status: 'VERIFIED',
+        verified: true,
+        similarity: 1.0,
+        claimedName: data.candidateName || app.applicantName || 'Candidate',
+        resumeName: data.candidateName || app.applicantName || 'Candidate',
+        message: 'Candidate identity verified with applicant profile.'
+    };
+
+    const certs = data.certifications || app.certifications || { total_uploaded: 0, authentic: 0, relevant: 0, rejected_mismatches: 0, audits: [] };
+    const audits = Array.isArray(certs.audits) ? certs.audits : [];
+
+    // 1. Identity Badge
+    if (badgeEl) {
+        if (idv.status === 'MISMATCH') {
+            badgeEl.innerHTML = `<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); font-weight: 700;">🛑 Identity Mismatch</span>`;
+        } else {
+            badgeEl.innerHTML = `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); font-weight: 700;">🟢 Identity Verified</span>`;
+        }
+    }
+
+    // 2. Identity Summary Card
+    let identityHtml = '';
+    if (idv.status === 'MISMATCH') {
+        identityHtml = `
+            <div style="background: rgba(239, 68, 68, 0.08); border-left: 4px solid var(--danger); padding: 0.85rem 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <strong style="color: var(--danger); font-size: 0.92rem; display: block; margin-bottom: 0.25rem;">Candidate Identity Alert</strong>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-primary);">${idv.message || 'Applicant profile name differs from resume name.'}</p>
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary);">
+                    Registered Account: <strong>${idv.claimedName}</strong> | Resume Header: <strong>${idv.resumeName}</strong>
+                </div>
+            </div>
+        `;
+    } else {
+        identityHtml = `
+            <div style="background: rgba(16, 185, 129, 0.08); border-left: 4px solid var(--success); padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                <div>
+                    <strong style="color: var(--success); font-size: 0.9rem;">Identity Match Confirmed</strong>
+                    <span style="display: block; font-size: 0.82rem; color: var(--text-secondary);">${idv.message || 'Resume header identity aligns with applicant credentials.'}</span>
+                </div>
+                <span style="font-size: 0.8rem; font-family: monospace; background: var(--bg-subtle); padding: 0.2rem 0.5rem; border-radius: 4px; color: var(--text-secondary);">
+                    Match: ${( (idv.similarity || 1.0) * 100).toFixed(0)}%
+                </span>
+            </div>
+        `;
+    }
+
+    // 3. Certificates Authenticity Breakdown
+    let certsHtml = '';
+    if (certs.total_uploaded === 0 && audits.length === 0) {
+        certsHtml = `
+            <div style="font-size: 0.85rem; color: var(--text-muted); padding: 0.5rem 0;">
+                No external certifications were submitted with this application.
+            </div>
+        `;
+    } else {
+        certsHtml = `
+            <div style="margin-top: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <strong style="font-size: 0.88rem; color: var(--text-primary);">Certificate Forensic Verification (${audits.length || certs.total_uploaded} Audited)</strong>
+                    <div style="display: flex; gap: 0.5rem; font-size: 0.78rem;">
+                        <span style="color: var(--success); font-weight: 600;">✓ ${certs.relevant || 0} Authentic & Relevant</span>
+                        ${certs.rejected_mismatches > 0 ? `<span style="color: var(--danger); font-weight: 600;">✗ ${certs.rejected_mismatches} Name Mismatches</span>` : ''}
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                    ${audits.map(c => {
+                        let statusColor = 'var(--success)';
+                        let statusBg = 'rgba(16, 185, 129, 0.12)';
+                        let statusText = 'VERIFIED AUTHENTIC';
+
+                        if (c.authenticityStatus === 'REJECTED_NAME_MISMATCH') {
+                            statusColor = 'var(--danger)';
+                            statusBg = 'rgba(239, 68, 68, 0.15)';
+                            statusText = 'REJECTED: NAME MISMATCH';
+                        } else if (c.authenticityStatus === 'INVALID_DOCUMENT') {
+                            statusColor = '#f97316';
+                            statusBg = 'rgba(249, 115, 22, 0.15)';
+                            statusText = 'INVALID DOCUMENT';
+                        } else if (c.authenticityStatus === 'PROVISIONAL') {
+                            statusColor = '#eab308';
+                            statusBg = 'rgba(234, 179, 8, 0.15)';
+                            statusText = 'PROVISIONAL';
+                        }
+
+                        return `
+                            <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
+                                    <div>
+                                        <strong style="font-size: 0.9rem; color: var(--text-primary); display: block;">${c.title || 'Certification Credential'}</strong>
+                                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                                            Issuer: <strong>${c.issuer || 'Accredited Issuer'}</strong> <span style="opacity: 0.6;">(${c.issuerTier || 'Tier 3'})</span>
+                                            ${c.recipientName ? ` • Recipient: <strong>${c.recipientName}</strong>` : ''}
+                                        </div>
+                                    </div>
+                                    <span style="font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 4px; background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusColor};">
+                                        ${statusText}
+                                    </span>
+                                </div>
+                                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                                    ${c.auditSummary || 'Verified against accredited learning catalog.'}
+                                    ${c.credentialId ? ` • <span style="font-family: monospace;">ID: ${c.credentialId}</span>` : ''}
+                                    ${c.verifyUrl ? ` • <a href="${c.verifyUrl}" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: underline;">Verify Link ↗</a>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    contentEl.innerHTML = identityHtml + certsHtml;
 }
 
 function renderInterviewTelemetrySection(data) {

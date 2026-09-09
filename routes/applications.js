@@ -57,15 +57,27 @@ router.post(
       const certFiles = req.files.certificates || [];
       const certificatePaths = certFiles.map(c => c.path);
 
-      // Perform NLP and AI Resume Analysis
+      const applicantName = req.body.name || req.user.name || 'Candidate';
+      const applicantEmail = req.body.email || req.user.email || 'candidate@example.com';
+
+      // Perform NLP, AI Resume Analysis, and Integrity & Identity Verification
       const analysis = await analyzeResume({
         resumePath: resumeFile.path,
         certificatePaths,
-        job
+        job,
+        candidateName: applicantName,
+        candidateEmail: applicantEmail
       });
 
-      const applicantName = req.body.name || req.user.name || analysis.candidate_name || 'Candidate';
-      const applicantEmail = req.body.email || req.user.email || 'candidate@example.com';
+      // Strict Identity Verification: Disallow cross-candidate resume uploads (e.g. Kamaljeet uploading Harnoor's resume)
+      if (analysis.identityVerification && analysis.identityVerification.status === 'MISMATCH') {
+        return res.status(400).json({
+          message: `Identity Verification Failed: The uploaded resume belongs to "${analysis.identityVerification.resumeName}", but your registered account name is "${applicantName}". Cross-candidate resume submissions are strictly prohibited for assessment integrity. Please upload your own resume.`,
+          identityMismatch: true,
+          claimedName: applicantName,
+          resumeName: analysis.identityVerification.resumeName
+        });
+      }
 
       // Extract resume text and generate candidate intelligence
       let resumeText = '';
@@ -101,6 +113,8 @@ router.post(
         scores: analysis.scores,
         category: analysis.category,
         eligibility: analysis.eligibility,
+        identityVerification: analysis.identityVerification,
+        certifications: analysis.certifications,
         status: analysis.eligibility.includes('Rejected') ? 'rejected' : 'pending'
       });
 
@@ -201,6 +215,8 @@ router.get('/:id/intelligence', verifyToken, async (req, res) => {
         candidateName: app.applicantName,
         jobTitle: app.jobTitle,
         scores: app.scores,
+        identityVerification: app.identityVerification,
+        certifications: app.certifications,
         intelligence: app.intelligence
       });
     }
@@ -235,6 +251,8 @@ router.get('/:id/intelligence', verifyToken, async (req, res) => {
       candidateName: app.applicantName,
       jobTitle: app.jobTitle,
       scores: app.scores,
+      identityVerification: app.identityVerification,
+      certifications: app.certifications,
       intelligence
     });
   } catch (error) {

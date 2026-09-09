@@ -2282,6 +2282,56 @@ footer {
     width: 100%;
     height: 100%;
     pointer-events: none;
+    transform: scaleX(-1); /* Mirror camera to match video feed */
+}
+
+.face-absent-warning-box {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(239, 68, 68, 0.4);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    animation: pulseWarningBg 1s infinite alternate;
+}
+
+.face-absent-banner {
+    background: rgba(15, 23, 42, 0.94);
+    border: 2px solid #ef4444;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.face-absent-banner strong {
+    color: #ef4444;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.face-absent-banner p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #f1f5f9;
+}
+
+@keyframes pulseWarningBg {
+    from { background: rgba(239, 68, 68, 0.3); }
+    to { background: rgba(239, 68, 68, 0.55); }
 }
 
 .feed-watermark {
