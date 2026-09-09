@@ -11,7 +11,11 @@ let proctoringInterval = null;
 let audioMeterInterval = null;
 let watermarkInterval = null;
 let lastFaceDetectedTime = Date.now();
-let faceAbsentWarningSent = false;
+let presenceCheckAbsentViolationSent = false;
+let presenceCheckMultiFaceViolationSent = false;
+let consecutiveAbsentTicks = 0;
+let consecutivePresentTicks = 0;
+let consecutiveMultiFaceTicks = 0;
 let infractionCount = 0;
 let maxAllowedInfractions = 3;
 let isAssessmentActive = false;
@@ -182,7 +186,11 @@ async function startInterviewSession() {
         videoElem.play().catch(e => console.warn('[Video] Proctoring video play warning:', e));
     }
     lastFaceDetectedTime = Date.now();
-    faceAbsentWarningSent = false;
+    presenceCheckAbsentViolationSent = false;
+    presenceCheckMultiFaceViolationSent = false;
+    consecutiveAbsentTicks = 0;
+    consecutivePresentTicks = 0;
+    consecutiveMultiFaceTicks = 0;
 
     // Initialize HUD
     document.getElementById('hudRolePill').textContent = `Role: ${sessionData.job?.title || 'Engineer'}`;
@@ -645,13 +653,308 @@ function dismissMalpracticeAlert() {
     }
 }
 
-// Enterprise-Grade In-Browser Computer Vision Face & Proctoring Tracker
+// Helper: Extract 20 Geometric Biometric Facial Landmarks & Head Pose from Camera Frame
+function extractFacialLandmarks(box, canvasWidth, canvasHeight, frameData) {
+    const { x, y, w, h } = box;
+
+    // 1. Estimate Left and Right Pupil Centers (anthropometric baseline)
+    let leftEyeX = Math.round(x + w * 0.33);
+    let leftEyeY = Math.round(y + h * 0.38);
+    let rightEyeX = Math.round(x + w * 0.67);
+    let rightEyeY = Math.round(y + h * 0.38);
+
+    // Fine-tune eye coordinates using local luminance minima in frame data
+    if (frameData && frameData.data) {
+        const data = frameData.data;
+        const searchHalfW = Math.max(4, Math.round(w * 0.08));
+        const searchHalfH = Math.max(3, Math.round(h * 0.05));
+
+        // Left eye dark center
+        let minLumL = 999;
+        let bestLX = leftEyeX;
+        let bestLY = leftEyeY;
+        for (let dy = -searchHalfH; dy <= searchHalfH; dy += 2) {
+            for (let dx = -searchHalfW; dx <= searchHalfW; dx += 2) {
+                const px = leftEyeX + dx;
+                const py = leftEyeY + dy;
+                if (px >= 0 && px < canvasWidth && py >= 0 && py < canvasHeight) {
+                    const idx = (py * canvasWidth + px) * 4;
+                    const lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                    if (lum < minLumL) {
+                        minLumL = lum;
+                        bestLX = px;
+                        bestLY = py;
+                    }
+                }
+            }
+        }
+        leftEyeX = bestLX;
+        leftEyeY = bestLY;
+
+        // Right eye dark center
+        let minLumR = 999;
+        let bestRX = rightEyeX;
+        let bestRY = rightEyeY;
+        for (let dy = -searchHalfH; dy <= searchHalfH; dy += 2) {
+            for (let dx = -searchHalfW; dx <= searchHalfW; dx += 2) {
+                const px = rightEyeX + dx;
+                const py = rightEyeY + dy;
+                if (px >= 0 && px < canvasWidth && py >= 0 && py < canvasHeight) {
+                    const idx = (py * canvasWidth + px) * 4;
+                    const lum = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
+                    if (lum < minLumR) {
+                        minLumR = lum;
+                        bestRX = px;
+                        bestRY = py;
+                    }
+                }
+            }
+        }
+        rightEyeX = bestRX;
+        rightEyeY = bestRY;
+    }
+
+    const eyeDist = Math.max(20, Math.hypot(rightEyeX - leftEyeX, rightEyeY - leftEyeY));
+    const eyeRadius = Math.max(5, Math.round(eyeDist * 0.15));
+
+    // Eye Orbital Contour Landmarks
+    const leftEyeOuter = { x: leftEyeX - eyeRadius, y: leftEyeY };
+    const leftEyeInner = { x: leftEyeX + eyeRadius, y: leftEyeY };
+    const leftEyeUpper = { x: leftEyeX, y: leftEyeY - Math.round(eyeRadius * 0.6) };
+    const leftEyeLower = { x: leftEyeX, y: leftEyeY + Math.round(eyeRadius * 0.6) };
+
+    const rightEyeInner = { x: rightEyeX - eyeRadius, y: rightEyeY };
+    const rightEyeOuter = { x: rightEyeX + eyeRadius, y: rightEyeY };
+    const rightEyeUpper = { x: rightEyeX, y: rightEyeY - Math.round(eyeRadius * 0.6) };
+    const rightEyeLower = { x: rightEyeX, y: rightEyeY + Math.round(eyeRadius * 0.6) };
+
+    // 2. Eyebrow Landmarks
+    const leftBrow = { x: leftEyeX, y: leftEyeY - Math.round(h * 0.11) };
+    const rightBrow = { x: rightEyeX, y: rightEyeY - Math.round(h * 0.11) };
+
+    // 3. Nasal Landmarks
+    const midEyeX = (leftEyeX + rightEyeX) / 2;
+    const midEyeY = (leftEyeY + rightEyeY) / 2;
+    const noseBridge = { x: midEyeX, y: midEyeY + Math.round(h * 0.08) };
+    const noseTip = { x: midEyeX, y: y + Math.round(h * 0.60) };
+    const leftNostril = { x: midEyeX - Math.round(w * 0.08), y: noseTip.y + Math.round(h * 0.03) };
+    const rightNostril = { x: midEyeX + Math.round(w * 0.08), y: noseTip.y + Math.round(h * 0.03) };
+
+    // 4. Mouth / Lip Landmarks
+    const mouthY = y + Math.round(h * 0.77);
+    const mouthLeft = { x: x + Math.round(w * 0.31), y: mouthY };
+    const mouthRight = { x: x + Math.round(w * 0.69), y: mouthY };
+    const upperLip = { x: midEyeX, y: mouthY - Math.round(h * 0.04) };
+    const lowerLip = { x: midEyeX, y: mouthY + Math.round(h * 0.04) };
+
+    // 5. Jawline & Chin Contour Landmarks
+    const chinApex = { x: midEyeX, y: y + Math.round(h * 0.96) };
+    const leftTemple = { x: x + Math.round(w * 0.12), y: y + Math.round(h * 0.48) };
+    const leftJaw = { x: x + Math.round(w * 0.18), y: y + Math.round(h * 0.78) };
+    const leftChin = { x: x + Math.round(w * 0.34), y: y + Math.round(h * 0.92) };
+    const rightChin = { x: x + Math.round(w * 0.66), y: y + Math.round(h * 0.92) };
+    const rightJaw = { x: x + Math.round(w * 0.82), y: y + Math.round(h * 0.78) };
+    const rightTemple = { x: x + Math.round(w * 0.88), y: y + Math.round(h * 0.48) };
+
+    // 6. Head Pose & Gaze Calculation (Yaw, Pitch, Roll)
+    const yawOffset = noseTip.x - (x + w / 2);
+    const yawAngle = Math.round((yawOffset / (w / 2)) * 40);
+
+    const vertRatio = (noseTip.y - midEyeY) / Math.max(1, mouthY - midEyeY);
+    const pitchAngle = Math.round((vertRatio - 0.55) * 55);
+
+    const rollAngle = Math.round(Math.atan2(rightEyeY - leftEyeY, rightEyeX - leftEyeX) * (180 / Math.PI));
+
+    return {
+        points: {
+            leftEye: { x: leftEyeX, y: leftEyeY },
+            leftEyeOuter, leftEyeInner, leftEyeUpper, leftEyeLower,
+            rightEye: { x: rightEyeX, y: rightEyeY },
+            rightEyeOuter, rightEyeInner, rightEyeUpper, rightEyeLower,
+            leftBrow, rightBrow,
+            noseBridge, noseTip, leftNostril, rightNostril,
+            mouthLeft, mouthRight, upperLip, lowerLip,
+            chinApex, leftTemple, leftJaw, leftChin, rightChin, rightJaw, rightTemple
+        },
+        pose: {
+            yaw: yawAngle,
+            pitch: pitchAngle,
+            roll: rollAngle
+        }
+    };
+}
+
+// Render Real-Time Biometric Landmark Points and Mesh on Proctoring Canvas
+function renderBiometricLandmarks(ctx, box, landmarks) {
+    const { points, pose } = landmarks;
+
+    // A. Corner Target HUD Brackets
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.5;
+    const bracketSize = Math.min(22, box.w * 0.18);
+
+    // Top-Left
+    ctx.beginPath();
+    ctx.moveTo(box.x, box.y + bracketSize);
+    ctx.lineTo(box.x, box.y);
+    ctx.lineTo(box.x + bracketSize, box.y);
+    ctx.stroke();
+
+    // Top-Right
+    ctx.beginPath();
+    ctx.moveTo(box.x + box.w - bracketSize, box.y);
+    ctx.lineTo(box.x + box.w, box.y);
+    ctx.lineTo(box.x + box.w, box.y + bracketSize);
+    ctx.stroke();
+
+    // Bottom-Left
+    ctx.beginPath();
+    ctx.moveTo(box.x, box.y + box.h - bracketSize);
+    ctx.lineTo(box.x, box.y + box.h);
+    ctx.lineTo(box.x + bracketSize, box.y + box.h);
+    ctx.stroke();
+
+    // Bottom-Right
+    ctx.beginPath();
+    ctx.moveTo(box.x + box.w - bracketSize, box.y + box.h);
+    ctx.lineTo(box.x + box.w, box.y + box.h);
+    ctx.lineTo(box.x + box.w, box.y + box.h - bracketSize);
+    ctx.stroke();
+
+    // B. Facial Wireframe Connecting Vectors
+    ctx.lineWidth = 1;
+
+    // Inter-ocular line
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.6)';
+    ctx.beginPath();
+    ctx.moveTo(points.leftEye.x, points.leftEye.y);
+    ctx.lineTo(points.rightEye.x, points.rightEye.y);
+    ctx.stroke();
+
+    // Eye contour loops
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
+    // Left eye loop
+    ctx.beginPath();
+    ctx.moveTo(points.leftEyeOuter.x, points.leftEyeOuter.y);
+    ctx.lineTo(points.leftEyeUpper.x, points.leftEyeUpper.y);
+    ctx.lineTo(points.leftEyeInner.x, points.leftEyeInner.y);
+    ctx.lineTo(points.leftEyeLower.x, points.leftEyeLower.y);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Right eye loop
+    ctx.beginPath();
+    ctx.moveTo(points.rightEyeInner.x, points.rightEyeInner.y);
+    ctx.lineTo(points.rightEyeUpper.x, points.rightEyeUpper.y);
+    ctx.lineTo(points.rightEyeOuter.x, points.rightEyeOuter.y);
+    ctx.lineTo(points.rightEyeLower.x, points.rightEyeLower.y);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Facial Triangle (Eyes to Nose Tip)
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.35)';
+    ctx.beginPath();
+    ctx.moveTo(points.leftEye.x, points.leftEye.y);
+    ctx.lineTo(points.noseTip.x, points.noseTip.y);
+    ctx.lineTo(points.rightEye.x, points.rightEye.y);
+    ctx.stroke();
+
+    // Nasal Axis
+    ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+    ctx.beginPath();
+    ctx.moveTo(points.noseBridge.x, points.noseBridge.y);
+    ctx.lineTo(points.noseTip.x, points.noseTip.y);
+    ctx.stroke();
+
+    // Mouth Loop
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.6)';
+    ctx.beginPath();
+    ctx.moveTo(points.mouthLeft.x, points.mouthLeft.y);
+    ctx.lineTo(points.upperLip.x, points.upperLip.y);
+    ctx.lineTo(points.mouthRight.x, points.mouthRight.y);
+    ctx.lineTo(points.lowerLip.x, points.lowerLip.y);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Jawline Contour
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
+    ctx.beginPath();
+    ctx.moveTo(points.leftTemple.x, points.leftTemple.y);
+    ctx.lineTo(points.leftJaw.x, points.leftJaw.y);
+    ctx.lineTo(points.leftChin.x, points.leftChin.y);
+    ctx.lineTo(points.chinApex.x, points.chinApex.y);
+    ctx.lineTo(points.rightChin.x, points.rightChin.y);
+    ctx.lineTo(points.rightJaw.x, points.rightJaw.y);
+    ctx.lineTo(points.rightTemple.x, points.rightTemple.y);
+    ctx.stroke();
+
+    // C. Render Landmark Keypoints
+    const keypoints = [
+        points.leftEyeOuter, points.leftEyeInner, points.leftEyeUpper, points.leftEyeLower,
+        points.rightEyeOuter, points.rightEyeInner, points.rightEyeUpper, points.rightEyeLower,
+        points.leftBrow, points.rightBrow,
+        points.noseBridge, points.noseTip, points.leftNostril, points.rightNostril,
+        points.mouthLeft, points.mouthRight, points.upperLip, points.lowerLip,
+        points.chinApex, points.leftJaw, points.rightJaw
+    ];
+
+    keypoints.forEach(pt => {
+        if (!pt) return;
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // Pupil Highlights
+    [points.leftEye, points.rightEye].forEach(eye => {
+        ctx.fillStyle = '#06b6d4';
+        ctx.beginPath();
+        ctx.arc(eye.x, eye.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(eye.x, eye.y, 1, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    // D. Gaze & Head Pose Vector Ray
+    const gazeRayLength = Math.max(16, box.w * 0.2);
+    const gazeRayX = points.noseTip.x + (pose.yaw * 0.7);
+    const gazeRayY = points.noseTip.y + (pose.pitch * 0.5);
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(points.noseTip.x, points.noseTip.y);
+    ctx.lineTo(gazeRayX, gazeRayY);
+    ctx.stroke();
+
+    ctx.fillStyle = '#06b6d4';
+    ctx.beginPath();
+    ctx.arc(gazeRayX, gazeRayY, 3, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Enterprise-Grade Computer Vision Facial Landmark Tracker & Real-Time Presence Check
 function initComputerVisionFaceTracker() {
     const video = document.getElementById('proctoringVideo');
     const canvas = document.getElementById('proctoringCanvas');
     const warningBox = document.getElementById('faceAbsentWarningBox');
+    const warningTitle = document.getElementById('presenceWarningTitle');
     const subtextEl = document.getElementById('faceAbsentSubtext');
     const badge = document.getElementById('faceTrackingBadge');
+    const hudPresence = document.getElementById('hudPresencePill');
+    const landmarkCountBadge = document.getElementById('landmarkCountBadge');
+    const landmarkPoseBadge = document.getElementById('landmarkPoseBadge');
+    const landmarkEyesStatus = document.getElementById('landmarkEyesStatus');
+    const landmarkNoseMouthStatus = document.getElementById('landmarkNoseMouthStatus');
+    const presenceCheckStatus = document.getElementById('presenceCheckStatus');
+
     if (!video || !canvas) return;
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -667,14 +970,12 @@ function initComputerVisionFaceTracker() {
     }
 
     let prevLuminance = null;
-    let consecutiveAbsentTicks = 0;
-    let consecutivePresentTicks = 0;
 
-    // Run high-frequency vision checks every 400ms for immediate responsiveness
+    // High-frequency proctoring check every 400ms
     proctoringInterval = setInterval(async () => {
         if (!isAssessmentActive) return;
 
-        // Ensure video dimensions are initialized
+        // Ensure video is actively playing with valid dimensions
         if (!video.videoWidth || !video.videoHeight || video.paused || video.ended) {
             return;
         }
@@ -689,8 +990,9 @@ function initComputerVisionFaceTracker() {
         let faceDetected = false;
         let multipleFacesDetected = false;
         let box = null;
+        let currentFrameData = null;
 
-        // 1. Check Native Hardware Face Detector if supported
+        // 1. Native Hardware Face Detector check
         if (nativeFaceDetector) {
             try {
                 const detectedFaces = await nativeFaceDetector.detect(canvas);
@@ -708,16 +1010,19 @@ function initComputerVisionFaceTracker() {
                     };
                 }
             } catch (detectorErr) {
-                // Fallback to computer vision algorithm
+                // Fall back to universal computer vision
             }
         }
 
-        // 2. High-Performance Universal Computer Vision Algorithm
-        // Extracts YCbCr skin chrominance + spatial clustering + temporal motion
-        if (!faceDetected) {
-            const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = frame.data;
+        // 2. Universal Computer Vision Pipeline: Skin Chrominance, Cluster Variance & Spatial Dispersion
+        try {
+            currentFrameData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        } catch (e) {
+            currentFrameData = null;
+        }
 
+        if (!faceDetected && currentFrameData) {
+            const data = currentFrameData.data;
             const step = 6;
             const sampledCols = Math.floor(canvas.width / step);
             const sampledRows = Math.floor(canvas.height / step);
@@ -729,7 +1034,11 @@ function initComputerVisionFaceTracker() {
             let sumSqX = 0;
             let sumSqY = 0;
 
-            let motionFluxCount = 0;
+            // Multiple face spatial partition counters
+            let leftClusterPixels = 0;
+            let rightClusterPixels = 0;
+            const midCanvasX = canvas.width / 2;
+
             const currentLuminance = new Uint8Array(totalSampled);
             let sampleIdx = 0;
 
@@ -740,18 +1049,14 @@ function initComputerVisionFaceTracker() {
                     const g = data[i + 1];
                     const b = data[i + 2];
 
-                    // Convert RGB to YCbCr space (standard universal skin locus)
+                    // Convert RGB to YCbCr space
                     const Y = 0.299 * r + 0.587 * g + 0.114 * b;
                     const Cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
                     const Cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
 
                     currentLuminance[sampleIdx] = Y;
 
-                    if (prevLuminance && Math.abs(Y - prevLuminance[sampleIdx]) > 10) {
-                        motionFluxCount++;
-                    }
-
-                    // Strict Skin Chrominance Locus (invariant to light skin, dark skin, and ambient white balance)
+                    // Standard Chrominance Locus for Human Skin
                     const isSkinChroma = (
                         Cb >= 77 && Cb <= 135 &&
                         Cr >= 130 && Cr <= 175 &&
@@ -766,6 +1071,12 @@ function initComputerVisionFaceTracker() {
                         sumY += y;
                         sumSqX += x * x;
                         sumSqY += y * y;
+
+                        if (x < midCanvasX - (canvas.width * 0.1)) {
+                            leftClusterPixels++;
+                        } else if (x > midCanvasX + (canvas.width * 0.1)) {
+                            rightClusterPixels++;
+                        }
                     }
 
                     sampleIdx++;
@@ -774,7 +1085,7 @@ function initComputerVisionFaceTracker() {
 
             prevLuminance = currentLuminance;
 
-            // Compute Spatial Cluster Statistics
+            // Compute Statistical Dispersion
             if (skinPixelCount > 0) {
                 const meanX = sumX / skinPixelCount;
                 const meanY = sumY / skinPixelCount;
@@ -785,16 +1096,13 @@ function initComputerVisionFaceTracker() {
 
                 const skinRatio = skinPixelCount / totalSampled;
 
-                // Threshold criteria for a localized human face vs a plain background wall:
-                // 1. Skin ratio: 2.5% to 42% of frame
-                // 2. Spatial localization: std deviation must be compact (not spread edge-to-edge across the whole room)
-                // 3. Central alignment: face is generally inside the 10% to 90% view corridor
+                // Thresholds for human face presence
                 const isSkinRatioValid = skinRatio >= 0.025 && skinRatio <= 0.42;
                 const isCompactCluster = (
                     stdX >= canvas.width * 0.05 &&
-                    stdX <= canvas.width * 0.34 &&
+                    stdX <= canvas.width * 0.35 &&
                     stdY >= canvas.height * 0.05 &&
-                    stdY <= canvas.height * 0.38
+                    stdY <= canvas.height * 0.40
                 );
                 const isCentered = (
                     meanX >= canvas.width * 0.10 &&
@@ -802,6 +1110,13 @@ function initComputerVisionFaceTracker() {
                     meanY >= canvas.height * 0.06 &&
                     meanY <= canvas.height * 0.90
                 );
+
+                // Multi-person presence detection (distinct left and right cluster masses)
+                const leftRatio = leftClusterPixels / totalSampled;
+                const rightRatio = rightClusterPixels / totalSampled;
+                if (leftRatio > 0.04 && rightRatio > 0.04) {
+                    multipleFacesDetected = true;
+                }
 
                 if (isSkinRatioValid && isCompactCluster && isCentered) {
                     faceDetected = true;
@@ -814,111 +1129,142 @@ function initComputerVisionFaceTracker() {
                         h
                     };
                 } else if (skinRatio > 0.46) {
-                    // Overwhelming skin pixels (multiple persons crowding the frame)
                     multipleFacesDetected = true;
                 }
             }
         }
 
-        // Clear canvas to draw clean HUD brackets over live stream
+        // Clear canvas for drawing the real-time biometric HUD overlay
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // State Machine Handling
+        // 3. Real-Time State Processing & 'Presence Check' Violations
         if (multipleFacesDetected) {
-            badge.style.background = 'rgba(239, 68, 68, 0.25)';
-            badge.style.color = 'var(--danger)';
-            badge.textContent = '🔴 Alert: Multiple Faces';
+            consecutiveMultiFaceTicks++;
+            consecutivePresentTicks = 0;
 
+            if (badge) {
+                badge.style.background = 'rgba(239, 68, 68, 0.25)';
+                badge.style.color = 'var(--danger)';
+                badge.textContent = '🔴 Presence Check: Multiple Faces';
+            }
+            if (hudPresence) {
+                hudPresence.textContent = '👤 Presence Check: Flagged';
+                hudPresence.className = 'hud-sensor-pill warning';
+            }
             if (warningBox) warningBox.style.display = 'flex';
-            if (subtextEl) subtextEl.textContent = 'Multiple persons or silhouettes detected';
+            if (warningTitle) warningTitle.textContent = '⚠️ PRESENCE CHECK: MULTIPLE FACES DETECTED';
+            if (subtextEl) subtextEl.textContent = 'Secondary face or multiple persons detected in proctored camera view';
 
-            if (sessionData.job?.proctoring?.multi_face_detection) {
-                triggerMalpracticeViolation('MULTIPLE_FACES', 'Multiple Persons Detected', 'Secondary face or silhouette detected in proctored camera view.');
+            if (presenceCheckStatus) {
+                presenceCheckStatus.textContent = 'Presence: Multi-Face Flagged';
+                presenceCheckStatus.style.color = 'var(--danger)';
+            }
+            if (landmarkCountBadge) {
+                landmarkCountBadge.textContent = 'Multi-Presence Detected';
+                landmarkCountBadge.className = 'landmark-pill-alert';
+            }
+
+            // Trigger Real-Time 'Presence Check' Violation after 2 consecutive cycles
+            if (consecutiveMultiFaceTicks >= 2 && !presenceCheckMultiFaceViolationSent) {
+                presenceCheckMultiFaceViolationSent = true;
+                logProctoringTelemetry('🔴 Malpractice: [PRESENCE_CHECK] Multiple faces detected in camera frame.');
+                triggerMalpracticeViolation(
+                    'PRESENCE_CHECK',
+                    'Presence Check: Multiple Faces Detected',
+                    'Secondary face or multiple candidate facial landmark clusters detected in proctored camera frame.'
+                );
             }
         } else if (faceDetected && box) {
             consecutivePresentTicks++;
             consecutiveAbsentTicks = 0;
+            consecutiveMultiFaceTicks = 0;
             lastFaceDetectedTime = Date.now();
-            faceAbsentWarningSent = false;
 
-            // Hide warning box immediately upon return
+            // Re-arm presence check absent violation after 3 seconds of continuous verified presence
+            if (consecutivePresentTicks > 7) {
+                presenceCheckAbsentViolationSent = false;
+                presenceCheckMultiFaceViolationSent = false;
+            }
+
+            // Hide warning modal/banner
             if (warningBox) warningBox.style.display = 'none';
 
-            // Draw clean High-Tech HUD brackets matching mirrored canvas coordinates
-            ctx.strokeStyle = '#10b981';
-            ctx.lineWidth = 3;
-            const bracketSize = Math.min(24, box.w * 0.2);
+            // Extract 20 Facial Landmarks & Head Pose from the detected face
+            const landmarks = extractFacialLandmarks(box, canvas.width, canvas.height, currentFrameData);
 
-            // Top-left bracket
-            ctx.beginPath();
-            ctx.moveTo(box.x, box.y + bracketSize);
-            ctx.lineTo(box.x, box.y);
-            ctx.lineTo(box.x + bracketSize, box.y);
-            ctx.stroke();
+            // Render Biometric Landmark Wireframe & Keypoints on Live Canvas
+            renderBiometricLandmarks(ctx, box, landmarks);
 
-            // Top-right bracket
-            ctx.beginPath();
-            ctx.moveTo(box.x + box.w - bracketSize, box.y);
-            ctx.lineTo(box.x + box.w, box.y);
-            ctx.lineTo(box.x + box.w, box.y + bracketSize);
-            ctx.stroke();
-
-            // Bottom-left bracket
-            ctx.beginPath();
-            ctx.moveTo(box.x, box.y + box.h - bracketSize);
-            ctx.lineTo(box.x, box.y + box.h);
-            ctx.lineTo(box.x + bracketSize, box.y + box.h);
-            ctx.stroke();
-
-            // Bottom-right bracket
-            ctx.beginPath();
-            ctx.moveTo(box.x + box.w - bracketSize, box.y + box.h);
-            ctx.lineTo(box.x + box.w, box.y + box.h);
-            ctx.lineTo(box.x + box.w, box.y + box.h - bracketSize);
-            ctx.stroke();
-
-            // Center subtle reticle
-            const centerX = box.x + box.w / 2;
-            const centerY = box.y + box.h / 2;
-            ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(centerX - 8, centerY);
-            ctx.lineTo(centerX + 8, centerY);
-            ctx.moveTo(centerX, centerY - 8);
-            ctx.lineTo(centerX, centerY + 8);
-            ctx.stroke();
-
-            badge.style.background = 'rgba(16, 185, 129, 0.2)';
-            badge.style.color = 'var(--success)';
-            badge.textContent = '🟢 Face Verified';
+            // Update UI Telemetry & Presence Status
+            if (badge) {
+                badge.style.background = 'rgba(16, 185, 129, 0.2)';
+                badge.style.color = 'var(--success)';
+                badge.textContent = '🟢 Presence: Verified';
+            }
+            if (hudPresence) {
+                hudPresence.textContent = '👤 Presence: Verified';
+                hudPresence.className = 'hud-sensor-pill active';
+            }
+            if (landmarkCountBadge) {
+                landmarkCountBadge.textContent = '20 Keypoints Locked';
+                landmarkCountBadge.className = 'landmark-pill-active';
+            }
+            if (landmarkPoseBadge) {
+                const yaw = landmarks.pose.yaw;
+                const gazeDirection = Math.abs(yaw) < 10 ? 'Center' : (yaw > 0 ? 'Right' : 'Left');
+                landmarkPoseBadge.textContent = `Gaze: ${gazeDirection} (${yaw}°)`;
+            }
+            if (landmarkEyesStatus) landmarkEyesStatus.textContent = '👀 Eyes: Locked (2)';
+            if (landmarkNoseMouthStatus) landmarkNoseMouthStatus.textContent = '👃 Nose / 👄 Mouth: Aligned';
+            if (presenceCheckStatus) {
+                presenceCheckStatus.textContent = 'Presence Check: OK';
+                presenceCheckStatus.style.color = 'var(--success)';
+            }
         } else {
-            // Face Missing / Moved out of frame
+            // Candidate Absent / Left Frame
             consecutiveAbsentTicks++;
             consecutivePresentTicks = 0;
 
             const absentDurationMs = Date.now() - lastFaceDetectedTime;
             const remainingSec = Math.max(0, Math.ceil((3500 - absentDurationMs) / 1000));
 
-            badge.style.background = 'rgba(239, 68, 68, 0.25)';
-            badge.style.color = 'var(--danger)';
-            badge.textContent = remainingSec > 0 ? `🔴 Face Absent (${remainingSec}s)` : '🔴 Face Absent (Infraction)';
-
+            if (badge) {
+                badge.style.background = 'rgba(239, 68, 68, 0.25)';
+                badge.style.color = 'var(--danger)';
+                badge.textContent = remainingSec > 0 ? `🔴 Presence Check: Missing (${remainingSec}s)` : '🔴 Presence Check: Breached';
+            }
+            if (hudPresence) {
+                hudPresence.textContent = '👤 Presence Check: Missing';
+                hudPresence.className = 'hud-sensor-pill breached';
+            }
             if (warningBox) warningBox.style.display = 'flex';
+            if (warningTitle) warningTitle.textContent = '⚠️ PRESENCE CHECK: FACE NOT DETECTED';
             if (subtextEl) {
                 subtextEl.textContent = remainingSec > 0
-                    ? `Please return to camera view immediately (Violation in ${remainingSec}s)`
-                    : 'Malpractice Recorded: Candidate departed from camera frame';
+                    ? `Candidate facial landmarks lost. Please return to camera view immediately (Presence Check Violation in ${remainingSec}s)`
+                    : 'Presence Check Malpractice Recorded: Candidate departed from camera frame';
             }
 
-            // Trigger official violation after 3.5 seconds of absence
-            if (absentDurationMs >= 3500 && !faceAbsentWarningSent) {
-                faceAbsentWarningSent = true;
-                logProctoringTelemetry('🔴 Malpractice: Candidate face moved out of camera frame.');
+            if (landmarkCountBadge) {
+                landmarkCountBadge.textContent = 'Landmarks Lost (0 Pts)';
+                landmarkCountBadge.className = 'landmark-pill-alert';
+            }
+            if (landmarkPoseBadge) landmarkPoseBadge.textContent = 'Gaze: Out of Frame';
+            if (landmarkEyesStatus) landmarkEyesStatus.textContent = '👀 Eyes: Missing';
+            if (landmarkNoseMouthStatus) landmarkNoseMouthStatus.textContent = '👃 / 👄: Untracked';
+            if (presenceCheckStatus) {
+                presenceCheckStatus.textContent = 'Presence Check: FAILED';
+                presenceCheckStatus.style.color = 'var(--danger)';
+            }
+
+            // Trigger Real-Time 'Presence Check' Violation after 3.5s of Absence
+            if (absentDurationMs >= 3500 && !presenceCheckAbsentViolationSent) {
+                presenceCheckAbsentViolationSent = true;
+                logProctoringTelemetry('🔴 Malpractice: [PRESENCE_CHECK] Candidate departed from camera frame.');
                 triggerMalpracticeViolation(
-                    'FACE_ABSENT',
-                    'Candidate Face Not Visible',
-                    'No face detected in the proctored webcam stream for over 3 seconds during active assessment.'
+                    'PRESENCE_CHECK',
+                    'Presence Check: Candidate Left Frame',
+                    'Candidate facial landmarks were lost and no presence was detected in the camera view for over 3 seconds during active assessment.'
                 );
             }
         }

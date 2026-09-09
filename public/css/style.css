@@ -2373,6 +2373,46 @@ footer {
     backdrop-filter: blur(8px);
 }
 
+.landmark-telemetry-panel {
+    background: var(--bg-subtle);
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border-color);
+    margin-top: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.landmark-pill-active {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.15);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.landmark-pill-alert {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.15);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.landmark-pose-pill {
+    font-family: monospace;
+    font-size: 0.74rem;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
 .audio-meter-wrapper {
     background: var(--bg-subtle);
     border-radius: 8px;
