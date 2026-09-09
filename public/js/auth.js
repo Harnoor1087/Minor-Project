@@ -39,31 +39,265 @@ const loginCredentialsSection = document.getElementById('loginCredentialsSection
 const loginOtpSection = document.getElementById('loginOtpSection');
 
 let currentLoginEmail = '';
-let loginCooldownTimer = null;
 
-function startOtpCountdown(btnEl, timerTextEl, cooldownSeconds = 30) {
-    if (!btnEl) return;
-    let remaining = cooldownSeconds;
-    btnEl.disabled = true;
-    btnEl.textContent = `Resend Code (${remaining}s)`;
+// Reusable Anti-Spam OTP Session and Timer Manager
+function createOtpSessionManager({
+    purpose,
+    getEmail,
+    resendBtnId,
+    cooldownPillId,
+    timerTextId,
+    resendNoticeId,
+    counterBadgeId,
+    devBoxId,
+    devTextId,
+    autoFillBtnId,
+    otpInputId,
+    errorDivId
+}) {
+    let cooldownInterval = null;
+    let expirationInterval = null;
 
-    if (timerTextEl) {
-        timerTextEl.textContent = 'Code expires in 10m';
+    const resendBtn = document.getElementById(resendBtnId);
+    const cooldownPill = document.getElementById(cooldownPillId);
+    const timerText = document.getElementById(timerTextId);
+    const resendNotice = document.getElementById(resendNoticeId);
+    const counterBadge = document.getElementById(counterBadgeId);
+    const devBox = document.getElementById(devBoxId);
+    const devText = document.getElementById(devTextId);
+    const autoFillBtn = document.getElementById(autoFillBtnId);
+    const otpInput = document.getElementById(otpInputId);
+    const errorDiv = document.getElementById(errorDivId);
+
+    function startExpiration(expiresInSeconds = 600) {
+        if (expirationInterval) clearInterval(expirationInterval);
+        if (!timerText) return;
+
+        let remaining = expiresInSeconds;
+        function render() {
+            if (remaining <= 0) {
+                clearInterval(expirationInterval);
+                timerText.textContent = 'Code expired';
+                timerText.style.color = '#ef4444';
+                if (resendNotice) {
+                    resendNotice.className = 'otp-resend-notice warning';
+                    resendNotice.textContent = '⚠️ Security code expired. Please click "Resend Code" to generate a fresh code.';
+                    resendNotice.style.display = 'block';
+                }
+                // Allow resending immediately if code has expired
+                if (cooldownInterval) clearInterval(cooldownInterval);
+                if (resendBtn) {
+                    resendBtn.disabled = false;
+                    const label = resendBtn.querySelector('.resend-label') || resendBtn;
+                    label.textContent = 'Resend Code';
+                }
+                if (cooldownPill) cooldownPill.style.display = 'none';
+                return;
+            }
+
+            const mins = Math.floor(remaining / 60);
+            const secs = remaining % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            timerText.textContent = `Code expires in ${formatted}`;
+            timerText.style.color = '';
+            remaining -= 1;
+        }
+
+        render();
+        expirationInterval = setInterval(render, 1000);
     }
 
-    const interval = setInterval(() => {
-        remaining -= 1;
-        if (remaining <= 0) {
-            clearInterval(interval);
-            btnEl.disabled = false;
-            btnEl.textContent = 'Resend Code';
-        } else {
-            btnEl.textContent = `Resend Code (${remaining}s)`;
-        }
-    }, 1000);
+    function startCooldown(cooldownSeconds = 30, resendCount = 0, maxResends = 5, maxReached = false) {
+        if (cooldownInterval) clearInterval(cooldownInterval);
 
-    return interval;
+        if (counterBadge) {
+            counterBadge.textContent = `${resendCount}/${maxResends} sent`;
+            counterBadge.style.display = 'inline-block';
+        }
+
+        if (maxReached || resendCount >= maxResends) {
+            if (resendBtn) {
+                resendBtn.disabled = true;
+                const label = resendBtn.querySelector('.resend-label') || resendBtn;
+                label.textContent = 'Limit Reached';
+            }
+            if (cooldownPill) cooldownPill.style.display = 'none';
+            if (resendNotice) {
+                resendNotice.className = 'otp-resend-notice error';
+                resendNotice.textContent = '🛑 Maximum resend limit reached for this session. Please wait 10 minutes to protect against email spam.';
+                resendNotice.style.display = 'block';
+            }
+            return;
+        }
+
+        let remaining = cooldownSeconds;
+        if (resendBtn) {
+            resendBtn.disabled = true;
+            const label = resendBtn.querySelector('.resend-label') || resendBtn;
+            label.textContent = 'Resend Code';
+        }
+        if (cooldownPill) {
+            cooldownPill.style.display = 'inline-block';
+            cooldownPill.textContent = `${remaining}s`;
+        }
+
+        cooldownInterval = setInterval(() => {
+            remaining -= 1;
+            if (remaining <= 0) {
+                clearInterval(cooldownInterval);
+                if (resendBtn) {
+                    resendBtn.disabled = false;
+                    const label = resendBtn.querySelector('.resend-label') || resendBtn;
+                    label.textContent = 'Resend Code';
+                }
+                if (cooldownPill) {
+                    cooldownPill.style.display = 'none';
+                }
+            } else {
+                if (cooldownPill) {
+                    cooldownPill.textContent = `${remaining}s`;
+                }
+            }
+        }, 1000);
+    }
+
+    function setupDevHelper(devCode) {
+        if (devCode && devBox && devText) {
+            devText.textContent = devCode;
+            devBox.style.display = 'flex';
+            if (autoFillBtn && otpInput) {
+                autoFillBtn.onclick = () => {
+                    otpInput.value = devCode;
+                    otpInput.focus();
+                };
+            }
+        } else if (devBox) {
+            devBox.style.display = 'none';
+        }
+    }
+
+    function initSession(data) {
+        startExpiration((data.expiresInMinutes || 10) * 60);
+        startCooldown(
+            data.cooldownSeconds || 30,
+            data.resendCount || 0,
+            data.maxResends || 5,
+            data.maxReached || false
+        );
+        setupDevHelper(data.devCode);
+        if (resendNotice) {
+            resendNotice.style.display = 'none';
+            resendNotice.textContent = '';
+        }
+    }
+
+    // Bind Resend button click
+    if (resendBtn) {
+        resendBtn.addEventListener('click', async () => {
+            const email = getEmail();
+            if (!email) return;
+            if (resendBtn.disabled) return;
+
+            if (errorDiv) {
+                errorDiv.classList.remove('show');
+                errorDiv.textContent = '';
+            }
+
+            resendBtn.disabled = true;
+            const label = resendBtn.querySelector('.resend-label') || resendBtn;
+            label.textContent = 'Sending...';
+            if (cooldownPill) cooldownPill.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/auth/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, purpose })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (resendNotice) {
+                        resendNotice.className = 'otp-resend-notice success';
+                        resendNotice.textContent = data.message || '✓ A fresh verification code has been dispatched.';
+                        resendNotice.style.display = 'block';
+                    }
+
+                    // Reset OTP input and focus
+                    if (otpInput) {
+                        otpInput.value = '';
+                        otpInput.focus();
+                    }
+
+                    // Restart timers with anti-spam cooldown
+                    startExpiration((data.expiresInMinutes || 10) * 60);
+                    startCooldown(
+                        data.cooldownSeconds || 30,
+                        data.resendCount || 1,
+                        data.maxResends || 5,
+                        false
+                    );
+                    setupDevHelper(data.devCode);
+                } else if (response.status === 429) {
+                    // Rate limit or max limit hit
+                    if (resendNotice) {
+                        resendNotice.className = 'otp-resend-notice warning';
+                        resendNotice.textContent = data.message || 'Please wait before requesting another code.';
+                        resendNotice.style.display = 'block';
+                    }
+                    startCooldown(
+                        data.cooldownSeconds || 30,
+                        data.resendCount || 0,
+                        data.maxResends || 5,
+                        data.maxReached || false
+                    );
+                } else {
+                    if (resendNotice) {
+                        resendNotice.className = 'otp-resend-notice error';
+                        resendNotice.textContent = data.message || 'Could not resend code. Please try again.';
+                        resendNotice.style.display = 'block';
+                    }
+                    resendBtn.disabled = false;
+                    label.textContent = 'Resend Code';
+                }
+            } catch (err) {
+                if (resendNotice) {
+                    resendNotice.className = 'otp-resend-notice error';
+                    resendNotice.textContent = 'Network error while requesting code. Please try again.';
+                    resendNotice.style.display = 'block';
+                }
+                resendBtn.disabled = false;
+                label.textContent = 'Resend Code';
+            }
+        });
+    }
+
+    return {
+        initSession,
+        startCooldown,
+        startExpiration,
+        clearTimers: () => {
+            if (cooldownInterval) clearInterval(cooldownInterval);
+            if (expirationInterval) clearInterval(expirationInterval);
+        }
+    };
 }
+
+const loginOtpManager = createOtpSessionManager({
+    purpose: 'login',
+    getEmail: () => currentLoginEmail,
+    resendBtnId: 'loginResendBtn',
+    cooldownPillId: 'loginCooldownPill',
+    timerTextId: 'loginTimerText',
+    resendNoticeId: 'loginResendNotice',
+    counterBadgeId: 'loginResendCounterBadge',
+    devBoxId: 'loginDevOtpBox',
+    devTextId: 'loginDevCodeText',
+    autoFillBtnId: 'loginAutoFillBtn',
+    otpInputId: 'loginOtpInput',
+    errorDivId: 'loginOtpError'
+});
 
 if (loginForm) {
     const errorDiv = document.getElementById('errorMessage');
@@ -120,28 +354,8 @@ if (loginForm) {
                         otpInput.focus();
                     }
 
-                    // Sandbox / Dev code helper
-                    const devBox = document.getElementById('loginDevOtpBox');
-                    const devText = document.getElementById('loginDevCodeText');
-                    const autoFillBtn = document.getElementById('loginAutoFillBtn');
-                    if (data.devCode && devBox && devText) {
-                        devText.textContent = data.devCode;
-                        devBox.style.display = 'flex';
-                        if (autoFillBtn && otpInput) {
-                            autoFillBtn.onclick = () => {
-                                otpInput.value = data.devCode;
-                                otpInput.focus();
-                            };
-                        }
-                    } else if (devBox) {
-                        devBox.style.display = 'none';
-                    }
-
-                    // Resend Timer
-                    const resendBtn = document.getElementById('loginResendBtn');
-                    const timerText = document.getElementById('loginTimerText');
-                    if (loginCooldownTimer) clearInterval(loginCooldownTimer);
-                    loginCooldownTimer = startOtpCountdown(resendBtn, timerText, data.cooldownSeconds || 30);
+                    // Initialize Anti-Spam Resend and Countdown Timers
+                    loginOtpManager.initSession(data);
 
                 } else if (data.token) {
                     // Direct token issued
@@ -239,60 +453,11 @@ if (loginForm) {
             }
         });
 
-        // Resend Login OTP
-        const loginResendBtn = document.getElementById('loginResendBtn');
-        if (loginResendBtn) {
-            loginResendBtn.addEventListener('click', async () => {
-                if (!currentLoginEmail) return;
-
-                if (otpErrorDiv) {
-                    otpErrorDiv.classList.remove('show');
-                    otpErrorDiv.textContent = '';
-                }
-
-                try {
-                    loginResendBtn.disabled = true;
-                    loginResendBtn.textContent = 'Sending...';
-
-                    const response = await fetch('/api/auth/resend-otp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: currentLoginEmail, purpose: 'login' })
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        if (loginCooldownTimer) clearInterval(loginCooldownTimer);
-                        loginCooldownTimer = startOtpCountdown(loginResendBtn, document.getElementById('loginTimerText'), data.cooldownSeconds || 30);
-
-                        if (data.devCode) {
-                            const devBox = document.getElementById('loginDevOtpBox');
-                            const devText = document.getElementById('loginDevCodeText');
-                            if (devBox && devText) {
-                                devText.textContent = data.devCode;
-                                devBox.style.display = 'flex';
-                            }
-                        }
-                    } else {
-                        if (otpErrorDiv) {
-                            otpErrorDiv.textContent = data.message || 'Could not resend code. Please try again.';
-                            otpErrorDiv.classList.add('show');
-                        }
-                        loginResendBtn.disabled = false;
-                        loginResendBtn.textContent = 'Resend Code';
-                    }
-                } catch (err) {
-                    loginResendBtn.disabled = false;
-                    loginResendBtn.textContent = 'Resend Code';
-                }
-            });
-        }
-
         // Back to credentials button
         const backToLoginBtn = document.getElementById('backToLoginFormBtn');
         if (backToLoginBtn) {
             backToLoginBtn.addEventListener('click', () => {
+                loginOtpManager.clearTimers();
                 if (loginOtpSection) loginOtpSection.classList.remove('active');
                 if (loginCredentialsSection) loginCredentialsSection.style.display = 'block';
             });
@@ -528,28 +693,8 @@ if (registerForm) {
                         registerOtpInput.focus();
                     }
 
-                    // Sandbox / Dev code helper
-                    const devBox = document.getElementById('registerDevOtpBox');
-                    const devText = document.getElementById('registerDevCodeText');
-                    const autoFillBtn = document.getElementById('registerAutoFillBtn');
-                    if (data.devCode && devBox && devText) {
-                        devText.textContent = data.devCode;
-                        devBox.style.display = 'flex';
-                        if (autoFillBtn && registerOtpInput) {
-                            autoFillBtn.onclick = () => {
-                                registerOtpInput.value = data.devCode;
-                                registerOtpInput.focus();
-                            };
-                        }
-                    } else if (devBox) {
-                        devBox.style.display = 'none';
-                    }
-
-                    // Resend Timer
-                    const resendBtn = document.getElementById('registerResendBtn');
-                    const timerText = document.getElementById('registerTimerText');
-                    if (registerCooldownTimer) clearInterval(registerCooldownTimer);
-                    registerCooldownTimer = startOtpCountdown(resendBtn, timerText, data.cooldownSeconds || 30);
+                    // Initialize Anti-Spam Resend and Countdown Timers
+                    registerOtpManager.initSession(data);
 
                 } else if (data.token) {
                     localStorage.setItem('token', data.token);
@@ -579,7 +724,21 @@ if (registerForm) {
     // Registration OTP Verification Form
     const registerOtpForm = document.getElementById('registerOtpForm');
     let currentRegisterEmail = '';
-    let registerCooldownTimer = null;
+
+    const registerOtpManager = createOtpSessionManager({
+        purpose: 'registration',
+        getEmail: () => currentRegisterEmail,
+        resendBtnId: 'registerResendBtn',
+        cooldownPillId: 'registerCooldownPill',
+        timerTextId: 'registerTimerText',
+        resendNoticeId: 'registerResendNotice',
+        counterBadgeId: 'registerResendCounterBadge',
+        devBoxId: 'registerDevOtpBox',
+        devTextId: 'registerDevCodeText',
+        autoFillBtnId: 'registerAutoFillBtn',
+        otpInputId: 'registerOtpInput',
+        errorDivId: 'registerOtpError'
+    });
 
     if (registerOtpForm) {
         const registerOtpError = document.getElementById('registerOtpError');
@@ -646,60 +805,11 @@ if (registerForm) {
             }
         });
 
-        // Resend Registration OTP
-        const registerResendBtn = document.getElementById('registerResendBtn');
-        if (registerResendBtn) {
-            registerResendBtn.addEventListener('click', async () => {
-                if (!currentRegisterEmail) return;
-
-                if (registerOtpError) {
-                    registerOtpError.classList.remove('show');
-                    registerOtpError.textContent = '';
-                }
-
-                try {
-                    registerResendBtn.disabled = true;
-                    registerResendBtn.textContent = 'Sending...';
-
-                    const response = await fetch('/api/auth/resend-otp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: currentRegisterEmail, purpose: 'registration' })
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        if (registerCooldownTimer) clearInterval(registerCooldownTimer);
-                        registerCooldownTimer = startOtpCountdown(registerResendBtn, document.getElementById('registerTimerText'), data.cooldownSeconds || 30);
-
-                        if (data.devCode) {
-                            const devBox = document.getElementById('registerDevOtpBox');
-                            const devText = document.getElementById('registerDevCodeText');
-                            if (devBox && devText) {
-                                devText.textContent = data.devCode;
-                                devBox.style.display = 'flex';
-                            }
-                        }
-                    } else {
-                        if (registerOtpError) {
-                            registerOtpError.textContent = data.message || 'Could not resend code. Please try again.';
-                            registerOtpError.classList.add('show');
-                        }
-                        registerResendBtn.disabled = false;
-                        registerResendBtn.textContent = 'Resend Code';
-                    }
-                } catch (err) {
-                    registerResendBtn.disabled = false;
-                    registerResendBtn.textContent = 'Resend Code';
-                }
-            });
-        }
-
         // Back to registration details
         const backToRegisterBtn = document.getElementById('backToRegisterFormBtn');
         if (backToRegisterBtn) {
             backToRegisterBtn.addEventListener('click', () => {
+                registerOtpManager.clearTimers();
                 const registerOtpSection = document.getElementById('registerOtpSection');
                 const registerCredentialsSection = document.getElementById('registerCredentialsSection');
                 if (registerOtpSection) registerOtpSection.classList.remove('active');

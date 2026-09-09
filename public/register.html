@@ -142,9 +142,28 @@
 
                     <button type="submit" id="registerVerifyBtn" class="btn-primary btn-block">Verify & Create Account</button>
 
-                    <div class="otp-action-row">
-                        <span id="registerTimerText">Code expires in 10m</span>
-                        <button type="button" id="registerResendBtn" class="otp-resend-btn" disabled>Resend Code (30s)</button>
+                    <!-- Anti-Spam Resend OTP Container with Countdown Timers -->
+                    <div class="otp-resend-container">
+                        <div class="otp-timer-info">
+                            <span class="otp-timer-badge">
+                                <svg class="timer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                <span id="registerTimerText">Code expires in 10:00</span>
+                            </span>
+                            <span id="registerResendCounterBadge" class="otp-count-badge" style="display: none;">0/5 sent</span>
+                        </div>
+
+                        <div id="registerResendNotice" class="otp-resend-notice" style="display: none;"></div>
+
+                        <div class="otp-resend-action">
+                            <span class="otp-resend-prompt">Didn't get the code?</span>
+                            <button type="button" id="registerResendBtn" class="otp-resend-btn" disabled>
+                                <span class="resend-label">Resend Code</span>
+                                <span class="cooldown-pill" id="registerCooldownPill">30s</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Development/Sandbox Helper if SMTP is not configured -->

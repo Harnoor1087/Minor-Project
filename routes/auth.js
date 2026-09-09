@@ -107,6 +107,7 @@ router.post('/register', async (req, res) => {
     });
 
     const isTestInbox = emailResult.deliveredToTestRecipient;
+    const cooldownInfo = otps.getCooldownInfo({ email: normalizedEmail, purpose: 'registration' });
     const responsePayload = {
       requiresOtp: true,
       email: normalizedEmail,
@@ -114,7 +115,10 @@ router.post('/register', async (req, res) => {
       message: isTestInbox
         ? `Verification code dispatched to your verified test inbox (${emailResult.recipient}).`
         : `A 6-digit verification code has been sent to ${normalizedEmail}.`,
-      cooldownSeconds: 30
+      cooldownSeconds: cooldownInfo.cooldownPeriod || 30,
+      resendCount: cooldownInfo.resendCount || 0,
+      maxResends: cooldownInfo.maxResends || 5,
+      expiresInMinutes: 10
     };
 
     // If delivered to sandbox test recipient or SMTP is offline, provide devCode for testing convenience
@@ -232,6 +236,7 @@ router.post('/login', async (req, res) => {
     });
 
     const isTestInbox = emailResult.deliveredToTestRecipient;
+    const cooldownInfo = otps.getCooldownInfo({ email: normalizedEmail, purpose: 'login' });
     const responsePayload = {
       requiresOtp: true,
       email: normalizedEmail,
@@ -239,7 +244,10 @@ router.post('/login', async (req, res) => {
       message: isTestInbox
         ? `Two-factor code dispatched to your verified test inbox (${emailResult.recipient}).`
         : `A two-factor authentication code has been sent to ${normalizedEmail}.`,
-      cooldownSeconds: 30
+      cooldownSeconds: cooldownInfo.cooldownPeriod || 30,
+      resendCount: cooldownInfo.resendCount || 0,
+      maxResends: cooldownInfo.maxResends || 5,
+      expiresInMinutes: 10
     };
 
     if (!emailResult.delivered || isTestInbox) {
@@ -317,12 +325,24 @@ router.post('/resend-otp', async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP purpose specified' });
     }
 
-    // Enforce cooldown
-    const cooldown = otps.getCooldown({ email: normalizedEmail, purpose });
-    if (cooldown > 0) {
+    // Enforce cooldown and anti-spam limits
+    const cooldownInfo = otps.getCooldownInfo({ email: normalizedEmail, purpose });
+    if (cooldownInfo.maxReached) {
       return res.status(429).json({
-        message: `Please wait ${cooldown} seconds before requesting another code.`,
-        cooldownSeconds: cooldown
+        message: 'Maximum resend limit reached to prevent email spam. Please wait 10 minutes before requesting a new code.',
+        cooldownSeconds: cooldownInfo.remainingSeconds,
+        maxReached: true,
+        resendCount: cooldownInfo.resendCount,
+        maxResends: cooldownInfo.maxResends
+      });
+    }
+
+    if (cooldownInfo.remainingSeconds > 0) {
+      return res.status(429).json({
+        message: `Please wait ${cooldownInfo.remainingSeconds} seconds before requesting another code to prevent email spamming.`,
+        cooldownSeconds: cooldownInfo.remainingSeconds,
+        resendCount: cooldownInfo.resendCount,
+        maxResends: cooldownInfo.maxResends
       });
     }
 
@@ -341,11 +361,10 @@ router.post('/resend-otp', async (req, res) => {
     }
 
     const code = generateOtpCode();
-    await otps.create({
+    await otps.recordResend({
       email: normalizedEmail,
-      code,
       purpose,
-      metadata,
+      code,
       expiresInMinutes: 10
     });
 
@@ -356,13 +375,19 @@ router.post('/resend-otp', async (req, res) => {
       purpose
     });
 
+    // Check newly updated cooldown info for next allowable resend
+    const nextCooldownInfo = otps.getCooldownInfo({ email: normalizedEmail, purpose });
+
     const isTestInbox = emailResult.deliveredToTestRecipient;
     const responsePayload = {
       success: true,
       message: isTestInbox
         ? `A fresh verification code has been dispatched to your verified inbox (${emailResult.recipient}).`
         : `A fresh verification code has been dispatched to ${normalizedEmail}.`,
-      cooldownSeconds: 30
+      cooldownSeconds: nextCooldownInfo.cooldownPeriod || 30,
+      resendCount: nextCooldownInfo.resendCount,
+      maxResends: nextCooldownInfo.maxResends,
+      expiresInMinutes: 10
     };
 
     if (!emailResult.delivered || isTestInbox) {

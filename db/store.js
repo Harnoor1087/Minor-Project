@@ -687,14 +687,21 @@ const applications = {
 
 // One-Time Password (OTP) verification store
 const otps = {
-  async create({ email, code, purpose, metadata = {}, expiresInMinutes = 10 }) {
+  async create({ email, code, purpose, metadata = {}, expiresInMinutes = 10, resendCount = 0 }) {
     if (!state.otps) state.otps = [];
     const normalizedEmail = email.toLowerCase().trim();
     
-    // Invalidate existing OTPs for the same email and purpose
+    // Check if an existing OTP exists for this email & purpose to preserve session resend counter
+    const existing = state.otps.find(o => o.email === normalizedEmail && o.purpose === purpose);
+    const count = typeof resendCount === 'number' && resendCount > 0 
+      ? resendCount 
+      : (existing ? (existing.resendCount || 0) : 0);
+
+    // Invalidate old OTP records for the same email and purpose
     state.otps = state.otps.filter(o => !(o.email === normalizedEmail && o.purpose === purpose));
 
     const codeHash = await bcrypt.hash(code.trim(), 8);
+    const now = new Date();
     const newOtp = {
       id: 'otp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
       email: normalizedEmail,
@@ -702,32 +709,102 @@ const otps = {
       purpose, // 'registration' | 'login'
       metadata,
       attempts: 0,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + expiresInMinutes * 60 * 1000).toISOString()
+      resendCount: count,
+      createdAt: now.toISOString(),
+      lastSentAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + expiresInMinutes * 60 * 1000).toISOString()
     };
     state.otps.push(newOtp);
     saveToDisk();
     return newOtp;
   },
 
-  getCooldown({ email, purpose }) {
-    if (!state.otps) return 0;
+  getCooldownInfo(optsOrEmail, maybePurpose) {
+    if (!state.otps) return { remainingSeconds: 0, resendCount: 0, maxResends: 5, maxReached: false, cooldownPeriod: 30 };
+    const email = typeof optsOrEmail === 'string' ? optsOrEmail : (optsOrEmail && optsOrEmail.email);
+    const purpose = typeof optsOrEmail === 'string' ? maybePurpose : (optsOrEmail && optsOrEmail.purpose);
+    if (!email) return { remainingSeconds: 0, resendCount: 0, maxResends: 5, maxReached: false, cooldownPeriod: 30 };
+
     const normalizedEmail = email.toLowerCase().trim();
     const existing = state.otps.find(o => o.email === normalizedEmail && o.purpose === purpose);
-    if (!existing) return 0;
+    if (!existing) return { remainingSeconds: 0, resendCount: 0, maxResends: 5, maxReached: false, cooldownPeriod: 30 };
     
-    const elapsedSeconds = Math.floor((Date.now() - new Date(existing.createdAt).getTime()) / 1000);
-    const cooldownPeriod = 30; // 30 seconds cooldown between resend requests
-    if (elapsedSeconds < cooldownPeriod) {
-      return cooldownPeriod - elapsedSeconds;
+    const count = existing.resendCount || 0;
+    const maxResends = 5;
+
+    if (count >= maxResends) {
+      return {
+        remainingSeconds: 600, // 10 minutes lock
+        resendCount: count,
+        maxResends,
+        maxReached: true,
+        cooldownPeriod: 600
+      };
     }
-    return 0;
+
+    // Progressive cooldown to prevent spam: 30s -> 45s -> 60s
+    let cooldownPeriod = 30;
+    if (count === 1) cooldownPeriod = 45;
+    else if (count >= 2) cooldownPeriod = 60;
+
+    const referenceTime = new Date(existing.lastSentAt || existing.createdAt).getTime();
+    const elapsedSeconds = Math.floor((Date.now() - referenceTime) / 1000);
+
+    if (elapsedSeconds < cooldownPeriod) {
+      return {
+        remainingSeconds: cooldownPeriod - elapsedSeconds,
+        resendCount: count,
+        maxResends,
+        maxReached: false,
+        cooldownPeriod
+      };
+    }
+
+    return {
+      remainingSeconds: 0,
+      resendCount: count,
+      maxResends,
+      maxReached: false,
+      cooldownPeriod
+    };
   },
 
-  getActive({ email, purpose }) {
+  getCooldown(optsOrEmail, maybePurpose) {
+    const info = this.getCooldownInfo(optsOrEmail, maybePurpose);
+    return info.remainingSeconds;
+  },
+
+  getActive(optsOrEmail, maybePurpose) {
     if (!state.otps) return null;
+    const email = typeof optsOrEmail === 'string' ? optsOrEmail : (optsOrEmail && optsOrEmail.email);
+    const purpose = typeof optsOrEmail === 'string' ? maybePurpose : (optsOrEmail && optsOrEmail.purpose);
+    if (!email) return null;
     const normalizedEmail = email.toLowerCase().trim();
     return state.otps.find(o => o.email === normalizedEmail && o.purpose === purpose) || null;
+  },
+
+  async recordResend(optsOrEmail, maybePurpose, maybeCode, maybeExpiresInMinutes) {
+    if (!state.otps) state.otps = [];
+    const email = typeof optsOrEmail === 'string' ? optsOrEmail : (optsOrEmail && optsOrEmail.email);
+    const purpose = typeof optsOrEmail === 'string' ? maybePurpose : (optsOrEmail && optsOrEmail.purpose);
+    const code = typeof optsOrEmail === 'string' ? maybeCode : (optsOrEmail && optsOrEmail.code);
+    const expiresInMinutes = typeof optsOrEmail === 'string' ? (maybeExpiresInMinutes || 10) : (optsOrEmail && optsOrEmail.expiresInMinutes || 10);
+    if (!email) return null;
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const existing = state.otps.find(o => o.email === normalizedEmail && o.purpose === purpose);
+    if (!existing) return null;
+
+    const codeHash = code ? await bcrypt.hash(code.trim(), 8) : existing.codeHash;
+    const now = new Date();
+    existing.codeHash = codeHash;
+    existing.attempts = 0; // reset failed verification attempts for fresh code
+    existing.resendCount = (existing.resendCount || 0) + 1;
+    existing.lastSentAt = now.toISOString();
+    existing.expiresAt = new Date(now.getTime() + expiresInMinutes * 60 * 1000).toISOString();
+
+    saveToDisk();
+    return existing;
   },
 
   async verify({ email, code, purpose }) {

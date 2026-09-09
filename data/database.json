@@ -251,6 +251,44 @@
         "max_infractions": 3,
         "label": "Strict Enterprise (Anti-Malpractice Active)"
       }
+    },
+    {
+      "id": 5,
+      "title": "AI engineer",
+      "description": "AI",
+      "companyId": "comp_infosys",
+      "companyName": "Infosys Technologies",
+      "companySlug": "infosys",
+      "department": "Engineering",
+      "location": "Remote",
+      "employmentType": "Full-time",
+      "experienceLevel": "Entry Level",
+      "mandatory_skills": [
+        "python",
+        "sql",
+        "machine learning"
+      ],
+      "optional_skills": [
+        "scikit",
+        "data science",
+        "tableau",
+        "github"
+      ],
+      "certification_enabled": true,
+      "certification_weight": 0.2,
+      "proctoring": {
+        "level": "high",
+        "require_camera": true,
+        "require_microphone": true,
+        "face_detection": true,
+        "multi_face_detection": true,
+        "tab_switch_detection": true,
+        "head_pose_detection": true,
+        "enforce_fullscreen": true,
+        "max_infractions": 3,
+        "label": "Strict Enterprise (Anti-Malpractice Active)"
+      },
+      "createdAt": "2026-09-09T13:07:26.621Z"
     }
   ],
   "applications": [
@@ -697,6 +735,164 @@
         "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
         "generatedAt": "2026-09-08T14:42:03.644Z"
       }
+    },
+    {
+      "_id": "app_1788959344005_bujk2",
+      "applicantId": "usr_1788877730839_azye1",
+      "applicantName": "Kamaljeet Singh",
+      "applicantEmail": "kamal89726@gmail.com",
+      "jobId": 5,
+      "jobTitle": "AI engineer",
+      "companyId": "comp_infosys",
+      "companyName": "Infosys Technologies",
+      "companySlug": "infosys",
+      "resumePath": "/app/applet/uploads/1788959336700-Resume_HarnoorSingh.pdf",
+      "certificates": [
+        "/app/applet/uploads/1788959336701-certificate__1_.pdf"
+      ],
+      "scores": {
+        "semantic": 0.66,
+        "skill": 0.85,
+        "experience": 0.65,
+        "certification": 0,
+        "final": 0.73
+      },
+      "category": "Strong Match",
+      "eligibility": "Eligible",
+      "status": "pending",
+      "proctoringLevel": "high",
+      "interview": {
+        "status": "in_progress",
+        "startedAt": "2026-09-09T13:10:17.291Z",
+        "overallScore": null,
+        "recommendation": null,
+        "proctoringConfig": {
+          "level": "high",
+          "require_camera": true,
+          "require_microphone": true,
+          "face_detection": true,
+          "multi_face_detection": true,
+          "tab_switch_detection": true,
+          "head_pose_detection": true,
+          "enforce_fullscreen": true,
+          "max_infractions": 3,
+          "label": "Strict Enterprise (Anti-Malpractice Active)"
+        },
+        "questions": [
+          {
+            "id": 1,
+            "category": "Core Competency Alignment",
+            "targetArea": "PYTHON & Practical Implementation",
+            "rationale": "Directly assesses candidate's verified capability in python which is vital for this AI engineer position.",
+            "question": "In your recent projects leveraging python, what was the most demanding technical hurdle you resolved? Specifically detail the design choices, edge cases, and performance considerations you took.",
+            "keyFocusPoints": [
+              "Architectural decisions with python",
+              "Handling concurrency, throughput, or memory constraints",
+              "Testing and production verification strategies"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          },
+          {
+            "id": 2,
+            "category": "Skill Gap & Adaptability",
+            "targetArea": "Adoption of MACHINE LEARNING in Production",
+            "rationale": "Our screening identified machine learning as a core requirement for AI engineer. This investigates your problem-solving adaptability.",
+            "question": "This role at Infosys Technologies requires strong proficiency with machine learning. Even if your primary background is in other tooling, how would you design and implement a solution utilizing machine learning? What foundational concepts translate directly from your existing toolset?",
+            "keyFocusPoints": [
+              "Fundamental paradigms of machine learning",
+              "Translating analogous patterns from known technologies",
+              "Mitigating risks when adopting new system components"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          },
+          {
+            "id": 3,
+            "category": "System Architecture & Scalability",
+            "targetArea": "End-to-End System Design for AI engineer",
+            "rationale": "Evaluates holistic architectural thinking, security boundaries, and scalability for high-load systems.",
+            "question": "Imagine you are tasked with architecting a fault-tolerant subsystem for Infosys Technologies that processes high-frequency user requests. How would you structure data consistency, caching, asynchronous communication, and observability?",
+            "keyFocusPoints": [
+              "Data consistency vs latency trade-offs",
+              "Resilience (circuit breakers, retries, dead-letter queues)",
+              "Metrics, structured logging, and distributed tracing"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          },
+          {
+            "id": 4,
+            "category": "Engineering Trade-offs & Production Incident",
+            "targetArea": "Incident Triage, Root-Cause Analysis & Quality Assurance",
+            "rationale": "Assesses operational maturity, calm under pressure, and systemic learning from outages.",
+            "question": "Describe a scenario where a critical bug or performance degradation escaped into production. Walk us through your triage protocol, root cause analysis, immediate remediation, and the architectural safeguards you put in place to prevent recurrence.",
+            "keyFocusPoints": [
+              "Immediate containment and stakeholder communication",
+              "Systematic root cause isolation (RCA)",
+              "Preventative automation (CI/CD regression tests, alerting)"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          }
+        ],
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "maxInfractions": 3,
+          "infractions": []
+        }
+      },
+      "appliedAt": "2026-09-09T13:09:04.005Z",
+      "intelligence": {
+        "executiveSummary": "Kamaljeet Singh demonstrates a 73% overall compatibility score for the AI engineer opening. The profile shows active proficiency in python, sql, machine learning, scikit with a 66% semantic context alignment with role responsibilities.",
+        "coreStrengths": [
+          "Demonstrated capability in required core competencies: python, sql, machine learning.",
+          "Relevant domain background evaluated at 65% depth for AI engineer.",
+          "Structured professional resume with demonstrated project delivery in modern technology stacks."
+        ],
+        "skillGaps": [
+          "No critical mandatory skill deficiencies detected; candidate matches all required core tech stacks.",
+          "Recommend probing practical depth in optional tooling: scikit, data science."
+        ],
+        "interviewQuestions": [
+          {
+            "question": "In your recent work, how have you architected and scaled systems using python to handle real-world latency and concurrent load?",
+            "focus": "python & Systems Design",
+            "expectedSignals": "Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes."
+          },
+          {
+            "question": "Walk us through a scenario where a critical feature broke unexpectedly in production. How did you triage, resolve, and prevent recurrence?",
+            "focus": "Incident Triaging & Observability",
+            "expectedSignals": "Candidate articulates structured debugging methodology and fast-learning engineering mindset."
+          },
+          {
+            "question": "How do you approach automated testing, continuous delivery, and code review standards when shipping under tight deadlines?",
+            "focus": "Engineering Rigor & Team Velocity",
+            "expectedSignals": "Demonstrates balanced velocity with code quality, automated test pipelines, and constructive peer collaboration."
+          }
+        ],
+        "hiringRecommendation": {
+          "decision": "Strong Advance",
+          "reasoning": "The candidate possesses the necessary skill baseline and high semantic alignment. Recommended to proceed directly to technical screening."
+        },
+        "applicantFeedback": {
+          "resumeTips": [
+            "Quantify project achievements with measurable business impact (e.g., reduced response times by 30%, served 50k+ daily users).",
+            "Ensure explicit keywords for core target skills like python, sql, machine learning appear prominently in recent role bullet points."
+          ],
+          "suggestedActions": [
+            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring scikit.",
+            "Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority."
+          ]
+        },
+        "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
+        "generatedAt": "2026-09-09T13:09:04.004Z"
+      }
     }
   ],
   "companies": [
@@ -749,5 +945,40 @@
       "createdAt": "2026-09-08T15:32:03.874Z"
     }
   ],
-  "otps": []
+  "otps": [
+    {
+      "id": "otp_1788959461067_iojgm",
+      "email": "antispam_test_1788959460930@example.com",
+      "codeHash": "$2a$08$1yyf7DeDzfqJjwlXAh2vs.qWcWyy3NLYsca7C6AI.aNcM/k8NTe7i",
+      "purpose": "registration",
+      "metadata": {
+        "name": "Spam Test User",
+        "email": "antispam_test_1788959460930@example.com",
+        "passwordHash": "$2a$10$weNIay/wQi2qvv4Qk1RSaepTBbMXJGiYrTvUzagefNqAOeVAhXr6W",
+        "role": "applicant",
+        "company": ""
+      },
+      "attempts": 0,
+      "createdAt": "2026-09-09T13:11:01.067Z",
+      "expiresAt": "2026-09-09T13:21:01.067Z"
+    },
+    {
+      "id": "otp_1788959484288_nuao0",
+      "email": "antispam_live_1788959484126@example.com",
+      "codeHash": "$2a$08$mxNcxHJ8be7l20CWzqbmf.aLAHJmIx.6OL4707f1aSq9xe3/.jur.",
+      "purpose": "registration",
+      "metadata": {
+        "name": "Spam Prevention Test",
+        "email": "antispam_live_1788959484126@example.com",
+        "passwordHash": "$2a$10$lncOLgCRxD/JecSd0b/Njelf5sUViefHfnELJiZJj9yQxP2Jxva9O",
+        "role": "applicant",
+        "company": ""
+      },
+      "attempts": 0,
+      "resendCount": 0,
+      "createdAt": "2026-09-09T13:11:24.288Z",
+      "lastSentAt": "2026-09-09T13:11:24.288Z",
+      "expiresAt": "2026-09-09T13:21:24.288Z"
+    }
+  ]
 }
