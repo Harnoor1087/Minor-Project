@@ -78,6 +78,16 @@
       "company": "",
       "companyId": "",
       "createdAt": "2026-09-08T15:37:05.200Z"
+    },
+    {
+      "_id": "usr_1788955427870_0op6m",
+      "name": "Jordan Tech",
+      "email": "newapplicant_1788955427589@example.com",
+      "passwordHash": "$2a$10$boTKti4OZfs1zYnYfh0eG.mmQzWKnBiOXNjj9SETMx3ZGMaymAP7q",
+      "role": "applicant",
+      "company": "",
+      "companyId": "",
+      "createdAt": "2026-09-09T12:03:47.870Z"
     }
   ],
   "jobs": [
@@ -738,5 +748,6 @@
       "description": "",
       "createdAt": "2026-09-08T15:32:03.874Z"
     }
-  ]
+  ],
+  "otps": []
 }

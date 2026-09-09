@@ -18,6 +18,21 @@ function isSmtpConfigured() {
   return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER);
 }
 
+function getFromAddress() {
+  if (process.env.SMTP_FROM) {
+    return process.env.SMTP_FROM;
+  }
+  const host = (process.env.SMTP_HOST || '').toLowerCase();
+  const user = (process.env.SMTP_USER || '').toLowerCase();
+  if (host.includes('resend') || user === 'resend') {
+    return 'AIRIS Auth <onboarding@resend.dev>';
+  }
+  return '"AIRIS Auth" <no-reply@airis.ai>';
+}
+
+// Store verified test recipient for sandbox accounts (e.g. Resend free tier)
+let cachedVerifiedTestEmail = process.env.SMTP_TEST_EMAIL || 'harnoorsinghjee@gmail.com';
+
 function getTransporter() {
   const nodemailer = getNodemailer();
   if (!nodemailer || !isSmtpConfigured()) {
@@ -47,7 +62,7 @@ function generateOtpCode() {
 
 /**
  * Sends an OTP email to the user
- * Falls back to console log and dev response when SMTP is not configured
+ * Handles Resend sandbox restrictions by forwarding to verified test address if recipient is unverified
  */
 async function sendOtpEmail({ to, name, code, purpose }) {
   const isRegistration = purpose === 'registration';
@@ -109,12 +124,16 @@ async function sendOtpEmail({ to, name, code, purpose }) {
 
   const transporter = getTransporter();
   let delivered = false;
+  let deliveredToTestRecipient = false;
+  let recipient = to;
   let deliveryError = null;
 
   if (transporter) {
+    const fromAddress = getFromAddress();
+
     try {
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || '"AIRIS Auth" <no-reply@airis.ai>',
+        from: fromAddress,
         to,
         subject,
         text: textContent,
@@ -123,14 +142,63 @@ async function sendOtpEmail({ to, name, code, purpose }) {
       delivered = true;
       console.log(`✅ [AIRIS AUTH EMAIL] Successfully dispatched SMTP email to ${to}`);
     } catch (err) {
-      console.error(`⚠️ [AIRIS AUTH EMAIL] SMTP delivery failed:`, err.message);
-      deliveryError = err.message;
+      const isResendRestriction = err.message && (
+        err.message.includes('550') ||
+        err.message.includes('only send testing emails to your own email address') ||
+        err.message.includes('resend.com/domains')
+      );
+
+      if (isResendRestriction) {
+        // Extract allowed test email if provided in error message
+        const match = err.message.match(/own email address \(([^)]+)\)/i);
+        if (match && match[1]) {
+          cachedVerifiedTestEmail = match[1].trim();
+        }
+
+        if (cachedVerifiedTestEmail && cachedVerifiedTestEmail.toLowerCase() !== to.toLowerCase()) {
+          console.log(`ℹ️ [AIRIS AUTH EMAIL] Resend sandbox restriction: routing test email for ${to} to verified inbox: ${cachedVerifiedTestEmail}`);
+          
+          try {
+            const testSubject = `[Test for ${to}] ${subject}`;
+            const testHtml = `
+              <div style="margin-bottom:16px; padding:12px; background:#fef3c7; border:1px solid #f59e0b; border-radius:8px; font-size:13px; color:#92400e; font-family: sans-serif;">
+                🔔 <strong>Sandbox Mode Notice:</strong> This email was routed to your verified test recipient (<code>${cachedVerifiedTestEmail}</code>) because <code>${to}</code> is a demo or unverified recipient in Resend sandbox.
+              </div>
+              ${htmlContent}
+            `;
+            const testText = `[Sandbox Test for ${to}]\nThis email was routed to your verified testing address (${cachedVerifiedTestEmail}).\n\n${textContent}`;
+
+            await transporter.sendMail({
+              from: fromAddress,
+              to: cachedVerifiedTestEmail,
+              subject: testSubject,
+              text: testText,
+              html: testHtml
+            });
+
+            delivered = true;
+            deliveredToTestRecipient = true;
+            recipient = cachedVerifiedTestEmail;
+            console.log(`✅ [AIRIS AUTH EMAIL] Successfully delivered test verification email to ${cachedVerifiedTestEmail}`);
+          } catch (retryErr) {
+            console.log(`ℹ️ [AIRIS AUTH EMAIL] Sandbox retry note: ${retryErr.message}`);
+            deliveryError = retryErr.message;
+          }
+        } else {
+          deliveryError = err.message;
+        }
+      } else {
+        console.error(`⚠️ [AIRIS AUTH EMAIL] SMTP delivery issue:`, err.message);
+        deliveryError = err.message;
+      }
     }
   }
 
   return {
     success: true,
     delivered,
+    deliveredToTestRecipient,
+    recipient,
     isSmtpConfigured: isSmtpConfigured(),
     deliveryError
   };

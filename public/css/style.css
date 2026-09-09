@@ -1137,6 +1137,160 @@ footer {
     color: var(--danger);
 }
 
+/* OTP Verification UI */
+.otp-screen {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.otp-screen.active {
+    display: block;
+}
+
+.otp-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.otp-icon-badge {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.otp-instruction {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: 0.35rem;
+}
+
+.otp-email-badge {
+    display: inline-block;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--bg-subtle);
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-family: inherit;
+    word-break: break-all;
+    border: 1px solid var(--border-color);
+}
+
+.otp-code-wrapper {
+    margin: 1.5rem 0;
+}
+
+.otp-input-field {
+    width: 100%;
+    font-family: 'Courier New', Courier, monospace, var(--font-body);
+    font-size: 2rem !important;
+    font-weight: 800;
+    letter-spacing: 0.55rem;
+    text-align: center;
+    padding: 0.85rem 1rem !important;
+    border-radius: 12px !important;
+    background: var(--bg-input);
+    border: 2px solid var(--border-color) !important;
+    transition: all 0.2s ease;
+}
+
+.otp-input-field:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--primary-glow) !important;
+}
+
+.otp-action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.otp-resend-btn {
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.otp-resend-btn:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.otp-resend-btn:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.otp-back-link {
+    display: block;
+    text-align: center;
+    margin-top: 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.otp-back-link:hover {
+    color: var(--text-primary);
+}
+
+.dev-otp-box {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px dashed var(--primary);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.dev-otp-box strong {
+    font-family: monospace;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    color: var(--primary);
+}
+
+.dev-otp-autofill-btn {
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+}
+
+.dev-otp-autofill-btn:hover {
+    opacity: 0.9;
+}
+
 
 /* KPI Stat Cards Bar */
 .stats-overview-grid {

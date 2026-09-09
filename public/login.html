@@ -24,27 +24,79 @@
 
     <div class="auth-container">
         <div class="auth-card">
-            <h2>Welcome Back</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="name@company.com" required>
+            <!-- Step 1: Credentials Form -->
+            <div id="loginCredentialsSection">
+                <h2>Welcome Back</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="name@company.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <div id="errorMessage" class="error-message"></div>
+                    <button type="submit" id="loginSubmitBtn" class="btn-primary btn-block">Sign In</button>
+                </form>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-subtle); border-radius: 12px; font-size: 0.88rem; color: var(--text-secondary); border: 1px solid var(--border-color);">
+                    <strong style="color: var(--text-primary); display: block; margin-bottom: 0.35rem;">🚀 Quick Demo Credentials:</strong>
+                    • <strong>Recruiter:</strong> <code>admin@company.com</code> / <code>admin123</code><br>
+                    • <strong>Applicant:</strong> <code>alex.morgan@example.com</code> / <code>alex123</code>
                 </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required>
-                </div>
-                <div id="errorMessage" class="error-message"></div>
-                <button type="submit" class="btn-primary btn-block">Sign In</button>
-            </form>
-            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-subtle); border-radius: 12px; font-size: 0.88rem; color: var(--text-secondary); border: 1px solid var(--border-color);">
-                <strong style="color: var(--text-primary); display: block; margin-bottom: 0.35rem;">🚀 Quick Demo Credentials:</strong>
-                • <strong>Recruiter:</strong> <code>admin@company.com</code> / <code>admin123</code><br>
-                • <strong>Applicant:</strong> <code>alex.morgan@example.com</code> / <code>alex123</code>
+                <p class="auth-footer">
+                    Don't have an account? <a href="/register">Register here</a>
+                </p>
             </div>
-            <p class="auth-footer">
-                Don't have an account? <a href="/register">Register here</a>
-            </p>
+
+            <!-- Step 2: Two-Factor OTP Verification Screen -->
+            <div id="loginOtpSection" class="otp-screen">
+                <div class="otp-header">
+                    <div class="otp-icon-badge">🛡️</div>
+                    <h2>Two-Factor Verification</h2>
+                    <p class="otp-instruction">
+                        We sent a 6-digit security code to<br>
+                        <span id="loginOtpEmailDisplay" class="otp-email-badge"></span>
+                    </p>
+                </div>
+
+                <form id="loginOtpForm">
+                    <div class="otp-code-wrapper">
+                        <input 
+                            type="text" 
+                            id="loginOtpInput" 
+                            name="code" 
+                            class="otp-input-field" 
+                            maxlength="6" 
+                            inputmode="numeric" 
+                            pattern="[0-9]{6}" 
+                            placeholder="······" 
+                            autocomplete="one-time-code"
+                            required
+                        >
+                    </div>
+
+                    <div id="loginOtpError" class="error-message"></div>
+
+                    <button type="submit" id="loginVerifyBtn" class="btn-primary btn-block">Verify & Sign In</button>
+
+                    <div class="otp-action-row">
+                        <span id="loginTimerText">Code expires in 10m</span>
+                        <button type="button" id="loginResendBtn" class="otp-resend-btn" disabled>Resend Code (30s)</button>
+                    </div>
+
+                    <!-- Development/Sandbox Helper if SMTP is not configured -->
+                    <div id="loginDevOtpBox" class="dev-otp-box" style="display: none;">
+                        <div>
+                            <span style="font-size: 0.76rem; color: var(--text-muted); display: block;">TEST CODE (SANDBOX)</span>
+                            <strong id="loginDevCodeText"></strong>
+                        </div>
+                        <button type="button" id="loginAutoFillBtn" class="dev-otp-autofill-btn">Auto-Fill</button>
+                    </div>
+
+                    <a id="backToLoginFormBtn" class="otp-back-link">← Back to credentials</a>
+                </form>
+            </div>
         </div>
     </div>
 

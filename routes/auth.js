@@ -57,7 +57,7 @@ function validatePasswordPolicy(password) {
   return null;
 }
 
-// Register
+// Register: Validates input, sends OTP verification code
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, role, company } = req.body;
@@ -75,17 +75,97 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    const existing = users.findByEmail(email);
+    const normalizedEmail = email.toLowerCase().trim();
+    const existing = users.findByEmail(normalizedEmail);
     if (existing) {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
 
+    // Hash password beforehand to safely store in pending state
+    const passwordHash = await bcrypt.hash(password, 10);
+    const code = generateOtpCode();
+
+    await otps.create({
+      email: normalizedEmail,
+      code,
+      purpose: 'registration',
+      metadata: {
+        name: name.trim(),
+        email: normalizedEmail,
+        passwordHash,
+        role: role || 'applicant',
+        company: company || ''
+      },
+      expiresInMinutes: 10
+    });
+
+    const emailResult = await sendOtpEmail({
+      to: normalizedEmail,
+      name: name.trim(),
+      code,
+      purpose: 'registration'
+    });
+
+    const isTestInbox = emailResult.deliveredToTestRecipient;
+    const responsePayload = {
+      requiresOtp: true,
+      email: normalizedEmail,
+      purpose: 'registration',
+      message: isTestInbox
+        ? `Verification code dispatched to your verified test inbox (${emailResult.recipient}).`
+        : `A 6-digit verification code has been sent to ${normalizedEmail}.`,
+      cooldownSeconds: 30
+    };
+
+    // If delivered to sandbox test recipient or SMTP is offline, provide devCode for testing convenience
+    if (!emailResult.delivered || isTestInbox) {
+      responsePayload.devCode = code;
+      responsePayload.notice = isTestInbox
+        ? `Resend sandbox active: Email delivered to verified inbox ${emailResult.recipient}.`
+        : 'SMTP offline or simulated. Verification code provided for testing.';
+    }
+
+    res.status(200).json(responsePayload);
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Verify Registration OTP & Complete Account Creation
+router.post('/register/verify-otp', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ message: 'Email and verification code are required' });
+    }
+
+    const verification = await otps.verify({
+      email,
+      code,
+      purpose: 'registration'
+    });
+
+    if (!verification.valid) {
+      return res.status(400).json({ message: verification.error });
+    }
+
+    const { name, email: userEmail, passwordHash, role, company } = verification.metadata;
+
+    // Double check user doesn't already exist
+    const existing = users.findByEmail(userEmail);
+    if (existing) {
+      return res.status(400).json({ message: 'User account was already registered.' });
+    }
+
+    // Create the persistent user record
     const newUser = await users.create({
       name,
-      email,
-      password,
-      role: role || 'applicant',
-      company: company || ''
+      email: userEmail,
+      passwordHash,
+      role,
+      company
     });
 
     const token = jwt.sign(
@@ -95,7 +175,7 @@ router.post('/register', async (req, res) => {
     );
 
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'Email verified and account registered successfully',
       token,
       user: {
         id: newUser._id,
@@ -106,12 +186,12 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('Verify registration OTP error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Login
+// Login: Step 1 - Check credentials & send Two-Factor OTP
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -120,7 +200,8 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = users.findByEmail(email);
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = users.findByEmail(normalizedEmail);
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -130,6 +211,75 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Generate login OTP
+    const code = generateOtpCode();
+
+    await otps.create({
+      email: normalizedEmail,
+      code,
+      purpose: 'login',
+      metadata: {
+        userId: user._id
+      },
+      expiresInMinutes: 10
+    });
+
+    const emailResult = await sendOtpEmail({
+      to: normalizedEmail,
+      name: user.name,
+      code,
+      purpose: 'login'
+    });
+
+    const isTestInbox = emailResult.deliveredToTestRecipient;
+    const responsePayload = {
+      requiresOtp: true,
+      email: normalizedEmail,
+      purpose: 'login',
+      message: isTestInbox
+        ? `Two-factor code dispatched to your verified test inbox (${emailResult.recipient}).`
+        : `A two-factor authentication code has been sent to ${normalizedEmail}.`,
+      cooldownSeconds: 30
+    };
+
+    if (!emailResult.delivered || isTestInbox) {
+      responsePayload.devCode = code;
+      responsePayload.notice = isTestInbox
+        ? `Resend sandbox active: Email delivered to verified inbox ${emailResult.recipient}.`
+        : 'SMTP offline or simulated. Verification code provided for testing.';
+    }
+
+    res.json(responsePayload);
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Verify Login OTP & Issue JWT Session Token
+router.post('/login/verify-otp', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ message: 'Email and verification code are required' });
+    }
+
+    const verification = await otps.verify({
+      email,
+      code,
+      purpose: 'login'
+    });
+
+    if (!verification.valid) {
+      return res.status(400).json({ message: verification.error });
+    }
+
+    const user = users.findById(verification.metadata.userId) || users.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({ message: 'User account not found' });
+    }
+
     const token = jwt.sign(
       { id: user._id, role: user.role, name: user.name, email: user.email },
       JWT_SECRET,
@@ -137,7 +287,7 @@ router.post('/login', async (req, res) => {
     );
 
     res.json({
-      message: 'Login successful',
+      message: 'Two-factor verification successful. Logged in.',
       token,
       user: {
         id: user._id,
@@ -148,7 +298,83 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Verify login OTP error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Resend OTP code for either registration or login
+router.post('/resend-otp', async (req, res) => {
+  try {
+    const { email, purpose } = req.body;
+
+    if (!email || !purpose) {
+      return res.status(400).json({ message: 'Email and purpose are required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!['registration', 'login'].includes(purpose)) {
+      return res.status(400).json({ message: 'Invalid OTP purpose specified' });
+    }
+
+    // Enforce cooldown
+    const cooldown = otps.getCooldown({ email: normalizedEmail, purpose });
+    if (cooldown > 0) {
+      return res.status(429).json({
+        message: `Please wait ${cooldown} seconds before requesting another code.`,
+        cooldownSeconds: cooldown
+      });
+    }
+
+    // Retrieve active OTP record to retain registration metadata
+    const active = otps.getActive({ email: normalizedEmail, purpose });
+    if (!active && purpose === 'registration') {
+      return res.status(400).json({ message: 'No pending registration found for this email. Please register again.' });
+    }
+
+    const metadata = active?.metadata || {};
+    let userName = metadata.name || '';
+    if (purpose === 'login') {
+      const user = users.findByEmail(normalizedEmail);
+      if (!user) return res.status(404).json({ message: 'User account not found.' });
+      userName = user.name;
+    }
+
+    const code = generateOtpCode();
+    await otps.create({
+      email: normalizedEmail,
+      code,
+      purpose,
+      metadata,
+      expiresInMinutes: 10
+    });
+
+    const emailResult = await sendOtpEmail({
+      to: normalizedEmail,
+      name: userName,
+      code,
+      purpose
+    });
+
+    const isTestInbox = emailResult.deliveredToTestRecipient;
+    const responsePayload = {
+      success: true,
+      message: isTestInbox
+        ? `A fresh verification code has been dispatched to your verified inbox (${emailResult.recipient}).`
+        : `A fresh verification code has been dispatched to ${normalizedEmail}.`,
+      cooldownSeconds: 30
+    };
+
+    if (!emailResult.delivered || isTestInbox) {
+      responsePayload.devCode = code;
+      responsePayload.notice = isTestInbox
+        ? `Resend sandbox active: Email delivered to verified inbox ${emailResult.recipient}.`
+        : 'SMTP offline or simulated. Verification code provided for development.';
+    }
+
+    res.json(responsePayload);
+  } catch (error) {
+    console.error('Resend OTP error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

@@ -24,89 +24,141 @@
 
     <div class="auth-container">
         <div class="auth-card">
-            <h2>Register</h2>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-input-wrapper">
-                        <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Create a strong password">
-                        <button type="button" id="togglePasswordBtn" class="password-toggle-btn" aria-label="Show password" title="Show password">
-                            <span id="passwordToggleIcon">👁️</span>
-                        </button>
+            <!-- Step 1: Registration Form -->
+            <div id="registerCredentialsSection">
+                <h2>Create Account</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" placeholder="Create a strong password">
+                            <button type="button" id="togglePasswordBtn" class="password-toggle-btn" aria-label="Show password" title="Show password">
+                                <span id="passwordToggleIcon">👁️</span>
+                            </button>
+                        </div>
+
+                        <!-- Password Strength Meter -->
+                        <div class="password-strength-container" id="passwordStrengthContainer">
+                            <div class="strength-header">
+                                <span>Password Strength:</span>
+                                <span id="strengthLabel" class="strength-label">Enter password</span>
+                            </div>
+                            <div class="strength-meter-track">
+                                <div id="strengthBar" class="strength-meter-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Security Requirements Checklist -->
+                        <div class="password-requirements-card" id="passwordRequirementsCard">
+                            <div class="requirements-title">
+                                <span>🛡️ Security Requirements</span>
+                            </div>
+                            <ul class="requirements-list">
+                                <li id="reqLength" class="req-item">
+                                    <span class="req-icon">○</span>
+                                    <span>At least <strong>8 characters</strong></span>
+                                </li>
+                                <li id="reqNumber" class="req-item">
+                                    <span class="req-icon">○</span>
+                                    <span>At least one <strong>numeric digit (0-9)</strong></span>
+                                </li>
+                                <li id="reqSpecial" class="req-item">
+                                    <span class="req-icon">○</span>
+                                    <span>At least one <strong>special character (!@#$%^&*...)</strong></span>
+                                </li>
+                                <li id="reqCase" class="req-item">
+                                    <span class="req-icon">○</span>
+                                    <span>Both <strong>uppercase (A-Z)</strong> and <strong>lowercase (a-z)</strong></span>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
-                    <!-- Password Strength Meter -->
-                    <div class="password-strength-container" id="passwordStrengthContainer">
-                        <div class="strength-header">
-                            <span>Password Strength:</span>
-                            <span id="strengthLabel" class="strength-label">Enter password</span>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" autocomplete="new-password" placeholder="Re-enter your password">
+                            <button type="button" id="toggleConfirmPasswordBtn" class="password-toggle-btn" aria-label="Show confirm password" title="Show password">
+                                <span id="confirmToggleIcon">👁️</span>
+                            </button>
                         </div>
-                        <div class="strength-meter-track">
-                            <div id="strengthBar" class="strength-meter-bar"></div>
-                        </div>
+                        <div id="passwordMatchFeedback" class="password-match-feedback" aria-live="polite"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Register as</label>
+                        <select id="role" name="role" required>
+                            <option value="applicant">Job Applicant</option>
+                            <option value="admin">Company/Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="companyGroup" style="display: none;">
+                        <label for="company">Company Name</label>
+                        <input type="text" id="company" name="company">
+                    </div>
+                    <div id="errorMessage" class="error-message"></div>
+                    <button type="submit" class="btn-primary btn-block">Continue & Send Code</button>
+                </form>
+                <p class="auth-footer">
+                    Already have an account? <a href="/login">Login here</a>
+                </p>
+            </div>
+
+            <!-- Step 2: Email OTP Verification Screen -->
+            <div id="registerOtpSection" class="otp-screen">
+                <div class="otp-header">
+                    <div class="otp-icon-badge">📩</div>
+                    <h2>Verify Your Email</h2>
+                    <p class="otp-instruction">
+                        We sent a 6-digit confirmation code to<br>
+                        <span id="registerOtpEmailDisplay" class="otp-email-badge"></span>
+                    </p>
+                </div>
+
+                <form id="registerOtpForm">
+                    <div class="otp-code-wrapper">
+                        <input 
+                            type="text" 
+                            id="registerOtpInput" 
+                            name="code" 
+                            class="otp-input-field" 
+                            maxlength="6" 
+                            inputmode="numeric" 
+                            pattern="[0-9]{6}" 
+                            placeholder="······" 
+                            autocomplete="one-time-code"
+                            required
+                        >
                     </div>
 
-                    <!-- Security Requirements Checklist -->
-                    <div class="password-requirements-card" id="passwordRequirementsCard">
-                        <div class="requirements-title">
-                            <span>🛡️ Security Requirements</span>
-                        </div>
-                        <ul class="requirements-list">
-                            <li id="reqLength" class="req-item">
-                                <span class="req-icon">○</span>
-                                <span>At least <strong>8 characters</strong></span>
-                            </li>
-                            <li id="reqNumber" class="req-item">
-                                <span class="req-icon">○</span>
-                                <span>At least one <strong>numeric digit (0-9)</strong></span>
-                            </li>
-                            <li id="reqSpecial" class="req-item">
-                                <span class="req-icon">○</span>
-                                <span>At least one <strong>special character (!@#$%^&*...)</strong></span>
-                            </li>
-                            <li id="reqCase" class="req-item">
-                                <span class="req-icon">○</span>
-                                <span>Both <strong>uppercase (A-Z)</strong> and <strong>lowercase (a-z)</strong></span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                    <div id="registerOtpError" class="error-message"></div>
 
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
-                    <div class="password-input-wrapper">
-                        <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8" autocomplete="new-password" placeholder="Re-enter your password">
-                        <button type="button" id="toggleConfirmPasswordBtn" class="password-toggle-btn" aria-label="Show confirm password" title="Show password">
-                            <span id="confirmToggleIcon">👁️</span>
-                        </button>
+                    <button type="submit" id="registerVerifyBtn" class="btn-primary btn-block">Verify & Create Account</button>
+
+                    <div class="otp-action-row">
+                        <span id="registerTimerText">Code expires in 10m</span>
+                        <button type="button" id="registerResendBtn" class="otp-resend-btn" disabled>Resend Code (30s)</button>
                     </div>
-                    <div id="passwordMatchFeedback" class="password-match-feedback" aria-live="polite"></div>
-                </div>
-                <div class="form-group">
-                    <label for="role">Register as</label>
-                    <select id="role" name="role" required>
-                        <option value="applicant">Job Applicant</option>
-                        <option value="admin">Company/Admin</option>
-                    </select>
-                </div>
-                <div class="form-group" id="companyGroup" style="display: none;">
-                    <label for="company">Company Name</label>
-                    <input type="text" id="company" name="company">
-                </div>
-                <div id="errorMessage" class="error-message"></div>
-                <button type="submit" class="btn-primary btn-block">Register</button>
-            </form>
-            <p class="auth-footer">
-                Already have an account? <a href="/login">Login here</a>
-            </p>
+
+                    <!-- Development/Sandbox Helper if SMTP is not configured -->
+                    <div id="registerDevOtpBox" class="dev-otp-box" style="display: none;">
+                        <div>
+                            <span style="font-size: 0.76rem; color: var(--text-muted); display: block;">TEST CODE (SANDBOX)</span>
+                            <strong id="registerDevCodeText"></strong>
+                        </div>
+                        <button type="button" id="registerAutoFillBtn" class="dev-otp-autofill-btn">Auto-Fill</button>
+                    </div>
+
+                    <a id="backToRegisterFormBtn" class="otp-back-link">← Back / Edit Information</a>
+                </form>
+            </div>
         </div>
     </div>
 
