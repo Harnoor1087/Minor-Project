@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const pdfParse = require('pdf-parse');
+const { scanAndVerifyCertificate } = require('./certificateVerification');
 
 // Lazy initialization of Gemini client
 let geminiClient = null;
@@ -376,6 +377,13 @@ function extractCredentialVerification(text) {
 }
 
 async function verifyCertificateAuthenticity(filePath, candidateName = '', jobSkills = []) {
+  try {
+    const verified = await scanAndVerifyCertificate(filePath, { candidateName, jobSkills });
+    if (verified) return verified;
+  } catch (scanErr) {
+    console.warn('[Analyzer] scanAndVerifyCertificate fallback triggered:', scanErr.message);
+  }
+
   const text = await extractTextFromFile(filePath);
   const filename = path.basename(filePath);
 

@@ -1108,6 +1108,18 @@ function renderIdentityAndCertificateAudit(data) {
                             statusColor = 'var(--danger)';
                             statusBg = 'rgba(239, 68, 68, 0.15)';
                             statusText = 'REJECTED: NAME MISMATCH';
+                        } else if (c.authenticityStatus === 'EXPIRED_CREDENTIAL') {
+                            statusColor = 'var(--danger)';
+                            statusBg = 'rgba(239, 68, 68, 0.15)';
+                            statusText = 'EXPIRED CREDENTIAL';
+                        } else if (c.authenticityStatus === 'SIGNATURE_MISSING') {
+                            statusColor = '#f97316';
+                            statusBg = 'rgba(249, 115, 22, 0.15)';
+                            statusText = 'SIGNATURE MISSING';
+                        } else if (c.authenticityStatus === 'NON_STANDARD_FORMAT') {
+                            statusColor = '#eab308';
+                            statusBg = 'rgba(234, 179, 8, 0.15)';
+                            statusText = 'NON-STANDARD FORMAT';
                         } else if (c.authenticityStatus === 'INVALID_DOCUMENT') {
                             statusColor = '#f97316';
                             statusBg = 'rgba(249, 115, 22, 0.15)';
@@ -1118,20 +1130,56 @@ function renderIdentityAndCertificateAudit(data) {
                             statusText = 'PROVISIONAL';
                         }
 
+                        const forensics = c.forensics || {};
+                        const sigs = forensics.signatures || {};
+                        const format = forensics.formatting || {};
+                        const validity = forensics.validity || {};
+
+                        // Signers string
+                        const signersStr = sigs.primarySigner || (sigs.signatories && sigs.signatories.length ? sigs.signatories.map(s => `${s.name} (${s.title})`).join(' & ') : (sigs.detected ? 'Verified Signatory' : 'None Detected'));
+                        const formatStr = format.layoutClassification ? `${format.layoutClassification.replace(/_/g, ' ')}${format.hasOfficialEmblem ? ' • Official Seal/Emblem' : ''}` : 'Standard Credential';
+                        const validityStr = validity.isLifetime ? `Lifetime Validity (Issued ${validity.issueDate || 'N/A'})` : (validity.expirationDate && validity.expirationDate !== 'LIFETIME_VALIDITY' ? `Valid until ${validity.expirationDate}` : `Issued: ${validity.issueDate || 'Verified'}`);
+
                         return `
-                            <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem;">
+                            <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.85rem 1rem;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
                                     <div>
-                                        <strong style="font-size: 0.9rem; color: var(--text-primary); display: block;">${c.title || 'Certification Credential'}</strong>
+                                        <strong style="font-size: 0.92rem; color: var(--text-primary); display: block;">${c.title || 'Certification Credential'}</strong>
                                         <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">
                                             Issuer: <strong>${c.issuer || 'Accredited Issuer'}</strong> <span style="opacity: 0.6;">(${c.issuerTier || 'Tier 3'})</span>
                                             ${c.recipientName ? ` • Recipient: <strong>${c.recipientName}</strong>` : ''}
                                         </div>
                                     </div>
-                                    <span style="font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 4px; background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusColor};">
-                                        ${statusText}
-                                    </span>
+                                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                                        ${typeof c.authenticityScore === 'number' ? `<span style="font-size: 0.72rem; font-family: monospace; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(99, 102, 241, 0.12); color: var(--accent); border: 1px solid var(--accent);">Score: ${Math.round(c.authenticityScore * 100)}%</span>` : ''}
+                                        <span style="font-size: 0.72rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 4px; background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusColor};">
+                                            ${statusText}
+                                        </span>
+                                    </div>
                                 </div>
+
+                                <!-- Forensic 3-Pillar Audit Grid -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; margin-top: 0.65rem; padding: 0.6rem 0.75rem; background: var(--bg-card); border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.78rem;">
+                                    <div>
+                                        <span style="color: var(--text-secondary); display: block; font-weight: 600; margin-bottom: 0.15rem;">✍️ Issuer Signatures:</span>
+                                        <span style="color: ${sigs.detected ? 'var(--text-primary)' : 'var(--danger)'}; font-weight: 500;">
+                                            ${signersStr}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span style="color: var(--text-secondary); display: block; font-weight: 600; margin-bottom: 0.15rem;">🏛️ Standard Formatting:</span>
+                                        <span style="color: var(--text-primary); font-weight: 500;">
+                                            ${formatStr}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span style="color: var(--text-secondary); display: block; font-weight: 600; margin-bottom: 0.15rem;">📅 Expiration & Validity:</span>
+                                        <span style="color: ${validity.isExpired ? 'var(--danger)' : 'var(--text-primary)'}; font-weight: 500;">
+                                            ${validityStr}
+                                        </span>
+                                    </div>
+                                </div>
+
                                 <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
                                     ${c.auditSummary || 'Verified against accredited learning catalog.'}
                                     ${c.credentialId ? ` • <span style="font-family: monospace;">ID: ${c.credentialId}</span>` : ''}

@@ -227,6 +227,39 @@ function displayAnalysis(analysis, certCount = 0, intelligence = null) {
                 const relCertsEl = document.getElementById('relevantCerts');
                 if (totalCertsEl) totalCertsEl.textContent = analysis.certifications.total_uploaded || certCount;
                 if (relCertsEl) relCertsEl.textContent = analysis.certifications.relevant || 0;
+
+                const auditsListEl = document.getElementById('certificateAuditsList');
+                if (auditsListEl && Array.isArray(analysis.certifications.audits) && analysis.certifications.audits.length > 0) {
+                    auditsListEl.innerHTML = analysis.certifications.audits.map(c => {
+                        const forensics = c.forensics || {};
+                        const sigs = forensics.signatures || {};
+                        const format = forensics.formatting || {};
+                        const validity = forensics.validity || {};
+                        const statusBadge = c.isAuthentic
+                            ? `<span style="color: var(--success); font-weight: 700; font-size: 0.75rem; background: rgba(16, 185, 129, 0.12); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--success);">✓ Verified Authentic</span>`
+                            : `<span style="color: var(--danger); font-weight: 700; font-size: 0.75rem; background: rgba(239, 68, 68, 0.12); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--danger);">⚠ ${c.authenticityStatus.replace(/_/g, ' ')}</span>`;
+
+                        return `
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem; text-align: left; font-size: 0.82rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap;">
+                                    <div>
+                                        <strong style="color: var(--text-primary); font-size: 0.88rem;">${c.title || 'Certification Credential'}</strong>
+                                        <div style="color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.1rem;">
+                                            Issuer: ${c.issuer || 'Accredited Issuer'} ${c.recipientName ? `• Awarded to: <strong>${c.recipientName}</strong>` : ''}
+                                        </div>
+                                    </div>
+                                    ${statusBadge}
+                                </div>
+                                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.4rem; font-size: 0.75rem; color: var(--text-secondary);">
+                                    ${sigs.primarySigner ? `<span>✍️ Signer: ${sigs.primarySigner}</span>` : ''}
+                                    ${format.layoutClassification ? `<span>🏛️ ${format.layoutClassification.replace(/_/g, ' ')}</span>` : ''}
+                                    ${validity.issueDate ? `<span>📅 Issued: ${validity.issueDate}</span>` : ''}
+                                    ${validity.isLifetime ? `<span>♾️ Lifetime</span>` : (validity.expirationDate && validity.expirationDate !== 'LIFETIME_VALIDITY' ? `<span>⌛ Exp: ${validity.expirationDate}</span>` : '')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
             }
         }
         
