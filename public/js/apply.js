@@ -123,7 +123,7 @@ applyForm.addEventListener('submit', async (e) => {
         if (response.ok) {
             // Smooth reveal
             setTimeout(() => {
-                displayAnalysis(data.analysis, certFiles.length, data.intelligence);
+                displayAnalysis(data.analysis, certFiles.length, data.intelligence, data.application);
             }, 300);
         } else {
             const err = new Error(data.message || 'Error submitting application');
@@ -157,7 +157,7 @@ applyForm.addEventListener('submit', async (e) => {
 });
 
 // Display analysis results with animation
-function displayAnalysis(analysis, certCount = 0, intelligence = null) {
+function displayAnalysis(analysis, certCount = 0, intelligence = null, application = null) {
     try {
         // Hide loader
         const loaderEl = document.getElementById('analyzingLoader');
@@ -313,6 +313,24 @@ function displayAnalysis(analysis, certCount = 0, intelligence = null) {
                 tipsSection.style.display = 'block';
                 tipsList.innerHTML = intelligence.applicantFeedback.resumeTips.map(t => `<li style="margin-bottom: 0.35rem;">${t}</li>`).join('');
             }
+        }
+
+        // Setup Proceed to Skill Verification Gate button
+        const skillBtn = document.getElementById('btnProceedSkillTest');
+        const defaultBox = document.getElementById('defaultDashboardBtnBox');
+        const stepBox = document.getElementById('skillVerificationStepBox');
+
+        if (application && application._id) {
+            if (skillBtn) {
+                skillBtn.onclick = () => {
+                    window.location.href = `/skill-test/${application._id}`;
+                };
+            }
+            if (stepBox) stepBox.style.display = 'block';
+            if (defaultBox) defaultBox.style.display = 'none';
+        } else {
+            if (stepBox) stepBox.style.display = 'none';
+            if (defaultBox) defaultBox.style.display = 'block';
         }
     } catch (renderErr) {
         console.error('Error rendering analysis results:', renderErr);

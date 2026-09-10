@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skill Verification Gate - AIRIS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+    <style>
+        .skill-gate-container {
+            max-width: 860px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .skill-stage-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 2.25rem;
+            box-shadow: var(--card-shadow);
+        }
+        .skill-badge-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .timer-badge {
+            font-family: monospace;
+            font-size: 1.15rem;
+            font-weight: 700;
+            padding: 0.4rem 0.9rem;
+            border-radius: 8px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .timer-warning {
+            color: #ef4444 !important;
+            border-color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+            animation: pulse-warn 1s infinite;
+        }
+        @keyframes pulse-warn {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .option-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-color);
+            background: var(--bg-subtle);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option-card:hover {
+            border-color: var(--accent);
+            background: var(--bg-card);
+            transform: translateY(-1px);
+        }
+        .option-card.selected {
+            border-color: var(--accent);
+            background: var(--accent-light, rgba(79, 70, 229, 0.08));
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        .option-radio {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .option-card.selected .option-radio {
+            border-color: var(--accent);
+            background: var(--accent);
+        }
+        .option-card.selected .option-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ffffff;
+        }
+        .code-snippet-box {
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+        .step-progress-bar {
+            height: 8px;
+            background: var(--bg-subtle);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin: 1.25rem 0;
+            border: 1px solid var(--border-color);
+        }
+        .step-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #06b6d4);
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2><a href="/applicant">🤖 AIRIS <span class="brand-badge" style="background: linear-gradient(135deg, #4f46e5, #06b6d4); color: white;">Skill Gate</span></a></h2>
+            </div>
+            <div class="nav-links">
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <span id="navUserBadge" class="user-chip">Candidate</span>
+                <button onclick="window.location.href='/applicant'" class="btn-secondary">Dashboard</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="skill-gate-container">
+
+        <!-- STAGE 1: BRIEFING & INTEGRITY PRE-CHECK -->
+        <div id="stageBriefing" class="skill-stage-card">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎯</div>
+                <h1 style="margin: 0 0 0.5rem 0; font-size: 1.85rem;" id="briefingTitle">Resume Skill Verification Gate</h1>
+                <p style="margin: 0; color: var(--text-secondary); font-size: 1.05rem;" id="briefingSubtitle">
+                    Validate claimed proficiencies prior to proctored AI technical interview
+                </p>
+                <div id="briefingTargetSkills" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 1.25rem;"></div>
+            </div>
+
+            <!-- Value Callout Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🛡️</div>
+                    <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Anti-Inflation Protection</strong>
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                        Ensures your resume skills reflect practical knowledge rather than keyword stuffing.
+                    </p>
+                </div>
+                <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⏱️</div>
+                    <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">5-Minute Micro-Check</strong>
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                        5–7 timed multiple-choice questions. 60 seconds per question with no penalty for quick completion.
+                    </p>
+                </div>
+                <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; border: 1px solid var(--border-color);">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🏅</div>
+                    <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">Skill Passport Badges</strong>
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">
+                        Passing (≥70%) awards verified skill badges valid for 90 days across all partner applications.
+                    </p>
+                </div>
+            </div>
+
+            <div style="background: rgba(79, 70, 229, 0.08); border-left: 4px solid var(--accent); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem;">
+                <h4 style="margin: 0 0 0.35rem 0; color: var(--accent); font-size: 0.95rem;">Why is this required before the AI Interview?</h4>
+                <p style="margin: 0; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+                    Live video/audio AI interviews require significant student energy and system compute. Pre-verifying foundational knowledge ensures you enter the interview confident and well-prepared.
+                </p>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <div style="font-size: 0.88rem; color: var(--text-muted);">
+                    Passing Cutoff: <strong id="briefingCutoffText" style="color: var(--text-primary);">70%</strong>
+                </div>
+                <button class="btn-primary" id="btnStartSkillTest" style="padding: 0.75rem 2rem; font-size: 1rem; font-weight: 700; background: linear-gradient(135deg, #4f46e5, #06b6d4); border: none;">
+                    Start Skill Verification Check →
+                </button>
+            </div>
+        </div>
+
+        <!-- STAGE 2: LIVE QUESTION ASSESSMENT -->
+        <div id="stageAssessment" class="skill-stage-card" style="display: none;">
+            <!-- Header Bar with Tracker and Timer -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <span id="questionCategoryBadge" class="skill-badge-chip" style="background: var(--accent-light, rgba(79, 70, 229, 0.1)); color: var(--accent); border-color: var(--accent);">
+                        Python
+                    </span>
+                    <span style="margin-left: 8px; font-size: 0.9rem; color: var(--text-secondary);" id="questionProgressText">
+                        Question 1 of 5
+                    </span>
+                </div>
+                <div id="questionTimerBadge" class="timer-badge">
+                    <span>⏱️</span>
+                    <span id="timerCountdown">60s</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="step-progress-bar">
+                <div id="stepProgressFill" class="step-progress-fill" style="width: 20%;"></div>
+            </div>
+
+            <!-- Question Card -->
+            <div style="margin: 1.75rem 0;">
+                <div id="questionText" style="font-size: 1.15rem; font-weight: 600; line-height: 1.6; color: var(--text-primary);">
+                    Question prompt loading...
+                </div>
+                <div id="questionCodeBlock" style="display: none;" class="code-snippet-box"></div>
+            </div>
+
+            <!-- Option Cards -->
+            <div id="optionsList" style="margin-bottom: 2rem;"></div>
+
+            <!-- Integrity & Next Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+                <span id="tabSwitchIndicator" style="font-size: 0.85rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
+                    <span>🛡️</span> Tab-focus monitored
+                </span>
+                <button id="btnNextQuestion" class="btn-primary" style="padding: 0.65rem 1.75rem; font-weight: 700;">
+                    Confirm & Next →
+                </button>
+            </div>
+        </div>
+
+        <!-- STAGE 3: RESULTS & VERDICT -->
+        <div id="stageResults" class="skill-stage-card" style="display: none; text-align: center;">
+            <div id="resultIcon" style="font-size: 3.5rem; margin-bottom: 0.5rem;">🎉</div>
+            <h1 id="resultTitle" style="margin: 0 0 0.5rem 0; font-size: 1.85rem;">Skill Verification Passed!</h1>
+            <p id="resultSubtitle" style="margin: 0 0 1.5rem 0; color: var(--text-secondary); font-size: 1.05rem;">
+                Your claimed resume skills have been verified by AIRIS.
+            </p>
+
+            <!-- Score Callout -->
+            <div style="display: inline-flex; align-items: center; gap: 1.5rem; background: var(--bg-subtle); padding: 1.25rem 2rem; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 2rem;">
+                <div>
+                    <div id="resultScorePct" style="font-size: 2.8rem; font-weight: 800; color: var(--accent); line-height: 1;">85%</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Verified Score</div>
+                </div>
+                <div style="border-left: 1px solid var(--border-color); padding-left: 1.5rem; text-align: left;">
+                    <div id="resultVerdictBadge" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--success);">
+                        ✅ Competency Authenticated
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);" id="resultCorrectStats">
+                        5 of 6 questions answered correctly
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breakdown per skill -->
+            <div style="text-align: left; margin-bottom: 2rem;">
+                <h3 style="font-size: 1.05rem; margin-bottom: 0.75rem;">Verified Competency Breakdown:</h3>
+                <div id="resultSkillsList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;"></div>
+            </div>
+
+            <!-- Gaps & Coaching Notes (if any) -->
+            <div id="resultGapsBox" style="display: none; text-align: left; background: rgba(245, 158, 11, 0.08); border: 1px solid var(--warning); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: var(--warning-text); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                    <span>⚠️</span> Knowledge Gaps to Strengthen:
+                </h4>
+                <ul id="resultGapsList" style="margin: 0; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+            </div>
+
+            <!-- Action buttons -->
+            <div id="resultActions" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <button onclick="window.location.href='/applicant'" class="btn-secondary" style="padding: 0.65rem 1.5rem;">
+                    Back to Dashboard
+                </button>
+                <button id="btnProceedToInterview" class="btn-primary" style="padding: 0.65rem 2rem; font-weight: 700; background: linear-gradient(135deg, #059669, #10b981); border: none;">
+                    🎙️ Proceed to Proctored AI Interview →
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/js/skill-test.js"></script>
+</body>
+</html>

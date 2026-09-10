@@ -435,6 +435,18 @@ function renderApplicationCard(app) {
         }
     }
 
+    let skillVerificationTag = '';
+    if (app.skillVerification) {
+        if (app.skillVerification.status === 'passed') {
+            skillVerificationTag = `<span class="skill-tag" style="background: rgba(16, 185, 129, 0.12); color: var(--success); font-size: 0.78rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3);">🏅 Skill Gate: ${app.skillVerification.score}% (Authentic)</span>`;
+        } else if (app.skillVerification.status === 'failed') {
+            const isInflated = app.skillVerification.evaluation?.antiInflationVerdict === 'SUSPECTED_KEYWORD_INFLATION';
+            skillVerificationTag = `<span class="skill-tag" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; font-weight: 700; border: 1px solid rgba(239, 68, 68, 0.3);">⚠️ Gate Failed: ${app.skillVerification.score}% ${isInflated ? '(Keyword Inflation)' : ''}</span>`;
+        }
+    } else {
+        skillVerificationTag = `<span class="skill-tag" style="background: rgba(100, 116, 139, 0.12); color: var(--text-muted); font-size: 0.78rem;">⏳ Skill Gate Pending</span>`;
+    }
+
     return `
         <div class="application-card" id="appCard-${app._id}">
             <div class="application-header">
@@ -442,6 +454,7 @@ function renderApplicationCard(app) {
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.25rem; flex-wrap: wrap;">
                         <span class="skill-tag" style="background: rgba(99, 102, 241, 0.1); color: var(--accent); font-size: 0.78rem;">${comp.logo || '🏢'} ${comp.name}</span>
                         ${proctorTag}
+                        ${skillVerificationTag}
                         ${interviewTag}
                     </div>
                     <h3>👤 ${app.applicantName || 'Anonymous Candidate'}</h3>
@@ -1020,6 +1033,9 @@ function renderIntelligenceModalData(data) {
     // Render Identity & Certificate Authenticity Section
     renderIdentityAndCertificateAudit(data);
 
+    // Render Pre-Interview Skill Verification Gate Section
+    renderSkillVerificationAuditSection(data);
+
     // Render Proctored Interview & Telemetry Section
     renderInterviewTelemetrySection(data);
 
@@ -1194,6 +1210,105 @@ function renderIdentityAndCertificateAudit(data) {
     }
 
     contentEl.innerHTML = identityHtml + certsHtml;
+}
+
+function renderSkillVerificationAuditSection(data) {
+    const badgeEl = document.getElementById('intelSkillGateBadge');
+    const contentEl = document.getElementById('intelSkillGateContent');
+    if (!contentEl) return;
+
+    const app = allApplications.find(a => a._id === (data.applicationId || currentIntelligenceAppId)) || {};
+    const sv = app.skillVerification || data.skillVerification;
+
+    if (!sv || sv.status === 'pending' || !sv.status) {
+        if (badgeEl) {
+            badgeEl.innerHTML = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: var(--warning-text); border: 1px solid var(--warning);">⏳ Gate Pending (AI Interview Locked)</span>`;
+        }
+        contentEl.innerHTML = `
+            <div style="text-align: center; padding: 1.25rem; background: var(--bg-subtle); border-radius: 8px; border: 1px dashed var(--border-color);">
+                <p style="margin: 0 0 0.35rem 0; font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">Pre-Interview Skill Verification Pending</p>
+                <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+                    Candidate has not verified claimed resume skills yet. Full AI interview generation and voice synthesis are locked until this 5-minute technical check is passed, preventing computing overhead and filtering keyword inflation.
+                </p>
+            </div>
+        `;
+        return;
+    }
+
+    const evalReport = sv.evaluation || {};
+    const score = sv.score || 0;
+    const isPassed = sv.status === 'passed';
+
+    // Badge
+    if (badgeEl) {
+        if (isPassed) {
+            badgeEl.innerHTML = `
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 700; border: 1px solid var(--success);">
+                        ✅ AUTHENTIC (Score: ${score}%)
+                    </span>
+                    <span class="badge badge-info" style="font-size: 0.75rem;">Cutoff: ${sv.passingScore || 70}%</span>
+                </div>
+            `;
+        } else {
+            badgeEl.innerHTML = `
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); font-weight: 700; border: 1px solid var(--danger);">
+                        ⚠️ GATE FAILED (${score}%)
+                    </span>
+                    <span class="badge badge-danger" style="font-size: 0.75rem;">Suspected Keyword Inflation</span>
+                </div>
+            `;
+        }
+    }
+
+    const skillsBreakdown = evalReport.skillBreakdown || {};
+    const skillKeys = Object.keys(skillsBreakdown);
+
+    contentEl.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
+            <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Overall Verification Score</div>
+                <div style="font-size: 1.4rem; font-weight: 800; color: ${isPassed ? 'var(--success)' : 'var(--danger)'};">${score}%</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Required: ${sv.passingScore || 70}% to unlock AI Interview</div>
+            </div>
+            <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Anti-Inflation Verdict</div>
+                <div style="font-size: 1rem; font-weight: 700; color: ${isPassed ? 'var(--success)' : 'var(--danger)'}; margin-top: 4px;">
+                    ${isPassed ? '🛡️ Verified Authentic Skills' : '⚠️ Potential Keyword Stuffing'}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Tab Switches Detected: ${sv.tabSwitches || 0}</div>
+            </div>
+            <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">System Cost Impact</div>
+                <div style="font-size: 1rem; font-weight: 700; color: var(--accent); margin-top: 4px;">
+                    ${isPassed ? 'Proceeding to AI Video Session' : 'Saved AI Interview Computing Overhead'}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${isPassed ? 'Candidate qualified for interview' : 'Saved Gemini token & recording cost'}</div>
+            </div>
+        </div>
+
+        ${skillKeys.length > 0 ? `
+            <div style="background: var(--bg-subtle); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text-primary); text-transform: uppercase; font-weight: 700;">
+                    Tested Skill Competencies Breakdown:
+                </h5>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${skillKeys.map(k => {
+                        const sb = skillsBreakdown[k];
+                        const sPct = sb.total > 0 ? Math.round((sb.correct / sb.total) * 100) : 0;
+                        const ok = sPct >= 70;
+                        return `
+                            <div style="background: var(--bg-card); padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.82rem; display: flex; align-items: center; gap: 6px;">
+                                <span style="font-weight: 600; text-transform: uppercase;">${k}:</span>
+                                <span style="font-weight: 700; color: ${ok ? 'var(--success)' : 'var(--danger)'};">${sb.correct}/${sb.total} (${sPct}%)</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        ` : ''}
+    `;
 }
 
 function renderInterviewTelemetrySection(data) {

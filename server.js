@@ -20,6 +20,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/companies', require('./routes/companies'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/applications', require('./routes/applications'));
+app.use('/api/skill-verification', require('./routes/skillVerification'));
 app.use('/api/interview', require('./routes/interview'));
 app.use('/api/decisions', require('./routes/decisions'));
 
@@ -51,6 +52,14 @@ app.get('/applicant', (req, res) => {
 
 app.get('/apply.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'apply.html'));
+});
+
+app.get('/skill-test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'skill-test.html'));
+});
+
+app.get('/skill-test/:appId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'skill-test.html'));
 });
 
 app.get('/interview', (req, res) => {

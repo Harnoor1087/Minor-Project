@@ -45,6 +45,8 @@ function showTab(tabName) {
         loadJobs();
     } else if (tabName === 'myapps') {
         loadMyApplications();
+    } else if (tabName === 'passport') {
+        loadSkillPassport();
     }
 }
 
@@ -203,29 +205,61 @@ async function loadMyApplications() {
                     year: 'numeric', month: 'short', day: 'numeric'
                 }) : 'Recent';
 
-                let interviewBtn = `
-                    <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: linear-gradient(135deg, #4f46e5, #06b6d4); border: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;" onclick="window.location.href='/interview/${app._id}'">
-                        <span>🎙️</span> Take AI Technical Assessment
-                    </button>
-                `;
+                // Skill Verification Gate check
+                const isSkillPassed = app.skillVerification && app.skillVerification.status === 'passed';
+                const isSkillFailed = app.skillVerification && app.skillVerification.status === 'failed';
+                let skillGateTag = '';
+                let interviewBtn = '';
 
-                if (app.interview) {
-                    if (app.interview.status === 'completed') {
+                if (!isSkillPassed) {
+                    if (isSkillFailed) {
+                        skillGateTag = `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; border: 1px solid var(--danger);">⚠️ Skill Gate: ${app.skillVerification.score}% (Cutoff Unmet)</span>`;
                         interviewBtn = `
-                            <button class="btn-secondary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; border-color: var(--success); color: var(--success); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="window.location.href='/interview/${app._id}'">
-                                <span>🎯</span> AI Assessment: ${app.interview.overallScore}%
+                            <button class="btn-secondary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; border-color: var(--danger); color: var(--danger); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="window.location.href='/skill-test/${app._id}'">
+                                <span>🔄</span> Retake Skill Gate (${app.skillVerification.score}%)
                             </button>
                         `;
-                    } else if (app.interview.status === 'disqualified') {
+                    } else {
+                        skillGateTag = `<span class="badge" style="background: rgba(79, 70, 229, 0.12); color: var(--accent); font-size: 0.78rem; border: 1px solid var(--accent);">📝 Skill Gate Pending</span>`;
                         interviewBtn = `
-                            <span class="badge badge-danger" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">
-                                🚫 Disqualified (Cheating Violation)
-                            </span>
+                            <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: linear-gradient(135deg, #4f46e5, #06b6d4); border: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);" onclick="window.location.href='/skill-test/${app._id}'">
+                                <span>⚡</span> Verify Claimed Skills (5 min)
+                            </button>
                         `;
-                    } else if (app.interview.status === 'in_progress') {
+                    }
+                } else {
+                    skillGateTag = `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--success); font-size: 0.78rem; border: 1px solid var(--success);">✅ Skills Verified (${app.skillVerification.score}%)</span>`;
+
+                    if (app.interview) {
+                        if (app.interview.status === 'completed') {
+                            interviewBtn = `
+                                <button class="btn-secondary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; border-color: var(--success); color: var(--success); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="window.location.href='/interview/${app._id}'">
+                                    <span>🎯</span> AI Assessment: ${app.interview.overallScore}%
+                                </button>
+                            `;
+                        } else if (app.interview.status === 'disqualified') {
+                            interviewBtn = `
+                                <span class="badge badge-danger" style="padding: 0.45rem 0.9rem; font-size: 0.85rem;">
+                                    🚫 Disqualified (Cheating Violation)
+                                </span>
+                            `;
+                        } else if (app.interview.status === 'in_progress') {
+                            interviewBtn = `
+                                <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: var(--warning); border-color: var(--warning); display: inline-flex; align-items: center; gap: 6px; font-weight: 700;" onclick="window.location.href='/interview/${app._id}'">
+                                    <span>⚡</span> Resume Proctored Assessment
+                                </button>
+                            `;
+                        } else {
+                            interviewBtn = `
+                                <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: linear-gradient(135deg, #059669, #10b981); border: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;" onclick="window.location.href='/interview/${app._id}'">
+                                    <span>🎙️</span> Take AI Technical Assessment
+                                </button>
+                            `;
+                        }
+                    } else {
                         interviewBtn = `
-                            <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: var(--warning); border-color: var(--warning); display: inline-flex; align-items: center; gap: 6px; font-weight: 700;" onclick="window.location.href='/interview/${app._id}'">
-                                <span>⚡</span> Resume Proctored Assessment
+                            <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: linear-gradient(135deg, #059669, #10b981); border: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;" onclick="window.location.href='/interview/${app._id}'">
+                                <span>🎙️</span> Take AI Technical Assessment
                             </button>
                         `;
                     }
@@ -267,6 +301,7 @@ async function loadMyApplications() {
                             <div>
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.35rem; flex-wrap: wrap;">
                                     ${pTierTag}
+                                    ${skillGateTag}
                                     ${decisionBadge}
                                 </div>
                                 <h3>${app.jobTitle}</h3>
@@ -525,8 +560,143 @@ function closeApplicantFeedbackModal() {
     if (modal) modal.classList.remove('active');
 }
 
+// Skill Passport & Master Resume Functions
+async function loadSkillPassport() {
+    try {
+        const response = await fetch('/api/skill-verification/passport', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const verifiedSkills = data.verifiedSkills || [];
+        const activeBadges = verifiedSkills.filter(s => !s.isExpired);
+
+        // Update Stat Counter
+        const countEl = document.getElementById('appVerifiedSkillsCount');
+        if (countEl) countEl.textContent = activeBadges.length;
+
+        // Render Badges Grid
+        const grid = document.getElementById('passportBadgesGrid');
+        if (grid) {
+            if (activeBadges.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; background: var(--bg-subtle); border-radius: 12px; border: 1px dashed var(--border-color); color: var(--text-muted);">
+                        No verified skill credentials yet. Take a 5-minute micro-test below or apply to a position to verify your skills.
+                    </div>
+                `;
+            } else {
+                grid.innerHTML = activeBadges.map(b => `
+                    <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.15rem; border: 1px solid var(--border-color); position: relative; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <span style="font-size: 1.5rem;">🏅</span>
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 700; border: 1px solid var(--success); font-size: 0.78rem;">
+                                Score: ${b.score}%
+                            </span>
+                        </div>
+                        <h4 style="margin: 0 0 0.25rem 0; font-size: 1rem; color: var(--text-primary);">${b.skill.toUpperCase()}</h4>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                            ${b.badge || 'Verified Specialist'}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 0.5rem; display: flex; justify-content: space-between;">
+                            <span>⏱️ Valid for 90 days</span>
+                            <span>${b.daysRemaining} days left</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Render Master Resume Profile
+        const resumeSubtitle = document.getElementById('passportResumeSubtitle');
+        const skillsBox = document.getElementById('passportExtractedSkills');
+        if (data.masterResume && data.masterResume.filename) {
+            if (resumeSubtitle) {
+                resumeSubtitle.innerHTML = `Active Resume: <strong>${data.masterResume.filename}</strong> (Uploaded: ${new Date(data.masterResume.uploadedAt).toLocaleDateString()})`;
+            }
+            if (skillsBox && Array.isArray(data.masterResume.skills)) {
+                skillsBox.innerHTML = `
+                    <div style="width: 100%; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                        Extracted Technical Skills from Master Resume:
+                    </div>
+                    ${data.masterResume.skills.map(s => `
+                        <span class="badge badge-info" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">${s}</span>
+                    `).join('')}
+                `;
+            }
+        } else {
+            if (resumeSubtitle) {
+                resumeSubtitle.textContent = 'Upload your master resume once to pre-extract skills for instantaneous verification across all applications.';
+            }
+            if (skillsBox) {
+                skillsBox.innerHTML = '';
+            }
+        }
+    } catch (e) {
+        console.error('Error loading skill passport:', e);
+    }
+}
+
+async function handleMasterResumeUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    const label = event.target.parentElement.querySelector('label');
+    const originalText = label ? label.innerHTML : '';
+    if (label) label.innerHTML = '<span>⏳</span> Parsing Resume...';
+
+    try {
+        const response = await fetch('/api/skill-verification/upload-master-resume', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Upload failed');
+        }
+        alert('Master resume uploaded and skills extracted successfully! You can now test your competencies.');
+        await loadSkillPassport();
+    } catch (err) {
+        alert(err.message || 'Error uploading resume');
+    } finally {
+        if (label) label.innerHTML = originalText;
+        event.target.value = '';
+    }
+}
+
+async function launchStandaloneSkillTest() {
+    const select = document.getElementById('quickSkillSelect');
+    const skill = select ? select.value : 'python';
+
+    try {
+        const response = await fetch('/api/skill-verification/standalone-test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ skill })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Could not launch skill test');
+        }
+        const data = await response.json();
+        
+        // Show test prompt modal or direct notice
+        alert(`Skill test prepared for ${skill.toUpperCase()}! You can verify skills directly on any job application or test your readiness.`);
+    } catch (err) {
+        alert(err.message || 'Error initiating test');
+    }
+}
+
 // Initial load
 loadJobs();
+loadSkillPassport();
 (async function prefetchMyApps() {
     try {
         const response = await fetch('/api/applications/my-applications', {

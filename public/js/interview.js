@@ -60,6 +60,11 @@ async function loadSession() {
 
         if (!res.ok) {
             const err = await res.json();
+            if (err.skillVerificationRequired) {
+                alert(err.message || 'Skill Verification Required: Please test and verify your claimed skills before entering the AI interview.');
+                window.location.href = err.redirectUrl || `/skill-test/${currentAppId}`;
+                return;
+            }
             throw new Error(err.message || 'Failed to initialize interview session');
         }
 

@@ -231,17 +231,30 @@ function loadFromDisk() {
           };
         });
 
-        // Ensure users have companyId
+        // Ensure users have companyId, verifiedSkills, and masterResume
         state.users = state.users.map(u => {
+          const updatedUser = {
+            ...u,
+            verifiedSkills: Array.isArray(u.verifiedSkills) ? u.verifiedSkills : [],
+            masterResume: u.masterResume || null
+          };
           if (u.role === 'admin' && !u.companyId) {
             const matchComp = state.companies.find(c => c.name.toLowerCase() === (u.company || '').toLowerCase());
-            return {
-              ...u,
-              companyId: matchComp ? matchComp.id : 'comp_airis'
-            };
+            updatedUser.companyId = matchComp ? matchComp.id : 'comp_airis';
           }
-          return u;
+          return updatedUser;
         });
+
+        // Ensure applications have skillVerification
+        state.applications = (state.applications || []).map(a => ({
+          ...a,
+          skillVerification: a.skillVerification || {
+            status: 'pending',
+            score: null,
+            passed: false,
+            completedAt: null
+          }
+        }));
 
         saveToDisk();
         return;
@@ -408,6 +421,43 @@ const users = {
   async verifyPassword(user, plainPassword) {
     if (!user || !user.passwordHash) return false;
     return bcrypt.compare(plainPassword, user.passwordHash);
+  },
+  updateVerifiedSkills(id, newSkills = []) {
+    const user = state.users.find(u => u._id === id);
+    if (!user) return null;
+    if (!Array.isArray(user.verifiedSkills)) user.verifiedSkills = [];
+
+    // Merge or update skill badges with 90-day expiry
+    const expiryDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+
+    for (const item of newSkills) {
+      const idx = user.verifiedSkills.findIndex(s => s.skill.toLowerCase() === item.skill.toLowerCase());
+      const badgeObj = {
+        skill: item.skill.toLowerCase(),
+        score: item.score,
+        badge: item.badge || `Verified ${item.skill.toUpperCase()} Specialist`,
+        verifiedAt: new Date().toISOString(),
+        expiresAt: expiryDate
+      };
+      if (idx !== -1) {
+        user.verifiedSkills[idx] = badgeObj;
+      } else {
+        user.verifiedSkills.push(badgeObj);
+      }
+    }
+    saveToDisk();
+    return user;
+  },
+  updateMasterResume(id, resumeData) {
+    const user = state.users.find(u => u._id === id);
+    if (!user) return null;
+    user.masterResume = {
+      ...(user.masterResume || {}),
+      ...resumeData,
+      updatedAt: new Date().toISOString()
+    };
+    saveToDisk();
+    return user;
   }
 };
 
@@ -563,6 +613,13 @@ const applications = {
       proctoringLevel: appData.proctoringLevel || 'medium',
       identityVerification: appData.identityVerification || null,
       certifications: appData.certifications || null,
+      skillVerification: appData.skillVerification || {
+        status: 'pending', // pending, passed, failed
+        score: null,
+        passed: false,
+        questions: [],
+        completedAt: null
+      },
       interview: appData.interview || {
         status: 'not_started', // not_started, in_progress, completed, disqualified
         overallScore: null,
@@ -592,6 +649,21 @@ const applications = {
     const app = state.applications.find(a => a._id === id);
     if (!app) return null;
     app.intelligence = intelligence;
+    saveToDisk();
+    return app;
+  },
+  updateSkillVerification(id, verificationData) {
+    const app = state.applications.find(a => a._id === id);
+    if (!app) return null;
+    app.skillVerification = {
+      ...(app.skillVerification || {
+        status: 'pending',
+        score: null,
+        passed: false
+      }),
+      ...verificationData,
+      updatedAt: new Date().toISOString()
+    };
     saveToDisk();
     return app;
   },

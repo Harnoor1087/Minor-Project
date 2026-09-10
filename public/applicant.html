@@ -47,11 +47,19 @@
                     <div class="stat-label">Average Match Score</div>
                 </div>
             </div>
+            <div class="stat-card" id="appStatVerifiedSkills">
+                <div class="stat-icon" style="background: rgba(16, 185, 129, 0.12); color: var(--success);">🏅</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="appVerifiedSkillsCount" style="color: var(--success);">0</div>
+                    <div class="stat-label">Verified Skill Badges</div>
+                </div>
+            </div>
         </div>
 
         <div class="tabs">
             <button class="tab-btn active" id="tabBtnBrowse" onclick="showTab('browse')">🔍 Browse Jobs</button>
             <button class="tab-btn" id="tabBtnMyApps" onclick="showTab('myapps')">📂 My Applications</button>
+            <button class="tab-btn" id="tabBtnPassport" onclick="showTab('passport')">🏅 Skill Passport & Resume</button>
         </div>
 
         <!-- Browse Jobs Tab -->
@@ -69,6 +77,80 @@
         <div id="myappsTab" class="tab-content">
             <h2>My Applications</h2>
             <div id="myApplicationsList"></div>
+        </div>
+
+        <!-- Skill Passport & Master Resume Tab -->
+        <div id="passportTab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 style="margin: 0 0 0.25rem 0;">Student Skill Passport</h2>
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;">
+                        Pre-verified competencies bypass repetitive skill gates and prove authentic readiness across all applications.
+                    </p>
+                </div>
+                <div style="background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.4rem 1rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 700; border: 1px solid var(--success);">
+                    🛡️ Anti-Keyword-Stuffing Gate Active
+                </div>
+            </div>
+
+            <!-- Master Resume Upload Card -->
+            <div class="application-card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h3 style="margin: 0 0 0.35rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                            <span>📄</span> Master Resume Profile
+                        </h3>
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);" id="passportResumeSubtitle">
+                            Upload your resume to extract claimed skills and unlock instant micro-verification tests.
+                        </p>
+                    </div>
+                    <div>
+                        <label for="masterResumeInput" class="btn-primary" style="cursor: pointer; padding: 0.45rem 1.15rem; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px;">
+                            <span>📤</span> Upload / Update Resume
+                        </label>
+                        <input type="file" id="masterResumeInput" accept=".pdf,.txt" style="display: none;" onchange="handleMasterResumeUpload(event)">
+                    </div>
+                </div>
+                <div id="passportExtractedSkills" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+
+            <!-- Verified Badges Section -->
+            <div class="application-card" style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <span>🏅</span> Verified Skill Credentials (90-Day Validity)
+                </h3>
+                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                    Skills verified with a score of 70% or higher automatically satisfy requirements on all partner job postings.
+                </p>
+                <div id="passportBadgesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
+                    <div style="color: var(--text-muted); font-size: 0.9rem;">Loading skill credentials...</div>
+                </div>
+            </div>
+
+            <!-- Take Standalone Skill Test Card -->
+            <div class="application-card">
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                    <span>⚡</span> Test a New Skill Now
+                </h3>
+                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Want to earn badges in advance? Select a technical domain to start a 5-minute practical micro-test.
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                    <select id="quickSkillSelect" class="filter-input" style="max-width: 220px; padding: 0.5rem;">
+                        <option value="python">Python (Core & Async)</option>
+                        <option value="javascript">JavaScript & Node.js</option>
+                        <option value="sql">SQL & Databases</option>
+                        <option value="machine learning">Machine Learning & NLP</option>
+                        <option value="docker">Docker & Containers</option>
+                        <option value="react">React & Frontend</option>
+                        <option value="aws">AWS & Cloud</option>
+                        <option value="git">Git & Version Control</option>
+                    </select>
+                    <button class="btn-primary" onclick="launchStandaloneSkillTest()" style="padding: 0.5rem 1.25rem; font-size: 0.9rem;">
+                        Launch 5-Min Test →
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- Apply Modal -->

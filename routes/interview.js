@@ -25,6 +25,21 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
       return res.status(403).json({ message: 'Access denied to this interview session' });
     }
 
+    // GATING GATEWAY: Candidate must pass skill verification before taking the resource-heavy proctored AI interview
+    if (req.user.role !== 'admin') {
+      const verificationStatus = app.skillVerification?.status;
+      if (verificationStatus !== 'passed') {
+        return res.status(403).json({
+          message: 'Skill Verification Required: You must complete and pass the quick Skill Verification test for your claimed resume skills before taking the proctored AI interview.',
+          skillVerificationRequired: true,
+          appId: app._id,
+          verificationStatus: verificationStatus || 'pending',
+          score: app.skillVerification?.score || null,
+          redirectUrl: `/skill-test/${app._id}`
+        });
+      }
+    }
+
     const job = jobs.getById(app.jobId) || {
       id: app.jobId,
       title: app.jobTitle,
