@@ -81,6 +81,13 @@
                     <div class="stat-label">Pending Reviews</div>
                 </div>
             </div>
+            <div class="stat-card" id="statCardGate">
+                <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">🛡️</div>
+                <div class="stat-info">
+                    <div class="stat-number" id="statGatePassRate">--</div>
+                    <div class="stat-label">Pre-Interview Gate Savings</div>
+                </div>
+            </div>
         </div>
 
         <div class="tabs">
@@ -211,6 +218,47 @@
                         <label for="certification_weight">Certification Weight (0 - 1)</label>
                         <input type="number" id="certification_weight" name="certification_weight" 
                                min="0" max="1" step="0.05" value="0.2">
+                    </div>
+                </div>
+
+                <!-- Pre-Interview Skill Verification Gate Config -->
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                            <span>⚡</span> Pre-Interview Skill Verification Gate
+                        </h3>
+                        <span style="font-size: 0.8rem; background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 0.2rem 0.6rem; border-radius: 9999px; font-weight: 700;">
+                            Anti-Inflation Protection
+                        </span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+                        Filter keyword stuffing and eliminate system compute costs by enforcing a 5-minute technical check before candidates access the proctored AI video interview.
+                    </p>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer;">
+                            <input type="checkbox" id="create_gate_enabled" name="gate_enabled" checked>
+                            Require Pre-Interview Skill Verification Gate (Recommended)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; color: var(--text-secondary);">
+                            <input type="checkbox" id="create_gate_passport_bypass" name="gate_passport_bypass" checked>
+                            Fast-Track Skill Passport Bypass (Auto-unlock if candidate holds valid verified skill badges)
+                        </label>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="create_gate_cutoff">Passing Cutoff Score (%)</label>
+                            <input type="number" id="create_gate_cutoff" name="gate_cutoff" min="40" max="100" value="70">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="create_gate_attempts">Max Retake Attempts</label>
+                            <input type="number" id="create_gate_attempts" name="gate_attempts" min="1" max="5" value="2">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="create_gate_seconds">Time Limit Per Question (sec)</label>
+                            <input type="number" id="create_gate_seconds" name="gate_seconds" min="30" max="180" value="60">
+                        </div>
                     </div>
                 </div>
 
@@ -570,6 +618,35 @@
                             <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
                                 <input type="checkbox" id="edit_proctor_multi_face"> Multi-Face Anomaly
                             </label>
+                        </div>
+                    </div>
+
+                    <!-- Pre-Interview Gate in Edit Modal -->
+                    <div style="background: var(--bg-subtle); border-radius: 10px; padding: 1.25rem; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                            <span>⚡</span> Pre-Interview Skill Verification Gate
+                        </h4>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer;">
+                                <input type="checkbox" id="edit_gate_enabled"> Enforce Pre-Interview Skill Gate
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="edit_gate_passport_bypass"> Allow Skill Passport Fast-Track Bypass
+                            </label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Cutoff (%)</label>
+                                <input type="number" id="edit_gate_cutoff" min="40" max="100" style="padding: 0.4rem; font-size: 0.88rem; width: 100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Max Retakes</label>
+                                <input type="number" id="edit_gate_attempts" min="1" max="5" style="padding: 0.4rem; font-size: 0.88rem; width: 100%;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--text-secondary);">Time/Q (sec)</label>
+                                <input type="number" id="edit_gate_seconds" min="30" max="180" style="padding: 0.4rem; font-size: 0.88rem; width: 100%;">
+                            </div>
                         </div>
                     </div>
 

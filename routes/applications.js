@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { applications, jobs } = require('../db/store');
+const { applications, jobs, users } = require('../db/store');
 const { verifyToken } = require('./auth');
 const { analyzeResume, generateCandidateIntelligence, extractTextFromFile } = require('../services/analyzer');
 
@@ -97,6 +97,59 @@ router.post(
         category: analysis.category
       });
 
+      // Determine Pre-Interview Gate evaluation & status
+      const preGate = job.preInterviewGate || { enabled: true, cutoffScore: 70, durationMinutes: 5, allowRetakes: true, maxRetakes: 2, passportBypassEnabled: true };
+      const user = users.findById(req.user.id);
+      let initialStatus = 'pending';
+      let initialSkillVerification = {
+        status: 'pending',
+        score: null,
+        passed: false,
+        cutoff: preGate.cutoffScore || 70,
+        durationMinutes: preGate.durationMinutes || 5,
+        maxAttempts: (preGate.allowRetakes ? (preGate.maxRetakes || 2) + 1 : 1),
+        attemptsCount: 0,
+        completedAt: null
+      };
+
+      if (analysis.eligibility && analysis.eligibility.includes('Rejected')) {
+        initialStatus = 'rejected';
+      } else if (!preGate.enabled) {
+        initialStatus = 'skill_verified';
+        initialSkillVerification.status = 'passed';
+        initialSkillVerification.passed = true;
+        initialSkillVerification.score = 100;
+        initialSkillVerification.completedAt = new Date().toISOString();
+        initialSkillVerification.summary = 'Pre-Interview Gate is disabled for this position; direct interview access granted.';
+      } else if (preGate.passportBypassEnabled && user && Array.isArray(user.verifiedSkills) && user.verifiedSkills.length > 0) {
+        const now = new Date();
+        const validBadges = user.verifiedSkills.filter(s => new Date(s.expiresAt) > now && (s.score || 0) >= (preGate.cutoffScore || 70));
+        const validSkillNames = validBadges.map(s => (s.skill || '').toLowerCase().trim());
+        const mandatorySkills = (job.mandatory_skills || []).map(s => s.toLowerCase().trim());
+        
+        const matched = mandatorySkills.filter(m => validSkillNames.some(vs => vs.includes(m) || m.includes(vs)));
+        const matchRatio = mandatorySkills.length > 0 ? (matched.length / mandatorySkills.length) : 1;
+
+        if (matchRatio >= 0.7) {
+          const avgScore = Math.round(validBadges.reduce((acc, b) => acc + (b.score || 80), 0) / validBadges.length);
+          initialStatus = 'skill_verified';
+          initialSkillVerification = {
+            status: 'passed',
+            score: avgScore,
+            passed: true,
+            cutoff: preGate.cutoffScore || 70,
+            bypassedViaPassport: true,
+            attemptsCount: 0,
+            completedAt: now.toISOString(),
+            summary: `Fast-track approved: Pre-verified competencies in ${matched.join(', ')} via Skill Passport satisfied Pre-Interview Gate.`
+          };
+        } else {
+          initialStatus = 'skill_test_pending';
+        }
+      } else {
+        initialStatus = 'skill_test_pending';
+      }
+
       // Save application to store with intelligence and company scope
       const application = applications.create({
         applicantId: req.user.id,
@@ -115,7 +168,8 @@ router.post(
         eligibility: analysis.eligibility,
         identityVerification: analysis.identityVerification,
         certifications: analysis.certifications,
-        status: analysis.eligibility.includes('Rejected') ? 'rejected' : 'pending'
+        status: initialStatus,
+        skillVerification: initialSkillVerification
       });
 
       // Attach intelligence to application

@@ -71,6 +71,12 @@ async function initializeSession() {
             return;
         }
 
+        // If already completed and failed
+        if (data.alreadyCompleted && !data.passed) {
+            showAlreadyFailed(data);
+            return;
+        }
+
         testData = data.test;
         const job = data.job || {};
 
@@ -129,6 +135,51 @@ function showAlreadyCompleted(data) {
     proceedBtn.onclick = () => {
         window.location.href = `/interview/${currentAppId}`;
     };
+}
+
+function showAlreadyFailed(data) {
+    document.getElementById('stageBriefing').style.display = 'none';
+    document.getElementById('stageAssessment').style.display = 'none';
+    const resultsStage = document.getElementById('stageResults');
+    resultsStage.style.display = 'block';
+
+    document.getElementById('resultIcon').textContent = '⚠️';
+    document.getElementById('resultTitle').textContent = 'Pre-Interview Skill Gate Not Cleared';
+    document.getElementById('resultSubtitle').textContent = data.summary || 'Previous score did not meet the role cutoff. Competencies must be verified before unlocking the AI interview.';
+    document.getElementById('resultScorePct').textContent = `${data.score || 0}%`;
+    document.getElementById('resultVerdictBadge').textContent = data.antiInflationVerdict === 'SUSPECTED_KEYWORD_INFLATION'
+        ? '⚠️ Potential Keyword Mismatch Detected'
+        : '⚠️ Score Below Cutoff Threshold';
+    document.getElementById('resultVerdictBadge').style.color = '#ef4444';
+    document.getElementById('resultCorrectStats').textContent = `Attempts used: ${data.attemptsCount || 1} of ${data.maxAttempts || 2} allowed (Cutoff: ${data.job?.cutoff || 70}%)`;
+
+    const proceedBtn = document.getElementById('btnProceedToInterview');
+    proceedBtn.style.display = 'none';
+
+    // Check if retake is possible
+    const actionsBox = document.getElementById('resultActions');
+    const existingRetakeBtn = document.getElementById('btnRetakeSkillTest');
+    if (existingRetakeBtn) existingRetakeBtn.remove();
+    const existingMsg = document.getElementById('retakeExhaustedMsg');
+    if (existingMsg) existingMsg.remove();
+
+    if (data.canRetake) {
+        const retakeBtn = document.createElement('button');
+        retakeBtn.id = 'btnRetakeSkillTest';
+        retakeBtn.className = 'btn-primary';
+        retakeBtn.style.cssText = 'padding: 0.65rem 1.75rem; font-weight: 700; background: linear-gradient(135deg, #4f46e5, #06b6d4); border: none;';
+        retakeBtn.innerHTML = `<span>🔄</span> Retake Skill Verification (Attempt ${(data.attemptsCount || 0) + 1} of ${data.maxAttempts || 2})`;
+        retakeBtn.onclick = () => {
+            window.location.href = `/skill-test/${currentAppId}?retake=true`;
+        };
+        actionsBox.appendChild(retakeBtn);
+    } else {
+        const infoMsg = document.createElement('div');
+        infoMsg.id = 'retakeExhaustedMsg';
+        infoMsg.style.cssText = 'width: 100%; font-size: 0.88rem; color: var(--text-muted); margin-top: 0.5rem;';
+        infoMsg.textContent = 'Maximum attempts reached. Your application has been logged for manual recruiter review.';
+        actionsBox.appendChild(infoMsg);
+    }
 }
 
 function startAssessment() {
@@ -320,6 +371,30 @@ async function submitAssessment() {
             verdictBadge.style.color = '#ef4444';
 
             proceedBtn.style.display = 'none';
+
+            const actionsBox = document.getElementById('resultActions');
+            const existingRetakeBtn = document.getElementById('btnRetakeSkillTest');
+            if (existingRetakeBtn) existingRetakeBtn.remove();
+            const existingMsg = document.getElementById('retakeExhaustedMsg');
+            if (existingMsg) existingMsg.remove();
+
+            if (ev.canRetake) {
+                const retakeBtn = document.createElement('button');
+                retakeBtn.id = 'btnRetakeSkillTest';
+                retakeBtn.className = 'btn-primary';
+                retakeBtn.style.cssText = 'padding: 0.65rem 1.75rem; font-weight: 700; background: linear-gradient(135deg, #4f46e5, #06b6d4); border: none;';
+                retakeBtn.innerHTML = `<span>🔄</span> Retake Skill Verification (Attempt ${(ev.attemptsCount || 0) + 1} of ${ev.maxAttempts || 2})`;
+                retakeBtn.onclick = () => {
+                    window.location.href = `/skill-test/${currentAppId}?retake=true`;
+                };
+                actionsBox.appendChild(retakeBtn);
+            } else {
+                const infoMsg = document.createElement('div');
+                infoMsg.id = 'retakeExhaustedMsg';
+                infoMsg.style.cssText = 'width: 100%; font-size: 0.88rem; color: var(--text-muted); margin-top: 0.5rem;';
+                infoMsg.textContent = 'Maximum attempts reached. Your application has been logged for manual recruiter review.';
+                actionsBox.appendChild(infoMsg);
+            }
         }
 
         // Render skill breakdown

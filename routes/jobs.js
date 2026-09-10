@@ -40,7 +40,8 @@ router.get('/:id', (req, res) => {
       optional_skills: job.optional_skills,
       certification_enabled: job.certification_enabled,
       certification_weight: job.certification_weight,
-      proctoring: job.proctoring
+      proctoring: job.proctoring,
+      preInterviewGate: job.preInterviewGate
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching job', error: error.message });
@@ -67,7 +68,9 @@ router.post('/', verifyToken, (req, res) => {
       employmentType,
       experienceLevel,
       proctoring,
-      proctoring_level
+      proctoring_level,
+      preInterviewGate,
+      pre_interview_gate
     } = req.body;
 
     if (!title || !description) {
@@ -77,6 +80,7 @@ router.post('/', verifyToken, (req, res) => {
     // Default companyId to authenticated admin's company if available
     const resolvedCompanyId = companyId || req.user.companyId || 'comp_airis';
     const resolvedProctoring = req.body.proctoring_config || proctoring || (proctoring_level ? { level: proctoring_level } : null);
+    const resolvedPreGate = req.body.pre_interview_gate_config || preInterviewGate || pre_interview_gate || null;
 
     const newJob = jobs.create({
       title,
@@ -91,7 +95,8 @@ router.post('/', verifyToken, (req, res) => {
       employmentType,
       experienceLevel,
       proctoring: resolvedProctoring,
-      proctoring_level
+      proctoring_level,
+      preInterviewGate: resolvedPreGate
     });
 
     res.status(201).json({

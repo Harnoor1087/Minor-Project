@@ -206,21 +206,37 @@ async function loadMyApplications() {
                 }) : 'Recent';
 
                 // Skill Verification Gate check
-                const isSkillPassed = app.skillVerification && app.skillVerification.status === 'passed';
-                const isSkillFailed = app.skillVerification && app.skillVerification.status === 'failed';
+                const sv = app.skillVerification || {};
+                const isSkillPassed = sv.status === 'passed';
+                const isSkillFailed = sv.status === 'failed';
+                const isBypassed = !!sv.bypassedViaPassport;
+                const isWaived = !!sv.waived;
+                const attemptsUsed = sv.attemptsCount || 1;
+                const maxAttempts = sv.maxAttempts || 2;
+                const canRetake = sv.canRetake !== false && attemptsUsed < maxAttempts;
+
                 let skillGateTag = '';
                 let interviewBtn = '';
 
                 if (!isSkillPassed) {
                     if (isSkillFailed) {
-                        skillGateTag = `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; border: 1px solid var(--danger);">⚠️ Skill Gate: ${app.skillVerification.score}% (Cutoff Unmet)</span>`;
-                        interviewBtn = `
-                            <button class="btn-secondary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; border-color: var(--danger); color: var(--danger); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="window.location.href='/skill-test/${app._id}'">
-                                <span>🔄</span> Retake Skill Gate (${app.skillVerification.score}%)
-                            </button>
-                        `;
+                        if (canRetake) {
+                            skillGateTag = `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; border: 1px solid var(--danger);">⚠️ Gate Unmet (${sv.score || 0}% / Cutoff: ${sv.cutoff || 70}%)</span>`;
+                            interviewBtn = `
+                                <button class="btn-secondary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; border-color: var(--danger); color: var(--danger); font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="window.location.href='/skill-test/${app._id}?retake=true'">
+                                    <span>🔄</span> Retake Skill Check (Attempt ${attemptsUsed + 1} of ${maxAttempts})
+                                </button>
+                            `;
+                        } else {
+                            skillGateTag = `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; border: 1px solid var(--danger);">⚠️ Gate Locked: Max Retakes Reached (${sv.score || 0}%)</span>`;
+                            interviewBtn = `
+                                <button class="btn-secondary" disabled style="opacity: 0.65; cursor: not-allowed; padding: 0.45rem 1.15rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;">
+                                    <span>🔒</span> In Recruiter Review
+                                </button>
+                            `;
+                        }
                     } else {
-                        skillGateTag = `<span class="badge" style="background: rgba(79, 70, 229, 0.12); color: var(--accent); font-size: 0.78rem; border: 1px solid var(--accent);">📝 Skill Gate Pending</span>`;
+                        skillGateTag = `<span class="badge" style="background: rgba(79, 70, 229, 0.12); color: var(--accent); font-size: 0.78rem; border: 1px solid var(--accent);">⚡ Pre-Interview Gate Required</span>`;
                         interviewBtn = `
                             <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: linear-gradient(135deg, #4f46e5, #06b6d4); border: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);" onclick="window.location.href='/skill-test/${app._id}'">
                                 <span>⚡</span> Verify Claimed Skills (5 min)
@@ -228,7 +244,13 @@ async function loadMyApplications() {
                         `;
                     }
                 } else {
-                    skillGateTag = `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--success); font-size: 0.78rem; border: 1px solid var(--success);">✅ Skills Verified (${app.skillVerification.score}%)</span>`;
+                    if (isWaived) {
+                        skillGateTag = `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-size: 0.78rem; border: 1px solid var(--success);">🔓 Gate Waived by Recruiter</span>`;
+                    } else if (isBypassed) {
+                        skillGateTag = `<span class="badge" style="background: rgba(79, 70, 229, 0.15); color: var(--accent); font-size: 0.78rem; border: 1px solid var(--accent);">🚀 Skill Passport Fast-Track (${sv.score}%)</span>`;
+                    } else {
+                        skillGateTag = `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: var(--success); font-size: 0.78rem; border: 1px solid var(--success);">✅ Skills Verified (${sv.score}%)</span>`;
+                    }
 
                     if (app.interview) {
                         if (app.interview.status === 'completed') {

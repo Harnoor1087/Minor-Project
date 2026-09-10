@@ -8,7 +8,9 @@
       "role": "admin",
       "company": "AIRIS Talent Global",
       "createdAt": "2026-01-15T09:00:00.000Z",
-      "companyId": "comp_airis"
+      "companyId": "comp_airis",
+      "verifiedSkills": [],
+      "masterResume": null
     },
     {
       "_id": "usr_applicant_1",
@@ -17,7 +19,31 @@
       "passwordHash": "$2a$10$y5zXRyf/aPD7H4L0gho1PuLHndNPksAC4iCdHyEe4fh8scAyVAq22",
       "role": "applicant",
       "company": "",
-      "createdAt": "2026-02-01T10:30:00.000Z"
+      "createdAt": "2026-02-01T10:30:00.000Z",
+      "verifiedSkills": [
+        {
+          "skill": "javascript",
+          "score": 100,
+          "badge": "Verified JAVASCRIPT Specialist",
+          "verifiedAt": "2026-09-10T15:02:36.240Z",
+          "expiresAt": "2026-12-09T15:02:36.240Z"
+        },
+        {
+          "skill": "nodejs",
+          "score": 100,
+          "badge": "Verified NODEJS Specialist",
+          "verifiedAt": "2026-09-10T15:02:36.240Z",
+          "expiresAt": "2026-12-09T15:02:36.240Z"
+        },
+        {
+          "skill": "sql",
+          "score": 100,
+          "badge": "Verified SQL Specialist",
+          "verifiedAt": "2026-09-10T15:02:36.240Z",
+          "expiresAt": "2026-12-09T15:02:36.240Z"
+        }
+      ],
+      "masterResume": null
     },
     {
       "_id": "usr_1788833949660_ndmt8",
@@ -27,7 +53,9 @@
       "role": "admin",
       "company": "Infosys",
       "createdAt": "2026-09-08T02:19:09.660Z",
-      "companyId": "comp_airis"
+      "companyId": "comp_airis",
+      "verifiedSkills": [],
+      "masterResume": null
     },
     {
       "_id": "usr_1788872448626_56rsk",
@@ -37,7 +65,9 @@
       "role": "admin",
       "company": "Infosys Technologies",
       "companyId": "comp_infosys",
-      "createdAt": "2026-09-08T13:00:48.627Z"
+      "createdAt": "2026-09-08T13:00:48.627Z",
+      "verifiedSkills": [],
+      "masterResume": null
     },
     {
       "_id": "usr_1788877613556_cbr0b",
@@ -47,7 +77,9 @@
       "role": "admin",
       "company": "Infosys Technologies",
       "companyId": "comp_infosys",
-      "createdAt": "2026-09-08T14:26:53.556Z"
+      "createdAt": "2026-09-08T14:26:53.556Z",
+      "verifiedSkills": [],
+      "masterResume": null
     },
     {
       "_id": "usr_1788877730839_azye1",
@@ -57,7 +89,9 @@
       "role": "applicant",
       "company": "",
       "companyId": "",
-      "createdAt": "2026-09-08T14:28:50.839Z"
+      "createdAt": "2026-09-08T14:28:50.839Z",
+      "verifiedSkills": [],
+      "masterResume": null
     },
     {
       "_id": "usr_1788881523874_2ye3a",
@@ -67,7 +101,9 @@
       "role": "admin",
       "company": "Wipro",
       "companyId": "comp_1788881523874_d2rw",
-      "createdAt": "2026-09-08T15:32:03.874Z"
+      "createdAt": "2026-09-08T15:32:03.874Z",
+      "verifiedSkills": [],
+      "masterResume": null
     },
     {
       "_id": "usr_1788881825200_c69y9",
@@ -77,7 +113,9 @@
       "role": "applicant",
       "company": "",
       "companyId": "",
-      "createdAt": "2026-09-08T15:37:05.200Z"
+      "createdAt": "2026-09-08T15:37:05.200Z",
+      "verifiedSkills": [],
+      "masterResume": null
     },
     {
       "_id": "usr_1788955427870_0op6m",
@@ -87,7 +125,9 @@
       "role": "applicant",
       "company": "",
       "companyId": "",
-      "createdAt": "2026-09-09T12:03:47.870Z"
+      "createdAt": "2026-09-09T12:03:47.870Z",
+      "verifiedSkills": [],
+      "masterResume": null
     }
   ],
   "jobs": [
@@ -129,6 +169,14 @@
         "enforce_fullscreen": false,
         "max_infractions": 5,
         "label": "Standard ATS (Face & Tab-Switch Monitored)"
+      },
+      "preInterviewGate": {
+        "enabled": true,
+        "cutoffScore": 70,
+        "durationMinutes": 5,
+        "allowRetakes": true,
+        "maxRetakes": 2,
+        "passportBypassEnabled": true
       }
     },
     {
@@ -170,6 +218,14 @@
         "enforce_fullscreen": false,
         "max_infractions": 5,
         "label": "Standard ATS (Face & Tab-Switch Monitored)"
+      },
+      "preInterviewGate": {
+        "enabled": true,
+        "cutoffScore": 70,
+        "durationMinutes": 5,
+        "allowRetakes": true,
+        "maxRetakes": 2,
+        "passportBypassEnabled": true
       }
     },
     {
@@ -210,6 +266,14 @@
         "enforce_fullscreen": false,
         "max_infractions": 5,
         "label": "Standard ATS (Face & Tab-Switch Monitored)"
+      },
+      "preInterviewGate": {
+        "enabled": true,
+        "cutoffScore": 70,
+        "durationMinutes": 5,
+        "allowRetakes": true,
+        "maxRetakes": 2,
+        "passportBypassEnabled": true
       }
     },
     {
@@ -250,6 +314,14 @@
         "enforce_fullscreen": true,
         "max_infractions": 3,
         "label": "Strict Enterprise (Anti-Malpractice Active)"
+      },
+      "preInterviewGate": {
+        "enabled": true,
+        "cutoffScore": 70,
+        "durationMinutes": 5,
+        "allowRetakes": true,
+        "maxRetakes": 2,
+        "passportBypassEnabled": true
       }
     },
     {
@@ -288,7 +360,15 @@
         "max_infractions": 3,
         "label": "Strict Enterprise (Anti-Malpractice Active)"
       },
-      "createdAt": "2026-09-09T13:07:26.621Z"
+      "createdAt": "2026-09-09T13:07:26.621Z",
+      "preInterviewGate": {
+        "enabled": true,
+        "cutoffScore": 70,
+        "durationMinutes": 5,
+        "allowRetakes": true,
+        "maxRetakes": 2,
+        "passportBypassEnabled": true
+      }
     }
   ],
   "applications": [
@@ -389,7 +469,13 @@
           "body": "Dear Alex,\n\nOn behalf of AIRIS Talent Global, we are thrilled to formally extend an offer of employment for the role of Senior Full Stack Software Engineer. Your performance in the technical assessment was exemplary, reflecting high technical accuracy (88%) and clean proctoring integrity.\n\nWe look forward to welcoming you aboard!"
         }
       },
-      "appliedAt": "2026-09-07T16:54:57.855Z"
+      "appliedAt": "2026-09-07T16:54:57.855Z",
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "completedAt": null
+      }
     },
     {
       "_id": "app_elena_rostova_01",
@@ -463,7 +549,13 @@
         "salaryBenchmark": "$165,000 - $190,000 USD",
         "percentile": 99
       },
-      "appliedAt": "2026-09-07T14:10:00.000Z"
+      "appliedAt": "2026-09-07T14:10:00.000Z",
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "completedAt": null
+      }
     },
     {
       "_id": "app_devon_vance_02",
@@ -543,7 +635,13 @@
         "salaryBenchmark": "$105,000 - $120,000 USD",
         "percentile": 58
       },
-      "appliedAt": "2026-09-07T18:00:00.000Z"
+      "appliedAt": "2026-09-07T18:00:00.000Z",
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "completedAt": null
+      }
     },
     {
       "_id": "app_1788834760613_y6sld",
@@ -569,7 +667,13 @@
       "category": "Strong Match",
       "eligibility": "Eligible",
       "status": "pending",
-      "appliedAt": "2026-09-08T02:32:40.613Z"
+      "appliedAt": "2026-09-08T02:32:40.613Z",
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "completedAt": null
+      }
     },
     {
       "_id": "app_1788878063975_vf6im",
@@ -652,6 +756,12 @@
         },
         "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
         "generatedAt": "2026-09-08T14:34:23.975Z"
+      },
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "completedAt": null
       }
     },
     {
@@ -734,6 +844,12 @@
         },
         "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
         "generatedAt": "2026-09-08T14:42:03.644Z"
+      },
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "completedAt": null
       }
     },
     {
@@ -892,6 +1008,559 @@
         },
         "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
         "generatedAt": "2026-09-09T13:09:04.004Z"
+      },
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "completedAt": null
+      }
+    },
+    {
+      "_id": "app_1789052488182_sda9q",
+      "applicantId": "usr_applicant_1",
+      "applicantName": "Alex Morgan",
+      "applicantEmail": "alex.morgan@example.com",
+      "jobId": 1,
+      "jobTitle": "Full Stack Software Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "/app/applet/uploads/1789052486991-alex_morgan_resume.txt",
+      "certificates": [],
+      "scores": {
+        "semantic": 0.35,
+        "skill": 0.2,
+        "experience": 0.65,
+        "certification": 0,
+        "final": 0.35
+      },
+      "category": "Weak Match",
+      "eligibility": "Rejected - Missing Mandatory Skills",
+      "status": "skill_gate_failed",
+      "proctoringLevel": "medium",
+      "identityVerification": {
+        "status": "VERIFIED",
+        "verified": true,
+        "similarity": 1,
+        "claimedName": "Alex Morgan",
+        "resumeName": "Alex Morgan",
+        "confidence": "HIGH",
+        "message": "Candidate identity successfully matched with resume header."
+      },
+      "certifications": {
+        "total_uploaded": 0,
+        "authentic": 0,
+        "relevant": 0,
+        "rejected_mismatches": 0,
+        "audits": []
+      },
+      "skillVerification": {
+        "status": "failed",
+        "score": 0,
+        "passed": false,
+        "cutoff": 70,
+        "durationMinutes": 5,
+        "maxAttempts": 3,
+        "attemptsCount": 1,
+        "completedAt": "2026-09-10T15:01:35.472Z",
+        "activeTest": null,
+        "startedAt": "2026-09-10T15:01:35.461Z",
+        "updatedAt": "2026-09-10T15:01:35.472Z",
+        "summary": "Candidate scored 0% on foundational questions for skills claimed on resume. High risk of keyword-stuffing. AI interview access withheld to avoid candidate distress and system overhead.",
+        "antiInflationVerdict": "SUSPECTED_KEYWORD_INFLATION",
+        "verifiedSkills": [],
+        "knowledgeGaps": [
+          {
+            "skill": "nodejs",
+            "score": 0,
+            "status": "GAP_DETECTED",
+            "recommendation": "Review core conceptual implementations and practical patterns in nodejs."
+          },
+          {
+            "skill": "javascript",
+            "score": 0,
+            "status": "GAP_DETECTED",
+            "recommendation": "Review core conceptual implementations and practical patterns in javascript."
+          },
+          {
+            "skill": "sql",
+            "score": 0,
+            "status": "GAP_DETECTED",
+            "recommendation": "Review core conceptual implementations and practical patterns in sql."
+          }
+        ],
+        "tabSwitches": 0,
+        "history": [
+          {
+            "attempt": 1,
+            "score": 0,
+            "passed": false,
+            "completedAt": "2026-09-10T15:01:35.472Z"
+          }
+        ],
+        "results": {
+          "totalQuestions": 6,
+          "correctCount": 0,
+          "scorePercentage": 0,
+          "passingCutoff": 70,
+          "passed": false,
+          "antiInflationVerdict": "SUSPECTED_KEYWORD_INFLATION",
+          "summary": "Candidate scored 0% on foundational questions for skills claimed on resume. High risk of keyword-stuffing. AI interview access withheld to avoid candidate distress and system overhead.",
+          "verifiedSkills": [],
+          "knowledgeGaps": [
+            {
+              "skill": "nodejs",
+              "score": 0,
+              "status": "GAP_DETECTED",
+              "recommendation": "Review core conceptual implementations and practical patterns in nodejs."
+            },
+            {
+              "skill": "javascript",
+              "score": 0,
+              "status": "GAP_DETECTED",
+              "recommendation": "Review core conceptual implementations and practical patterns in javascript."
+            },
+            {
+              "skill": "sql",
+              "score": 0,
+              "status": "GAP_DETECTED",
+              "recommendation": "Review core conceptual implementations and practical patterns in sql."
+            }
+          ],
+          "questionResults": [
+            {
+              "id": "node_1",
+              "skill": "nodejs",
+              "question": "In Express.js middleware, what happens if you do NOT call `next()` or return a response (e.g., `res.send()`)?",
+              "userSelected": null,
+              "correctIndex": 1,
+              "isCorrect": false,
+              "explanation": "Express middleware chains require either passing control to the next handler with `next()` or terminating with a response. Failing to do either leaves the request hanging."
+            },
+            {
+              "id": "node_2",
+              "skill": "nodejs",
+              "question": "Why should CPU-intensive operations (like heavy cryptographic loops or massive JSON parsing) be avoided on the main Node.js thread?",
+              "userSelected": null,
+              "correctIndex": 1,
+              "isCorrect": false,
+              "explanation": "Because JavaScript execution runs on a single event-loop thread, long synchronous operations starve the loop and freeze throughput."
+            },
+            {
+              "id": "js_1",
+              "skill": "javascript",
+              "question": "What is printed to the console?\n\n```javascript\nconsole.log(typeof null);\nconsole.log([] == false);\n```",
+              "userSelected": null,
+              "correctIndex": 1,
+              "isCorrect": false,
+              "explanation": "`typeof null` historically returns \"object\". An empty array `[]` coerces to `\"\"` which coerces to `0`, matching `false` (0)."
+            },
+            {
+              "id": "js_3",
+              "skill": "javascript",
+              "question": "In JavaScript closures, what occurs when an inner function accesses a variable from an outer scope?",
+              "userSelected": null,
+              "correctIndex": 1,
+              "isCorrect": false,
+              "explanation": "Closures retain access to their outer lexical scope variables by reference even after the enclosing scope has returned."
+            },
+            {
+              "id": "sql_1",
+              "skill": "sql",
+              "question": "What is the primary difference between `WHERE` and `HAVING` clauses in SQL?",
+              "userSelected": null,
+              "correctIndex": 0,
+              "isCorrect": false,
+              "explanation": "`WHERE` filters individual table rows prior to aggregation; `HAVING` applies conditions to grouped/aggregated summary rows."
+            },
+            {
+              "id": "js_2",
+              "skill": "javascript",
+              "question": "What is the key difference between microtasks (e.g., Promise callbacks) and macrotasks (e.g., setTimeout) in the Node.js / Browser Event Loop?",
+              "userSelected": null,
+              "correctIndex": 1,
+              "isCorrect": false,
+              "explanation": "Microtasks (Promises, process.nextTick) have higher priority and drain completely before the event loop advances to the next macrotask."
+            }
+          ],
+          "evaluatedAt": "2026-09-10T15:01:35.472Z",
+          "tabSwitches": 0
+        }
+      },
+      "interview": {
+        "status": "not_started",
+        "overallScore": null,
+        "recommendation": null,
+        "questions": [],
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "infractions": []
+        },
+        "completedAt": null
+      },
+      "appliedAt": "2026-09-10T15:01:28.182Z",
+      "intelligence": {
+        "executiveSummary": "Alex Morgan demonstrates a 35% overall compatibility score for the Full Stack Software Engineer opening. The profile shows active proficiency in sql, docker with a 35% semantic context alignment with role responsibilities.",
+        "coreStrengths": [
+          "Demonstrated capability in required core competencies: sql, docker.",
+          "Relevant domain background evaluated at 65% depth for Full Stack Software Engineer.",
+          "Structured professional resume with demonstrated project delivery in modern technology stacks."
+        ],
+        "skillGaps": [
+          "Requires evaluation or ramp-up in mandatory competency: \"javascript\" (Moderate Risk)",
+          "Requires evaluation or ramp-up in mandatory competency: \"nodejs\" (Moderate Risk)",
+          "Requires evaluation or ramp-up in mandatory competency: \"express\" (Moderate Risk)",
+          "Requires evaluation or ramp-up in mandatory competency: \"git\" (Moderate Risk)"
+        ],
+        "interviewQuestions": [
+          {
+            "question": "In your recent work, how have you architected and scaled systems using sql to handle real-world latency and concurrent load?",
+            "focus": "sql & Systems Design",
+            "expectedSignals": "Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes."
+          },
+          {
+            "question": "This position relies on javascript. While your background shows strong parallels, how would you approach ramping up and applying this in production within the first 30 days?",
+            "focus": "Adaptability & javascript",
+            "expectedSignals": "Candidate articulates structured debugging methodology and fast-learning engineering mindset."
+          },
+          {
+            "question": "How do you approach automated testing, continuous delivery, and code review standards when shipping under tight deadlines?",
+            "focus": "Engineering Rigor & Team Velocity",
+            "expectedSignals": "Demonstrates balanced velocity with code quality, automated test pipelines, and constructive peer collaboration."
+          }
+        ],
+        "hiringRecommendation": {
+          "decision": "Hold / Realign for Alternative Openings",
+          "reasoning": "The candidate demonstrates solid potential but has specific competency gaps that should be validated during technical screening."
+        },
+        "applicantFeedback": {
+          "resumeTips": [
+            "Quantify project achievements with measurable business impact (e.g., reduced response times by 30%, served 50k+ daily users).",
+            "Ensure explicit keywords for core target skills like javascript, nodejs, express appear prominently in recent role bullet points."
+          ],
+          "suggestedActions": [
+            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring javascript.",
+            "Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority."
+          ]
+        },
+        "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
+        "generatedAt": "2026-09-10T15:01:28.182Z"
+      }
+    },
+    {
+      "_id": "app_1789052556190_v4j7c",
+      "applicantId": "usr_applicant_1",
+      "applicantName": "Alex Morgan",
+      "applicantEmail": "alex.morgan@example.com",
+      "jobId": 1,
+      "jobTitle": "Full Stack Software Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "/app/applet/uploads/1789052549183-alex_resume.txt",
+      "certificates": [],
+      "scores": {
+        "semantic": 0.35,
+        "skill": 0.2,
+        "experience": 0.65,
+        "certification": 0,
+        "final": 0.35
+      },
+      "category": "Weak Match",
+      "eligibility": "Rejected - Missing Mandatory Skills",
+      "status": "skill_verified",
+      "proctoringLevel": "medium",
+      "identityVerification": {
+        "status": "VERIFIED",
+        "verified": true,
+        "similarity": 1,
+        "claimedName": "Alex Morgan",
+        "resumeName": "Alex Morgan",
+        "confidence": "HIGH",
+        "message": "Candidate identity successfully matched with resume header."
+      },
+      "certifications": {
+        "total_uploaded": 0,
+        "authentic": 0,
+        "relevant": 0,
+        "rejected_mismatches": 0,
+        "audits": []
+      },
+      "skillVerification": {
+        "status": "passed",
+        "score": 100,
+        "passed": true,
+        "cutoff": 70,
+        "durationMinutes": 5,
+        "maxAttempts": 3,
+        "attemptsCount": 2,
+        "completedAt": "2026-09-10T15:02:36.239Z",
+        "activeTest": null,
+        "startedAt": "2026-09-10T15:02:36.231Z",
+        "updatedAt": "2026-09-10T15:02:36.239Z",
+        "summary": "Candidate verified claimed skills with a score of 100%. Qualified for AI interview.",
+        "antiInflationVerdict": "VERIFIED_COMPETENCY",
+        "verifiedSkills": [
+          {
+            "skill": "javascript",
+            "score": 100,
+            "status": "VERIFIED",
+            "badge": "Verified JAVASCRIPT Specialist"
+          },
+          {
+            "skill": "nodejs",
+            "score": 100,
+            "status": "VERIFIED",
+            "badge": "Verified NODEJS Specialist"
+          },
+          {
+            "skill": "sql",
+            "score": 100,
+            "status": "VERIFIED",
+            "badge": "Verified SQL Specialist"
+          }
+        ],
+        "knowledgeGaps": [],
+        "tabSwitches": 0,
+        "history": [
+          {
+            "attempt": 1,
+            "score": 0,
+            "passed": false,
+            "completedAt": "2026-09-10T15:02:36.217Z"
+          },
+          {
+            "attempt": 2,
+            "score": 100,
+            "passed": true,
+            "completedAt": "2026-09-10T15:02:36.239Z"
+          }
+        ],
+        "results": {
+          "totalQuestions": 6,
+          "correctCount": 6,
+          "scorePercentage": 100,
+          "passingCutoff": 70,
+          "passed": true,
+          "antiInflationVerdict": "VERIFIED_COMPETENCY",
+          "summary": "Candidate verified claimed skills with a score of 100%. Qualified for AI interview.",
+          "verifiedSkills": [
+            {
+              "skill": "javascript",
+              "score": 100,
+              "status": "VERIFIED",
+              "badge": "Verified JAVASCRIPT Specialist"
+            },
+            {
+              "skill": "nodejs",
+              "score": 100,
+              "status": "VERIFIED",
+              "badge": "Verified NODEJS Specialist"
+            },
+            {
+              "skill": "sql",
+              "score": 100,
+              "status": "VERIFIED",
+              "badge": "Verified SQL Specialist"
+            }
+          ],
+          "knowledgeGaps": [],
+          "questionResults": [
+            {
+              "id": "js_3",
+              "skill": "javascript",
+              "question": "In JavaScript closures, what occurs when an inner function accesses a variable from an outer scope?",
+              "userSelected": 1,
+              "correctIndex": 1,
+              "isCorrect": true,
+              "explanation": "Closures retain access to their outer lexical scope variables by reference even after the enclosing scope has returned."
+            },
+            {
+              "id": "js_2",
+              "skill": "javascript",
+              "question": "What is the key difference between microtasks (e.g., Promise callbacks) and macrotasks (e.g., setTimeout) in the Node.js / Browser Event Loop?",
+              "userSelected": 1,
+              "correctIndex": 1,
+              "isCorrect": true,
+              "explanation": "Microtasks (Promises, process.nextTick) have higher priority and drain completely before the event loop advances to the next macrotask."
+            },
+            {
+              "id": "node_1",
+              "skill": "nodejs",
+              "question": "In Express.js middleware, what happens if you do NOT call `next()` or return a response (e.g., `res.send()`)?",
+              "userSelected": 1,
+              "correctIndex": 1,
+              "isCorrect": true,
+              "explanation": "Express middleware chains require either passing control to the next handler with `next()` or terminating with a response. Failing to do either leaves the request hanging."
+            },
+            {
+              "id": "node_2",
+              "skill": "nodejs",
+              "question": "Why should CPU-intensive operations (like heavy cryptographic loops or massive JSON parsing) be avoided on the main Node.js thread?",
+              "userSelected": 1,
+              "correctIndex": 1,
+              "isCorrect": true,
+              "explanation": "Because JavaScript execution runs on a single event-loop thread, long synchronous operations starve the loop and freeze throughput."
+            },
+            {
+              "id": "sql_1",
+              "skill": "sql",
+              "question": "What is the primary difference between `WHERE` and `HAVING` clauses in SQL?",
+              "userSelected": 0,
+              "correctIndex": 0,
+              "isCorrect": true,
+              "explanation": "`WHERE` filters individual table rows prior to aggregation; `HAVING` applies conditions to grouped/aggregated summary rows."
+            },
+            {
+              "id": "js_1",
+              "skill": "javascript",
+              "question": "What is printed to the console?\n\n```javascript\nconsole.log(typeof null);\nconsole.log([] == false);\n```",
+              "userSelected": 1,
+              "correctIndex": 1,
+              "isCorrect": true,
+              "explanation": "`typeof null` historically returns \"object\". An empty array `[]` coerces to `\"\"` which coerces to `0`, matching `false` (0)."
+            }
+          ],
+          "evaluatedAt": "2026-09-10T15:02:36.239Z",
+          "tabSwitches": 0
+        }
+      },
+      "interview": {
+        "status": "in_progress",
+        "overallScore": null,
+        "recommendation": null,
+        "questions": [
+          {
+            "id": 1,
+            "category": "Core Competency Alignment",
+            "targetArea": "JAVASCRIPT & Practical Implementation",
+            "rationale": "Directly assesses candidate's verified capability in javascript which is vital for this Full Stack Software Engineer position.",
+            "question": "In your recent projects leveraging javascript, what was the most demanding technical hurdle you resolved? Specifically detail the design choices, edge cases, and performance considerations you took.",
+            "keyFocusPoints": [
+              "Architectural decisions with javascript",
+              "Handling concurrency, throughput, or memory constraints",
+              "Testing and production verification strategies"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          },
+          {
+            "id": 2,
+            "category": "Skill Gap & Adaptability",
+            "targetArea": "Adoption of EXPRESS in Production",
+            "rationale": "Our screening identified express as a core requirement for Full Stack Software Engineer. This investigates your problem-solving adaptability.",
+            "question": "This role at AIRIS Talent Global requires strong proficiency with express. Even if your primary background is in other tooling, how would you design and implement a solution utilizing express? What foundational concepts translate directly from your existing toolset?",
+            "keyFocusPoints": [
+              "Fundamental paradigms of express",
+              "Translating analogous patterns from known technologies",
+              "Mitigating risks when adopting new system components"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          },
+          {
+            "id": 3,
+            "category": "System Architecture & Scalability",
+            "targetArea": "End-to-End System Design for Full Stack Software Engineer",
+            "rationale": "Evaluates holistic architectural thinking, security boundaries, and scalability for high-load systems.",
+            "question": "Imagine you are tasked with architecting a fault-tolerant subsystem for AIRIS Talent Global that processes high-frequency user requests. How would you structure data consistency, caching, asynchronous communication, and observability?",
+            "keyFocusPoints": [
+              "Data consistency vs latency trade-offs",
+              "Resilience (circuit breakers, retries, dead-letter queues)",
+              "Metrics, structured logging, and distributed tracing"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          },
+          {
+            "id": 4,
+            "category": "Engineering Trade-offs & Production Incident",
+            "targetArea": "Incident Triage, Root-Cause Analysis & Quality Assurance",
+            "rationale": "Assesses operational maturity, calm under pressure, and systemic learning from outages.",
+            "question": "Describe a scenario where a critical bug or performance degradation escaped into production. Walk us through your triage protocol, root cause analysis, immediate remediation, and the architectural safeguards you put in place to prevent recurrence.",
+            "keyFocusPoints": [
+              "Immediate containment and stakeholder communication",
+              "Systematic root cause isolation (RCA)",
+              "Preventative automation (CI/CD regression tests, alerting)"
+            ],
+            "candidateAnswer": "",
+            "evaluation": null,
+            "answeredAt": null
+          }
+        ],
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "maxInfractions": 5,
+          "infractions": []
+        },
+        "completedAt": null,
+        "startedAt": "2026-09-10T15:02:43.251Z",
+        "proctoringConfig": {
+          "level": "medium",
+          "require_camera": true,
+          "require_microphone": false,
+          "face_detection": true,
+          "multi_face_detection": true,
+          "tab_switch_detection": true,
+          "head_pose_detection": false,
+          "enforce_fullscreen": false,
+          "max_infractions": 5,
+          "label": "Standard ATS (Face & Tab-Switch Monitored)"
+        }
+      },
+      "appliedAt": "2026-09-10T15:02:36.190Z",
+      "intelligence": {
+        "executiveSummary": "Alex Morgan demonstrates a 35% overall compatibility score for the Full Stack Software Engineer opening. The profile shows active proficiency in sql, docker with a 35% semantic context alignment with role responsibilities.",
+        "coreStrengths": [
+          "Demonstrated capability in required core competencies: sql, docker.",
+          "Relevant domain background evaluated at 65% depth for Full Stack Software Engineer.",
+          "Structured professional resume with demonstrated project delivery in modern technology stacks."
+        ],
+        "skillGaps": [
+          "Requires evaluation or ramp-up in mandatory competency: \"javascript\" (Moderate Risk)",
+          "Requires evaluation or ramp-up in mandatory competency: \"nodejs\" (Moderate Risk)",
+          "Requires evaluation or ramp-up in mandatory competency: \"express\" (Moderate Risk)",
+          "Requires evaluation or ramp-up in mandatory competency: \"git\" (Moderate Risk)"
+        ],
+        "interviewQuestions": [
+          {
+            "question": "In your recent work, how have you architected and scaled systems using sql to handle real-world latency and concurrent load?",
+            "focus": "sql & Systems Design",
+            "expectedSignals": "Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes."
+          },
+          {
+            "question": "This position relies on javascript. While your background shows strong parallels, how would you approach ramping up and applying this in production within the first 30 days?",
+            "focus": "Adaptability & javascript",
+            "expectedSignals": "Candidate articulates structured debugging methodology and fast-learning engineering mindset."
+          },
+          {
+            "question": "How do you approach automated testing, continuous delivery, and code review standards when shipping under tight deadlines?",
+            "focus": "Engineering Rigor & Team Velocity",
+            "expectedSignals": "Demonstrates balanced velocity with code quality, automated test pipelines, and constructive peer collaboration."
+          }
+        ],
+        "hiringRecommendation": {
+          "decision": "Hold / Realign for Alternative Openings",
+          "reasoning": "The candidate demonstrates solid potential but has specific competency gaps that should be validated during technical screening."
+        },
+        "applicantFeedback": {
+          "resumeTips": [
+            "Quantify project achievements with measurable business impact (e.g., reduced response times by 30%, served 50k+ daily users).",
+            "Ensure explicit keywords for core target skills like javascript, nodejs, express appear prominently in recent role bullet points."
+          ],
+          "suggestedActions": [
+            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring javascript.",
+            "Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority."
+          ]
+        },
+        "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
+        "generatedAt": "2026-09-10T15:02:36.190Z"
       }
     }
   ],

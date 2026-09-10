@@ -90,6 +90,17 @@ function normalizeProctoringConfig(proctoringInput = {}) {
   };
 }
 
+function normalizePreInterviewGateConfig(gateInput = {}) {
+  return {
+    enabled: gateInput.enabled !== undefined ? Boolean(gateInput.enabled) : true,
+    cutoffScore: gateInput.cutoffScore !== undefined ? parseInt(gateInput.cutoffScore, 10) : (gateInput.cutoff ? parseInt(gateInput.cutoff, 10) : 70),
+    durationMinutes: gateInput.durationMinutes ? parseInt(gateInput.durationMinutes, 10) : 5,
+    allowRetakes: gateInput.allowRetakes !== undefined ? Boolean(gateInput.allowRetakes) : true,
+    maxRetakes: gateInput.maxRetakes !== undefined ? parseInt(gateInput.maxRetakes, 10) : 2,
+    passportBypassEnabled: gateInput.passportBypassEnabled !== undefined ? Boolean(gateInput.passportBypassEnabled) : true
+  };
+}
+
 const defaultData = {
   companies: defaultCompanies,
   users: [
@@ -130,7 +141,8 @@ const defaultData = {
       optional_skills: ['react', 'docker', 'mongodb', 'typescript', 'rest api'],
       certification_enabled: true,
       certification_weight: 0.2,
-      proctoring: normalizeProctoringConfig({ level: 'high' })
+      proctoring: normalizeProctoringConfig({ level: 'high' }),
+      preInterviewGate: normalizePreInterviewGateConfig({ enabled: true, cutoffScore: 70 })
     },
     {
       id: 2,
@@ -147,7 +159,8 @@ const defaultData = {
       optional_skills: ['tensorflow', 'pytorch', 'llm', 'numpy', 'pandas', 'git'],
       certification_enabled: true,
       certification_weight: 0.25,
-      proctoring: normalizeProctoringConfig({ level: 'high' })
+      proctoring: normalizeProctoringConfig({ level: 'high' }),
+      preInterviewGate: normalizePreInterviewGateConfig({ enabled: true, cutoffScore: 75 })
     },
     {
       id: 3,
@@ -164,7 +177,8 @@ const defaultData = {
       optional_skills: ['gcp', 'python', 'security', 'microservices', 'kafka'],
       certification_enabled: true,
       certification_weight: 0.3,
-      proctoring: normalizeProctoringConfig({ level: 'medium' })
+      proctoring: normalizeProctoringConfig({ level: 'medium' }),
+      preInterviewGate: normalizePreInterviewGateConfig({ enabled: true, cutoffScore: 70 })
     },
     {
       id: 4,
@@ -181,7 +195,8 @@ const defaultData = {
       optional_skills: ['opencv', 'cuda', 'control systems', 'slam', 'docker'],
       certification_enabled: false,
       certification_weight: 0.15,
-      proctoring: normalizeProctoringConfig({ level: 'high' })
+      proctoring: normalizeProctoringConfig({ level: 'high' }),
+      preInterviewGate: normalizePreInterviewGateConfig({ enabled: true, cutoffScore: 70 })
     }
   ],
   applications: []
@@ -227,7 +242,8 @@ function loadFromDisk() {
             location: j.location || 'Remote',
             employmentType: j.employmentType || 'Full-time',
             experienceLevel: j.experienceLevel || 'Mid Level',
-            proctoring: j.proctoring ? normalizeProctoringConfig(j.proctoring) : normalizeProctoringConfig({ level: 'medium' })
+            proctoring: j.proctoring ? normalizeProctoringConfig(j.proctoring) : normalizeProctoringConfig({ level: 'medium' }),
+            preInterviewGate: j.preInterviewGate ? normalizePreInterviewGateConfig(j.preInterviewGate) : normalizePreInterviewGateConfig({ enabled: true, cutoffScore: 70 })
           };
         });
 
@@ -494,6 +510,7 @@ const jobs = {
     }
 
     const proctoring = normalizeProctoringConfig(data.proctoring || { level: data.proctoring_level || 'medium' });
+    const preInterviewGate = normalizePreInterviewGateConfig(data.preInterviewGate || data.pre_interview_gate || {});
 
     const newJob = {
       id: maxId + 1,
@@ -511,6 +528,7 @@ const jobs = {
       certification_enabled: Boolean(data.certification_enabled),
       certification_weight: parseFloat(data.certification_weight) || 0.2,
       proctoring,
+      preInterviewGate,
       createdAt: new Date().toISOString()
     };
     state.jobs.push(newJob);
@@ -527,6 +545,11 @@ const jobs = {
     let proctoring = existing.proctoring;
     if (data.proctoring || data.proctoring_level) {
       proctoring = normalizeProctoringConfig(data.proctoring || { level: data.proctoring_level, ...data });
+    }
+
+    let preInterviewGate = existing.preInterviewGate ? normalizePreInterviewGateConfig(existing.preInterviewGate) : normalizePreInterviewGateConfig({ enabled: true });
+    if (data.preInterviewGate || data.pre_interview_gate) {
+      preInterviewGate = normalizePreInterviewGateConfig(data.preInterviewGate || data.pre_interview_gate);
     }
 
     let companyId = data.companyId ?? existing.companyId;
@@ -555,7 +578,8 @@ const jobs = {
       optional_skills: Array.isArray(data.optional_skills) ? data.optional_skills : existing.optional_skills,
       certification_enabled: data.certification_enabled !== undefined ? Boolean(data.certification_enabled) : existing.certification_enabled,
       certification_weight: data.certification_weight !== undefined ? parseFloat(data.certification_weight) : existing.certification_weight,
-      proctoring
+      proctoring,
+      preInterviewGate
     };
     saveToDisk();
     return state.jobs[idx];

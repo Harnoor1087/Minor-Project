@@ -247,11 +247,12 @@ function showTab(tabName) {
 }
 
 // Update KPI Stats Bar
-function updateStatsOverview() {
+async function updateStatsOverview() {
     const totalJobsEl = document.getElementById('statTotalJobs');
     const totalAppsEl = document.getElementById('statTotalApps');
     const strongMatchesEl = document.getElementById('statStrongMatches');
     const pendingAppsEl = document.getElementById('statPendingApps');
+    const gateSavingsEl = document.getElementById('statGatePassRate');
 
     if (totalJobsEl) totalJobsEl.textContent = allJobs.length;
     if (totalAppsEl) totalAppsEl.textContent = allApplications.length;
@@ -271,6 +272,21 @@ function updateStatsOverview() {
 
     if (strongMatchesEl) strongMatchesEl.textContent = strongMatches;
     if (pendingAppsEl) pendingAppsEl.textContent = pendingCount;
+
+    if (gateSavingsEl) {
+        try {
+            const res = await fetch('/api/skill-verification/gate-stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const s = await res.json();
+                gateSavingsEl.textContent = `$${s.estimatedDollarsSaved || 0} Saved`;
+                gateSavingsEl.title = `${s.failedCount || 0} unqualified profiles filtered, saving ~${s.estimatedMinutesSaved || 0} mins compute`;
+            }
+        } catch (e) {
+            console.error('Error fetching gate stats:', e);
+        }
+    }
 }
 
 // Score tier helper
@@ -296,6 +312,11 @@ function renderJobCard(job) {
         proctorBadge = `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">🟡 Standard Proctoring</span>`;
     }
 
+    const gate = job.preInterviewGate;
+    const gateTag = gate && gate.enabled !== false
+        ? `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3);">⚡ Skill Gate (${gate.cutoffScore || 70}%)</span>`
+        : `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; background: var(--bg-subtle); color: var(--text-muted);">⚡ Gate Off</span>`;
+
     return `
         <div class="job-card" id="jobCard-${job.id}">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
@@ -311,6 +332,7 @@ function renderJobCard(job) {
                 </div>
                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                     ${proctorBadge}
+                    ${gateTag}
                     <span class="skill-tag" style="background: var(--bg-subtle);">Job ID: <strong>#${job.id}</strong></span>
                 </div>
             </div>
@@ -661,6 +683,13 @@ if (createJobForm) {
                 enforce_fullscreen: !!document.getElementById('proctor_fullscreen')?.checked,
                 require_microphone: !!document.getElementById('proctor_microphone')?.checked,
                 multi_face_detection: !!document.getElementById('proctor_multi_face')?.checked
+            },
+            preInterviewGate: {
+                enabled: !!document.getElementById('create_gate_enabled')?.checked,
+                cutoffScore: parseInt(document.getElementById('create_gate_cutoff')?.value, 10) || 70,
+                maxAttempts: parseInt(document.getElementById('create_gate_attempts')?.value, 10) || 2,
+                timeLimitSeconds: parseInt(document.getElementById('create_gate_seconds')?.value, 10) || 60,
+                allowPassportBypass: !!document.getElementById('create_gate_passport_bypass')?.checked
             }
         };
         
@@ -744,6 +773,23 @@ async function editJob(jobId) {
             document.getElementById('edit_proctor_multi_face').checked = !(job.proctoring_config && job.proctoring_config.multi_face_detection === false);
         }
 
+        const gate = job.preInterviewGate || { enabled: true, cutoffScore: 70, timeLimitSeconds: 60, maxAttempts: 2, allowPassportBypass: true };
+        if (document.getElementById('edit_gate_enabled')) {
+            document.getElementById('edit_gate_enabled').checked = gate.enabled !== false;
+        }
+        if (document.getElementById('edit_gate_passport_bypass')) {
+            document.getElementById('edit_gate_passport_bypass').checked = gate.allowPassportBypass !== false;
+        }
+        if (document.getElementById('edit_gate_cutoff')) {
+            document.getElementById('edit_gate_cutoff').value = gate.cutoffScore || 70;
+        }
+        if (document.getElementById('edit_gate_attempts')) {
+            document.getElementById('edit_gate_attempts').value = gate.maxAttempts || 2;
+        }
+        if (document.getElementById('edit_gate_seconds')) {
+            document.getElementById('edit_gate_seconds').value = gate.timeLimitSeconds || 60;
+        }
+
         document.getElementById('editModal').classList.add('active');
     } catch (error) {
         console.error('Error loading job details:', error);
@@ -781,6 +827,13 @@ if (editJobForm) {
                 enforce_fullscreen: !!document.getElementById('edit_proctor_fullscreen')?.checked,
                 require_microphone: !!document.getElementById('edit_proctor_microphone')?.checked,
                 multi_face_detection: !!document.getElementById('edit_proctor_multi_face')?.checked
+            },
+            preInterviewGate: {
+                enabled: !!document.getElementById('edit_gate_enabled')?.checked,
+                cutoffScore: parseInt(document.getElementById('edit_gate_cutoff')?.value, 10) || 70,
+                maxAttempts: parseInt(document.getElementById('edit_gate_attempts')?.value, 10) || 2,
+                timeLimitSeconds: parseInt(document.getElementById('edit_gate_seconds')?.value, 10) || 60,
+                allowPassportBypass: !!document.getElementById('edit_gate_passport_bypass')?.checked
             }
         };
         
@@ -1225,29 +1278,58 @@ function renderSkillVerificationAuditSection(data) {
             badgeEl.innerHTML = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: var(--warning-text); border: 1px solid var(--warning);">⏳ Gate Pending (AI Interview Locked)</span>`;
         }
         contentEl.innerHTML = `
-            <div style="text-align: center; padding: 1.25rem; background: var(--bg-subtle); border-radius: 8px; border: 1px dashed var(--border-color);">
-                <p style="margin: 0 0 0.35rem 0; font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">Pre-Interview Skill Verification Pending</p>
-                <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
-                    Candidate has not verified claimed resume skills yet. Full AI interview generation and voice synthesis are locked until this 5-minute technical check is passed, preventing computing overhead and filtering keyword inflation.
-                </p>
+            <div style="padding: 1.25rem; background: var(--bg-subtle); border-radius: 8px; border: 1px dashed var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <p style="margin: 0 0 0.35rem 0; font-weight: 600; color: var(--text-primary); font-size: 0.95rem;">Pre-Interview Skill Verification Pending</p>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; max-width: 580px;">
+                            Candidate has not completed their required 5-minute technical verification test yet. The Proctored AI Interview is protected and locked to eliminate computing overhead.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn-primary" style="padding: 0.45rem 0.95rem; font-size: 0.82rem; background: linear-gradient(135deg, #059669, #10b981); border: none; font-weight: 700;" onclick="adminWaiveSkillGate('${app._id}')">
+                            🔓 Waive Gate & Unlock
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
         return;
     }
 
-    const evalReport = sv.evaluation || {};
+    const evalReport = sv.results || sv.evaluation || {};
     const score = sv.score || 0;
     const isPassed = sv.status === 'passed';
+    const isBypassed = !!sv.bypassedViaPassport;
+    const isWaived = !!sv.waived;
 
     // Badge
     if (badgeEl) {
-        if (isPassed) {
+        if (isWaived) {
+            badgeEl.innerHTML = `
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 700; border: 1px solid var(--success);">
+                        🔓 WAIVED BY RECRUITER
+                    </span>
+                    <span class="badge badge-info" style="font-size: 0.75rem;">Unlocked</span>
+                </div>
+            `;
+        } else if (isBypassed) {
+            badgeEl.innerHTML = `
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <span class="badge" style="background: rgba(79, 70, 229, 0.15); color: var(--accent); font-weight: 700; border: 1px solid var(--accent);">
+                        🚀 PASSPORT FAST-TRACK (${score}%)
+                    </span>
+                    <span class="badge badge-success" style="font-size: 0.75rem;">Verified Credentials</span>
+                </div>
+            `;
+        } else if (isPassed) {
             badgeEl.innerHTML = `
                 <div style="display: flex; gap: 6px; align-items: center;">
                     <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 700; border: 1px solid var(--success);">
                         ✅ AUTHENTIC (Score: ${score}%)
                     </span>
-                    <span class="badge badge-info" style="font-size: 0.75rem;">Cutoff: ${sv.passingScore || 70}%</span>
+                    <span class="badge badge-info" style="font-size: 0.75rem;">Cutoff: ${sv.cutoff || 70}%</span>
                 </div>
             `;
         } else {
@@ -1256,7 +1338,7 @@ function renderSkillVerificationAuditSection(data) {
                     <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); font-weight: 700; border: 1px solid var(--danger);">
                         ⚠️ GATE FAILED (${score}%)
                     </span>
-                    <span class="badge badge-danger" style="font-size: 0.75rem;">Suspected Keyword Inflation</span>
+                    <span class="badge badge-danger" style="font-size: 0.75rem;">Keyword Inflation Guard</span>
                 </div>
             `;
         }
@@ -1268,25 +1350,57 @@ function renderSkillVerificationAuditSection(data) {
     contentEl.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-bottom: 1rem;">
             <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Overall Verification Score</div>
+                <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Verification Score</div>
                 <div style="font-size: 1.4rem; font-weight: 800; color: ${isPassed ? 'var(--success)' : 'var(--danger)'};">${score}%</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">Required: ${sv.passingScore || 70}% to unlock AI Interview</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Required: ${sv.cutoff || 70}% • Attempts: ${sv.attemptsCount || 1} / ${sv.maxAttempts || 2}</div>
             </div>
             <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
                 <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Anti-Inflation Verdict</div>
                 <div style="font-size: 1rem; font-weight: 700; color: ${isPassed ? 'var(--success)' : 'var(--danger)'}; margin-top: 4px;">
-                    ${isPassed ? '🛡️ Verified Authentic Skills' : '⚠️ Potential Keyword Stuffing'}
+                    ${isWaived ? 'Recruiter Verified' : (isBypassed ? 'Skill Passport Fast-Track' : (isPassed ? '🛡️ Verified Authentic' : '⚠️ Keyword Inflation Detected'))}
                 </div>
                 <div style="font-size: 0.75rem; color: var(--text-muted);">Tab Switches Detected: ${sv.tabSwitches || 0}</div>
             </div>
             <div style="background: var(--bg-subtle); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">System Cost Impact</div>
-                <div style="font-size: 1rem; font-weight: 700; color: var(--accent); margin-top: 4px;">
-                    ${isPassed ? 'Proceeding to AI Video Session' : 'Saved AI Interview Computing Overhead'}
+                <div style="font-size: 0.78rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;">Interview Guard Status</div>
+                <div style="font-size: 1rem; font-weight: 700; color: ${isPassed ? 'var(--success)' : 'var(--danger)'}; margin-top: 4px;">
+                    ${isPassed ? 'AI Technical Interview Unlocked' : 'Guarded (Saved ~30m & $2.80 Compute)'}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">${isPassed ? 'Candidate qualified for interview' : 'Saved Gemini token & recording cost'}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${sv.summary || 'Competency assessment completed'}</div>
             </div>
         </div>
+
+        ${!isPassed ? `
+            <div style="background: rgba(239, 68, 68, 0.08); border-left: 3px solid var(--danger); padding: 0.85rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                <div>
+                    <strong style="font-size: 0.88rem; color: var(--danger);">Recruiter Override Actions:</strong>
+                    <div style="font-size: 0.82rem; color: var(--text-secondary);">You can waive the gate if the applicant has verifiable GitHub/work experience, or grant an additional retake.</div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn-primary" style="padding: 0.45rem 0.95rem; font-size: 0.82rem; background: linear-gradient(135deg, #059669, #10b981); border: none; font-weight: 700;" onclick="adminWaiveSkillGate('${app._id}')">
+                        🔓 Waive Gate & Unlock Interview
+                    </button>
+                    <button class="btn-secondary" style="padding: 0.45rem 0.95rem; font-size: 0.82rem; border-color: var(--accent); color: var(--accent); font-weight: 700;" onclick="adminGrantSkillGateRetake('${app._id}')">
+                        🔄 Grant Retake Attempt
+                    </button>
+                </div>
+            </div>
+        ` : ''}
+
+        ${Array.isArray(sv.verifiedSkills) && sv.verifiedSkills.length > 0 ? `
+            <div style="background: var(--bg-subtle); padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1rem;">
+                <h5 style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: var(--text-primary); text-transform: uppercase; font-weight: 700;">
+                    Awarded Skill Passport Badges:
+                </h5>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${sv.verifiedSkills.map(s => `
+                        <span class="skill-badge-chip" style="background: rgba(16, 185, 129, 0.12); color: var(--success); border: 1px solid var(--success); font-size: 0.82rem; padding: 0.3rem 0.75rem; border-radius: 9999px;">
+                            🏅 ${s.skill.toUpperCase()} (${s.score}%)
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
 
         ${skillKeys.length > 0 ? `
             <div style="background: var(--bg-subtle); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
@@ -1309,6 +1423,64 @@ function renderSkillVerificationAuditSection(data) {
             </div>
         ` : ''}
     `;
+}
+
+// Admin waiver & retake handlers
+async function adminWaiveSkillGate(appId) {
+    const reason = prompt('Reason for waiving Pre-Interview Gate (e.g. Verified production experience / GitHub repository):', 'Recruiter verified technical background');
+    if (!reason) return;
+
+    try {
+        const res = await fetch(`/api/skill-verification/waive/${appId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            if (window.showToast) window.showToast('Pre-Interview Gate waived! AI Interview unlocked.', 'success');
+            // Refresh data
+            loadApplications();
+            if (currentIntelligenceAppId === appId) {
+                openCandidateIntelligence(appId);
+            }
+        } else {
+            alert(data.message || 'Error waiving gate');
+        }
+    } catch (err) {
+        console.error('Error waiving gate:', err);
+        alert('Failed to waive skill gate');
+    }
+}
+
+async function adminGrantSkillGateRetake(appId) {
+    if (!confirm('Grant candidate an additional Pre-Interview Gate attempt?')) return;
+
+    try {
+        const res = await fetch(`/api/skill-verification/grant-retake/${appId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        const data = await res.json();
+        if (res.ok) {
+            if (window.showToast) window.showToast('Additional attempt granted! Candidate can now retake.', 'success');
+            loadApplications();
+            if (currentIntelligenceAppId === appId) {
+                openCandidateIntelligence(appId);
+            }
+        } else {
+            alert(data.message || 'Error granting retake');
+        }
+    } catch (err) {
+        console.error('Error granting retake:', err);
+        alert('Failed to grant retake');
+    }
 }
 
 function renderInterviewTelemetrySection(data) {

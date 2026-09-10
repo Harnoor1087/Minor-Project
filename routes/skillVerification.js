@@ -53,10 +53,19 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
       optional_skills: []
     };
 
-    const userObj = users.findById(app.applicantId);
-    const existingVerified = (userObj?.verifiedSkills || []).filter(s => new Date(s.expiresAt) > new Date());
+    const preGate = job.preInterviewGate || {
+      enabled: true,
+      cutoffScore: 70,
+      durationMinutes: 5,
+      allowRetakes: true,
+      maxRetakes: 2,
+      passportBypassEnabled: true
+    };
+    const passingCutoff = preGate.cutoffScore || job.skill_verification_cutoff || 70;
+    const maxAttempts = preGate.allowRetakes ? (preGate.maxRetakes || 2) + 1 : 1;
+    const currentAttempts = app.skillVerification?.attemptsCount || 0;
 
-    // If application already has completed skill verification
+    // If application already has completed skill verification (passed or waived)
     if (app.skillVerification && app.skillVerification.status === 'passed') {
       return res.json({
         alreadyCompleted: true,
@@ -65,12 +74,37 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
         status: app.skillVerification.status,
         summary: app.skillVerification.summary || 'Skills successfully verified',
         verifiedSkills: app.skillVerification.verifiedSkills || [],
+        bypassedViaPassport: Boolean(app.skillVerification.bypassedViaPassport),
+        waived: Boolean(app.skillVerification.waived),
+        waivedBy: app.skillVerification.waivedBy || null,
+        waivedReason: app.skillVerification.waivedReason || null,
+        nextUrl: `/interview/${app._id}`,
         job: { id: job.id, title: job.title, companyName: job.companyName }
       });
     }
 
-    // If a test session exists in memory/store and not submitted yet
-    if (app.skillVerification?.activeTest && Array.isArray(app.skillVerification.activeTest.questions)) {
+    // If candidate previously failed
+    if (app.skillVerification && app.skillVerification.status === 'failed') {
+      const isRetakeRequested = req.query.retake === 'true';
+      if (!isRetakeRequested || currentAttempts >= maxAttempts) {
+        return res.json({
+          alreadyCompleted: true,
+          passed: false,
+          score: app.skillVerification.score,
+          status: 'failed',
+          canRetake: currentAttempts < maxAttempts,
+          attemptsCount: currentAttempts,
+          maxAttempts,
+          summary: app.skillVerification.summary || 'Technical score below passing threshold.',
+          antiInflationVerdict: app.skillVerification.antiInflationVerdict || 'SUSPECTED_KEYWORD_INFLATION',
+          results: app.skillVerification.results || null,
+          job: { id: job.id, title: job.title, companyName: job.companyName, cutoff: passingCutoff }
+        });
+      }
+    }
+
+    // If an existing pending test is active and not retake
+    if (req.query.retake !== 'true' && app.skillVerification?.activeTest && Array.isArray(app.skillVerification.activeTest.questions)) {
       return res.json({
         alreadyCompleted: false,
         test: sanitizeTestForClient(app.skillVerification.activeTest),
@@ -78,7 +112,10 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
           id: job.id,
           title: job.title,
           companyName: job.companyName,
-          cutoff: job.skill_verification_cutoff || 70
+          cutoff: passingCutoff,
+          durationMinutes: preGate.durationMinutes || 5,
+          attemptsCount: currentAttempts,
+          maxAttempts
         }
       });
     }
@@ -91,7 +128,7 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
       claimedSkills = app.scores.matchedSkills;
     }
 
-    // Generate new test
+    // Generate new randomized test
     const generatedTest = await createSkillVerificationTest({
       claimedSkills,
       jobMandatorySkills: job.mandatory_skills || [],
@@ -104,6 +141,9 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
     applications.updateSkillVerification(app._id, {
       status: 'pending',
       activeTest: generatedTest,
+      cutoff: passingCutoff,
+      maxAttempts,
+      durationMinutes: preGate.durationMinutes || 5,
       startedAt: new Date().toISOString()
     });
 
@@ -114,7 +154,10 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
         id: job.id,
         title: job.title,
         companyName: job.companyName,
-        cutoff: job.skill_verification_cutoff || 70
+        cutoff: passingCutoff,
+        durationMinutes: preGate.durationMinutes || 5,
+        attemptsCount: currentAttempts,
+        maxAttempts
       }
     });
   } catch (error) {
@@ -144,7 +187,8 @@ router.post('/submit/:appId', verifyToken, async (req, res) => {
     }
 
     const job = jobs.getById(app.jobId) || {};
-    const passingCutoff = job.skill_verification_cutoff || 70;
+    const preGate = job.preInterviewGate || { enabled: true, cutoffScore: 70, allowRetakes: true, maxRetakes: 2 };
+    const passingCutoff = preGate.cutoffScore || job.skill_verification_cutoff || 70;
 
     const activeTest = app.skillVerification?.activeTest;
     if (!activeTest || !Array.isArray(activeTest.questions)) {
@@ -157,6 +201,16 @@ router.post('/submit/:appId', verifyToken, async (req, res) => {
 
     const isPassed = evaluation.passed;
     const newStatus = isPassed ? 'passed' : 'failed';
+    const attemptsCount = (app.skillVerification?.attemptsCount || 0) + 1;
+    const maxAttempts = app.skillVerification?.maxAttempts || (preGate.allowRetakes ? (preGate.maxRetakes || 2) + 1 : 1);
+
+    const history = Array.isArray(app.skillVerification?.history) ? [...app.skillVerification.history] : [];
+    history.push({
+      attempt: attemptsCount,
+      score: evaluation.scorePercentage,
+      passed: isPassed,
+      completedAt: new Date().toISOString()
+    });
 
     // Update application skill verification
     applications.updateSkillVerification(app._id, {
@@ -169,6 +223,10 @@ router.post('/submit/:appId', verifyToken, async (req, res) => {
       verifiedSkills: evaluation.verifiedSkills,
       knowledgeGaps: evaluation.knowledgeGaps,
       tabSwitches,
+      attemptsCount,
+      maxAttempts,
+      history,
+      activeTest: null, // Clear active test so retakes generate fresh questions
       completedAt: new Date().toISOString(),
       results: evaluation
     });
@@ -185,8 +243,8 @@ router.post('/submit/:appId', verifyToken, async (req, res) => {
 
     res.json({
       message: isPassed
-        ? 'Skill verification passed! You are qualified for the AI Technical Interview.'
-        : 'Skill verification score did not reach the threshold. Please review key concepts.',
+        ? 'Pre-Interview Skill Gate PASSED! You are unlocked for the Proctored AI Technical Interview.'
+        : 'Skill verification score did not meet the requirement. Full AI interview is guarded.',
       evaluation: {
         scorePercentage: evaluation.scorePercentage,
         passingCutoff: evaluation.passingCutoff,
@@ -197,13 +255,154 @@ router.post('/submit/:appId', verifyToken, async (req, res) => {
         summary: evaluation.summary,
         verifiedSkills: evaluation.verifiedSkills,
         knowledgeGaps: evaluation.knowledgeGaps,
-        questionResults: evaluation.questionResults
+        questionResults: evaluation.questionResults,
+        attemptsCount,
+        maxAttempts,
+        canRetake: !isPassed && attemptsCount < maxAttempts
       },
       nextUrl: isPassed ? `/interview/${app._id}` : null
     });
   } catch (error) {
     console.error('[SkillVerification] Submit error:', error);
     res.status(500).json({ message: 'Error submitting skill verification', error: error.message });
+  }
+});
+
+/**
+ * POST /api/skill-verification/waive/:appId
+ * Recruiter override: waive Pre-Interview Gate for candidate
+ */
+router.post('/waive/:appId', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+    const app = applications.getById(req.params.appId);
+    if (!app) return res.status(404).json({ message: 'Application not found' });
+
+    const reason = req.body.reason || 'Recruiter verified portfolio / production engineering background';
+
+    applications.updateSkillVerification(app._id, {
+      status: 'passed',
+      passed: true,
+      score: 100,
+      waived: true,
+      waivedBy: req.user.name || 'Recruiter',
+      waivedReason: reason,
+      completedAt: new Date().toISOString(),
+      summary: `Pre-Interview Gate waived by recruiter: ${reason}`
+    });
+    applications.updateStatus(app._id, 'skill_verified');
+
+    res.json({
+      message: 'Pre-Interview Gate waived successfully. Candidate is now unlocked for AI interview.',
+      application: applications.getById(app._id)
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error waiving skill gate', error: error.message });
+  }
+});
+
+/**
+ * POST /api/skill-verification/grant-retake/:appId
+ * Recruiter action: grant an additional skill gate attempt to candidate
+ */
+router.post('/grant-retake/:appId', verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+    const app = applications.getById(req.params.appId);
+    if (!app) return res.status(404).json({ message: 'Application not found' });
+
+    const currentMax = app.skillVerification?.maxAttempts || 2;
+
+    applications.updateSkillVerification(app._id, {
+      status: 'pending',
+      passed: false,
+      activeTest: null,
+      maxAttempts: currentMax + 1,
+      grantedBy: req.user.name || 'Recruiter',
+      grantedAt: new Date().toISOString()
+    });
+    applications.updateStatus(app._id, 'skill_test_pending');
+
+    res.json({
+      message: 'Pre-Interview Gate retake attempt granted. Candidate can now retake the skill test.',
+      application: applications.getById(app._id)
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error granting retake', error: error.message });
+  }
+});
+
+/**
+ * GET /api/skill-verification/gate-stats
+ * Pre-Interview Gate funnel & compute cost savings metrics for recruiter dashboard
+ */
+router.get('/gate-stats', verifyToken, (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+
+    const { companyId } = req.query;
+    const filter = {};
+    if (companyId && companyId !== 'all') {
+      filter.companyId = companyId;
+    }
+
+    const apps = applications.getAll(filter);
+    const totalApps = apps.length;
+
+    let gatePending = 0;
+    let gatePassed = 0;
+    let gateFailed = 0;
+    let passportBypassed = 0;
+    let gateWaived = 0;
+    let keywordInflationFiltered = 0;
+
+    apps.forEach(a => {
+      const sv = a.skillVerification;
+      if (!sv || sv.status === 'pending') {
+        gatePending++;
+      } else if (sv.status === 'passed') {
+        gatePassed++;
+        if (sv.bypassedViaPassport) passportBypassed++;
+        if (sv.waived) gateWaived++;
+      } else if (sv.status === 'failed') {
+        gateFailed++;
+        if (sv.antiInflationVerdict === 'SUSPECTED_KEYWORD_INFLATION') {
+          keywordInflationFiltered++;
+        }
+      }
+    });
+
+    const evaluatedTotal = gatePassed + gateFailed;
+    const passRate = evaluatedTotal > 0 ? Math.round((gatePassed / evaluatedTotal) * 100) : 0;
+    const failRate = evaluatedTotal > 0 ? Math.round((gateFailed / evaluatedTotal) * 100) : 0;
+
+    // AI Compute Cost Savings calculation:
+    // Every candidate blocked at the gate saves ~30 mins of video compute, Whisper/Gemini Live tokens, and Cloud storage ($2.80 per session)
+    const estimatedSavedCostDollars = (gateFailed * 2.80).toFixed(2);
+    const savedHours = (gateFailed * 0.5).toFixed(1);
+
+    res.json({
+      totalApps,
+      evaluatedTotal,
+      gatePending,
+      gatePassed,
+      gateFailed,
+      passportBypassed,
+      gateWaived,
+      keywordInflationFiltered,
+      passRate,
+      failRate,
+      estimatedSavedCostDollars,
+      savedHours
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error calculating gate stats', error: error.message });
   }
 });
 
