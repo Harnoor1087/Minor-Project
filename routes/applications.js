@@ -6,6 +6,7 @@ const fs = require('fs');
 const { applications, jobs, users } = require('../db/store');
 const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 const { analyzeResume, generateCandidateIntelligence, extractTextFromFile } = require('../services/analyzer');
+const { generateScreeningRecommendations, generateOptimizedResume } = require('../services/resumeOptimizer');
 
 // Configure multer for file uploads
 const uploadDir = path.join(__dirname, '../uploads');
@@ -162,6 +163,7 @@ router.post(
         companySlug: job.companySlug || 'airis',
         proctoringLevel: job.proctoring?.level || 'medium',
         resumePath: resumeFile.path,
+        resumeText: (resumeText || '').slice(0, 15000),
         certificates: certificatePaths,
         scores: analysis.scores,
         category: analysis.category,
@@ -403,6 +405,286 @@ Provide a concise, highly objective, professional talent intelligence response (
     });
   } catch (error) {
     res.status(500).json({ message: 'Error querying candidate AI', error: error.message });
+  }
+});
+
+/**
+ * GET /api/applications/:id/screening-feedback
+ * Returns actionable skill gaps, section modifications, and projected ATS score
+ * when a candidate fails or needs optimization after initial screening.
+ */
+router.get('/:id/screening-feedback', verifyToken, async (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Authorization: owner applicant or tenant admin
+    const isOwner = app.applicantId ? (app.applicantId === req.user.id) : (app.applicantEmail === req.user.email);
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: 'Access denied to this application' });
+    }
+
+    const job = jobs.getById(app.jobId);
+    if (!job) {
+      return res.status(404).json({ message: 'Job posting not found' });
+    }
+
+    // Retrieve resume text
+    let resumeText = app.resumeText || '';
+    if (!resumeText && app.resumePath && fs.existsSync(app.resumePath)) {
+      try {
+        resumeText = await extractTextFromFile(app.resumePath);
+        applications.update(app._id, { resumeText: resumeText.slice(0, 15000) });
+      } catch (e) {
+        console.warn('[Applications] Failed extracting resume text for feedback:', e.message);
+      }
+    }
+
+    const isRejected = (app.status === 'rejected') ||
+      (app.eligibility && app.eligibility.includes('Rejected')) ||
+      (app.scores && (app.scores.final || 0) < 0.65);
+
+    const recommendations = await generateScreeningRecommendations({
+      job,
+      resumeText,
+      skills: app.skills || { matched: [], missing: [] },
+      scores: app.scores || {},
+      eligibility: app.eligibility || ''
+    });
+
+    res.json({
+      applicationId: app._id,
+      job: {
+        id: job.id,
+        title: job.title,
+        companyName: job.companyName,
+        mandatory_skills: job.mandatory_skills || [],
+        optional_skills: job.optional_skills || []
+      },
+      currentScreening: {
+        status: app.status,
+        eligibility: app.eligibility,
+        scores: app.scores,
+        category: app.category,
+        isRejected
+      },
+      hasOptimizedResume: Boolean(app.optimizedResume),
+      recommendations
+    });
+  } catch (err) {
+    console.error('[Applications] Error fetching screening feedback:', err);
+    res.status(500).json({ message: 'Error retrieving screening feedback', error: err.message });
+  }
+});
+
+/**
+ * POST /api/applications/:id/generate-optimized-resume
+ * On-demand: Reconstructs an enhanced resume matching the candidate's original template,
+ * incorporating missing competencies and STAR achievements.
+ */
+router.post('/:id/generate-optimized-resume', verifyToken, async (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Authorization: owner applicant or tenant admin
+    const isOwner = app.applicantId ? (app.applicantId === req.user.id) : (app.applicantEmail === req.user.email);
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: 'Access denied to this application' });
+    }
+
+    const job = jobs.getById(app.jobId);
+    if (!job) {
+      return res.status(404).json({ message: 'Job posting not found' });
+    }
+
+    // Retrieve resume text
+    let resumeText = app.resumeText || '';
+    if (!resumeText && app.resumePath && fs.existsSync(app.resumePath)) {
+      try {
+        resumeText = await extractTextFromFile(app.resumePath);
+      } catch (e) {
+        console.warn('[Applications] Failed extracting resume text for optimization:', e.message);
+      }
+    }
+
+    const optimizedResume = await generateOptimizedResume({
+      job,
+      resumeText,
+      skills: app.skills || { matched: [], missing: [] },
+      candidateName: app.applicantName,
+      candidateEmail: app.applicantEmail
+    });
+
+    // Save optimized resume to application record
+    applications.update(app._id, {
+      optimizedResume,
+      updatedAt: new Date().toISOString()
+    });
+
+    res.json({
+      success: true,
+      message: 'Template-preserved optimized resume generated successfully',
+      optimizedResume
+    });
+  } catch (err) {
+    console.error('[Applications] Error generating optimized resume:', err);
+    res.status(500).json({ message: 'Failed to generate optimized resume', error: err.message });
+  }
+});
+
+/**
+ * POST /api/applications/:id/rescreen
+ * Submits the optimized resume, runs screening re-evaluation,
+ * updates ATS scores & eligibility, and unlocks Pre-Interview Skill Verification Gate.
+ */
+router.post('/:id/rescreen', verifyToken, async (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Authorization: owner applicant or tenant admin
+    const isOwner = app.applicantId ? (app.applicantId === req.user.id) : (app.applicantEmail === req.user.email);
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: 'Access denied to this application' });
+    }
+
+    const job = jobs.getById(app.jobId);
+    if (!job) {
+      return res.status(404).json({ message: 'Job posting not found' });
+    }
+
+    const optimized = app.optimizedResume || req.body.optimizedResume;
+    if (!optimized || (!optimized.markdownText && !optimized.styledHtml)) {
+      return res.status(400).json({ message: 'Please generate an optimized resume first before re-screening.' });
+    }
+
+    const newResumeText = (optimized.markdownText || '') + '\n' + (app.resumeText || '');
+    const newResumeFilePath = path.join(uploadDir, `optimized-resume-${app._id}.txt`);
+    fs.writeFileSync(newResumeFilePath, newResumeText, 'utf8');
+
+    // Run analyzer with new resume file
+    const newAnalysis = await analyzeResume({
+      resumePath: newResumeFilePath,
+      certificatePaths: app.certificates || [],
+      job,
+      candidateName: app.applicantName,
+      candidateEmail: app.applicantEmail
+    });
+
+    // Check Pre-Interview Gate configuration
+    const preGate = job.preInterviewGate || { enabled: true, cutoffScore: 70, durationMinutes: 5, allowRetakes: true, maxRetakes: 2, passportBypassEnabled: true };
+    const isPassing = !newAnalysis.eligibility.includes('Rejected');
+
+    let newStatus = app.status;
+    let newSkillVerification = app.skillVerification || {
+      status: 'pending',
+      score: null,
+      passed: false,
+      cutoff: preGate.cutoffScore || 70,
+      durationMinutes: preGate.durationMinutes || 5,
+      maxAttempts: 3,
+      attemptsCount: 0
+    };
+
+    if (isPassing) {
+      if (!preGate.enabled) {
+        newStatus = 'skill_verified';
+        newSkillVerification.status = 'passed';
+        newSkillVerification.passed = true;
+        newSkillVerification.score = 100;
+        newSkillVerification.summary = 'Direct interview access granted (Pre-Interview Gate disabled).';
+      } else {
+        newStatus = 'skill_test_pending';
+        newSkillVerification.status = 'pending';
+      }
+    } else {
+      newStatus = 'rejected';
+    }
+
+    // Update candidate intelligence
+    let newIntelligence = app.intelligence;
+    try {
+      newIntelligence = await generateCandidateIntelligence({
+        resumeText: newResumeText,
+        candidateName: app.applicantName,
+        job,
+        scores: newAnalysis.scores,
+        skills: newAnalysis.skills,
+        eligibility: newAnalysis.eligibility,
+        category: newAnalysis.category
+      });
+    } catch (e) {
+      console.warn('[Applications] Failed updating intelligence on rescreen:', e.message);
+    }
+
+    const updatedApp = applications.update(app._id, {
+      resumePath: newResumeFilePath,
+      resumeText: newResumeText.slice(0, 15000),
+      scores: newAnalysis.scores,
+      category: newAnalysis.category,
+      eligibility: newAnalysis.eligibility,
+      skills: newAnalysis.skills,
+      status: newStatus,
+      skillVerification: newSkillVerification,
+      intelligence: newIntelligence,
+      rescreened: true,
+      optimizedResume: optimized,
+      rescreenedAt: new Date().toISOString(),
+      previousScores: app.scores
+    });
+
+    const nextStepUrl = !isPassing
+      ? null
+      : (!preGate.enabled ? `/interview/${app._id}` : `/skill-test/${app._id}`);
+
+    res.json({
+      success: true,
+      message: isPassing
+        ? 'Congratulations! Your optimized resume passed the screening criteria.'
+        : 'Resume re-evaluated. Additional skill adjustments recommended.',
+      isPassing,
+      application: updatedApp,
+      analysis: newAnalysis,
+      nextStepUrl
+    });
+  } catch (err) {
+    console.error('[Applications] Error re-screening application:', err);
+    res.status(500).json({ message: 'Failed to re-screen application', error: err.message });
+  }
+});
+
+/**
+ * GET /api/applications/:id/optimized-resume-html
+ * Returns clean, self-contained printable HTML representation
+ */
+router.get('/:id/optimized-resume-html', verifyToken, (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) return res.status(404).send('Application not found');
+    const isOwner = app.applicantId ? (app.applicantId === req.user.id) : (app.applicantEmail === req.user.email);
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    if (!isAdmin && !isOwner) {
+      return res.status(403).send('Access denied');
+    }
+
+    if (!app.optimizedResume || !app.optimizedResume.styledHtml) {
+      return res.status(404).send('No optimized resume available. Please generate one first.');
+    }
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(app.optimizedResume.styledHtml);
+  } catch (err) {
+    res.status(500).send('Error retrieving resume HTML: ' + err.message);
   }
 });
 

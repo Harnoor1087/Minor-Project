@@ -227,12 +227,43 @@ function renderCurrentQuestion() {
 
     const q = questions[currentQuestionIndex];
     document.getElementById('hudQuestionProgress').textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
-    document.getElementById('questionCategoryTag').textContent = q.category || 'Technical Competency';
+    const categoryTag = document.getElementById('questionCategoryTag');
+    categoryTag.textContent = q.category || 'Technical Competency';
+    
+    // Style tag according to category
+    if (q.category && q.category.toLowerCase().includes('project')) {
+        categoryTag.style.background = 'rgba(14, 165, 233, 0.2)';
+        categoryTag.style.color = '#0284c7';
+        categoryTag.style.border = '1px solid rgba(14, 165, 233, 0.4)';
+    } else if (q.category && q.category.toLowerCase().includes('gap')) {
+        categoryTag.style.background = 'rgba(245, 158, 11, 0.15)';
+        categoryTag.style.color = 'var(--warning-text, #b45309)';
+        categoryTag.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+    } else {
+        categoryTag.style.background = '';
+        categoryTag.style.color = '';
+        categoryTag.style.border = '';
+    }
+
     document.getElementById('questionTitleText').textContent = q.question;
 
     const rationaleBox = document.getElementById('questionRationaleBox');
+    const rationaleHeader = document.getElementById('questionRationaleHeader');
     if (q.rationale) {
         rationaleBox.style.display = 'block';
+        if (rationaleHeader) {
+            if (q.category && q.category.toLowerCase().includes('project')) {
+                rationaleHeader.textContent = '🚀 Candidate Project Deep-Dive:';
+            } else if (q.category && q.category.toLowerCase().includes('gap')) {
+                rationaleHeader.textContent = '🎯 Targeted Skill Gap Investigation:';
+            } else if (q.category && q.category.toLowerCase().includes('core')) {
+                rationaleHeader.textContent = '⚡ Core Competency Alignment:';
+            } else if (q.category && q.category.toLowerCase().includes('architecture')) {
+                rationaleHeader.textContent = '🏛️ System Architecture Scenario:';
+            } else {
+                rationaleHeader.textContent = '💡 Evaluation Focus:';
+            }
+        }
         document.getElementById('questionRationaleText').textContent = q.rationale;
     } else {
         rationaleBox.style.display = 'none';

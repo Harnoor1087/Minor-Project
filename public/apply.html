@@ -187,6 +187,198 @@
             border-radius: 12px;
             margin: 1.5rem 0;
         }
+
+        /* Resume Optimization & Recovery Suite */
+        .recovery-banner {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1.5px solid rgba(239, 68, 68, 0.4);
+            border-radius: 14px;
+            padding: 1.75rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .recovery-banner h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--danger);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+        }
+
+        .recovery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .recovery-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .recovery-card h4 {
+            margin: 0 0 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .skill-tag-pill {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin: 0.25rem 0.25rem 0.25rem 0;
+        }
+
+        .skill-tag-pill.mandatory {
+            background: rgba(239, 68, 68, 0.14);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .skill-tag-pill.optional {
+            background: rgba(79, 70, 229, 0.12);
+            color: var(--accent);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+        }
+
+        .mod-item {
+            background: var(--bg-subtle);
+            border-radius: 8px;
+            padding: 0.85rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--accent);
+            font-size: 0.88rem;
+        }
+
+        .mod-item strong {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .mod-item code {
+            display: block;
+            margin-top: 0.35rem;
+            padding: 0.4rem 0.6rem;
+            background: var(--bg-card);
+            border-radius: 6px;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            border: 1px dashed var(--border-color);
+            font-family: inherit;
+        }
+
+        /* Modal Studio */
+        .resume-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(6px);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            box-sizing: border-box;
+        }
+
+        .resume-modal.active {
+            display: flex;
+        }
+
+        .resume-modal-dialog {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 980px;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .resume-modal-header {
+            padding: 1.25rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-subtle);
+        }
+
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 1.75rem;
+            background: var(--bg-subtle);
+            gap: 1rem;
+        }
+
+        .modal-tab-btn {
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .resume-modal-body {
+            padding: 1.5rem 1.75rem;
+            overflow-y: auto;
+            flex: 1;
+            background: var(--bg-card);
+        }
+
+        .resume-modal-footer {
+            padding: 1.25rem 1.75rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: var(--bg-subtle);
+        }
+
+        .resume-preview-frame {
+            width: 100%;
+            min-height: 540px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -356,6 +548,101 @@
                     </div>
                 </div>
 
+                <!-- Post-Screening Recovery & Optimization Suite (Displayed when initial screening criteria unmet) -->
+                <div id="screeningRecoverySection" class="recovery-banner" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <h3><span>⚠️</span> Initial Resume Screening Unmet</h3>
+                            <p style="margin: 0; color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; max-width: 680px;">
+                                Your uploaded resume does not meet the mandatory criteria for this position. To unlock the Pre-Interview Skill Verification Gate, please review the recommended skills to add and suggested structural modifications below.
+                            </p>
+                        </div>
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: var(--danger); font-weight: 700; border: 1px solid var(--danger); padding: 0.35rem 0.75rem;">
+                            Action Required to Proceed
+                        </span>
+                    </div>
+
+                    <!-- Projected ATS Score Uplift Card -->
+                    <div style="background: var(--bg-card); border-radius: 12px; padding: 1.25rem; margin: 1.25rem 0; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <div style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">ATS Match Score Potential</div>
+                            <div style="display: flex; align-items: baseline; gap: 0.75rem; margin-top: 0.25rem;">
+                                <span id="recoveryCurrentScore" style="font-size: 1.5rem; font-weight: 800; color: var(--danger);">0%</span>
+                                <span style="color: var(--text-secondary); font-size: 1.2rem;">➔</span>
+                                <span id="recoveryProjectedScore" style="font-size: 1.75rem; font-weight: 800; color: var(--success);">88%</span>
+                                <span id="recoveryScoreUplift" class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 700;">+0% Uplift</span>
+                            </div>
+                        </div>
+                        <div style="max-width: 420px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+                            <span id="recoveryAtsExplanation">Incorporating the required core competencies directly elevates your profile past the screening threshold.</span>
+                        </div>
+                    </div>
+
+                    <!-- Missing Skills Breakdown -->
+                    <div class="recovery-grid">
+                        <div class="recovery-card">
+                            <h4><span>🎯</span> Missing Skills to Add</h4>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                                Critical competencies required to pass the screening stage:
+                            </div>
+                            <div id="recoveryCriticalSkills"></div>
+                            <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                Recommended competencies to boost ranking:
+                            </div>
+                            <div id="recoveryOptionalSkills"></div>
+                        </div>
+
+                        <!-- Section Modifications -->
+                        <div class="recovery-card">
+                            <h4><span>📝</span> Structural Modifications Guidance</h4>
+                            <div id="recoverySectionMods"></div>
+                        </div>
+                    </div>
+
+                    <!-- On-Demand Resume Generation Callout -->
+                    <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.06), rgba(6, 182, 212, 0.06)); border: 1.5px dashed var(--accent); border-radius: 12px; padding: 1.5rem; margin-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="max-width: 620px;">
+                            <strong style="color: var(--text-primary); font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                                <span>✨</span> Generate Optimized Resume (Preserving Original Template)
+                            </strong>
+                            <p style="margin: 0.35rem 0 0 0; color: var(--text-secondary); font-size: 0.88rem; line-height: 1.45;">
+                                Only generated upon your explicit request. Our AI analyzes your uploaded resume's exact typography, headers, date alignments, and structure, and strategically incorporates the missing skills using genuine STAR-formatted achievements without altering your actual employment timeline or degrees.
+                            </p>
+                        </div>
+                        <div>
+                            <button id="btnGenerateOptimizedResume" class="btn-primary" style="padding: 0.8rem 1.6rem; font-weight: 700; background: linear-gradient(135deg, #4f46e5, #06b6d4); border: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);">
+                                <span id="genBtnIcon">✨</span>
+                                <span id="genBtnText">Generate Optimized Resume</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Generating Progress Indicator -->
+                    <div id="optimizerLoadingBox" style="display: none; background: var(--bg-card); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; border: 1px solid var(--border-color); text-align: center;">
+                        <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 0.75rem;"></div>
+                        <strong id="optimizerStepText" style="color: var(--accent); font-size: 0.95rem; display: block;">Extracting original template typography and layout...</strong>
+                        <p style="color: var(--text-secondary); font-size: 0.82rem; margin: 0.25rem 0 0 0;">Synthesizing STAR achievements with target competencies</p>
+                    </div>
+                </div>
+
+                <!-- Re-Screen Success Notification Banner -->
+                <div id="rescreenSuccessBanner" style="display: none; background: rgba(16, 185, 129, 0.1); border: 1.5px solid var(--success); border-radius: 14px; padding: 1.5rem; margin: 2rem 0; text-align: left;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 2rem;">🎉</span>
+                            <div>
+                                <h3 style="margin: 0; color: var(--success); font-size: 1.2rem;">Re-Screening Passed Successfully!</h3>
+                                <p style="margin: 0.2rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">
+                                    Your optimized resume has been verified and meets all mandatory role requirements. The Pre-Interview Skill Verification Gate is now unlocked.
+                                </p>
+                            </div>
+                        </div>
+                        <button id="btnViewActiveOptimizedResume" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                            View Optimized Resume
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Pre-Interview Skill Verification Step -->
                 <div id="skillVerificationStepBox" style="background: rgba(79, 70, 229, 0.08); border: 1.5px solid var(--accent); border-radius: 14px; padding: 1.5rem; margin: 2rem 0; text-align: left;">
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.5rem;">
@@ -379,6 +666,88 @@
 
                 <div id="defaultDashboardBtnBox" style="display: none; text-align: center; margin-top: 2rem;">
                     <button onclick="window.location.href='/applicant'" class="btn-primary">Go to Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template-Preserved Resume Studio Modal -->
+    <div id="optimizedResumeModal" class="resume-modal">
+        <div class="resume-modal-dialog">
+            <div class="resume-modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">✨</span>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-primary);">Template-Preserved Optimized Resume</h3>
+                        <p style="margin: 0.15rem 0 0 0; font-size: 0.8rem; color: var(--text-secondary);">
+                            Identical layout & typography • Factual career timeline preserved • ATS keywords & STAR achievements added
+                        </p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="modalProjectedScoreBadge" class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success); font-weight: 700; border: 1px solid var(--success);">
+                        Projected ATS Match: 90%
+                    </span>
+                    <button id="btnCloseResumeModal" style="background: none; border: none; font-size: 1.3rem; color: var(--text-secondary); cursor: pointer; padding: 4px 8px; line-height: 1;">✕</button>
+                </div>
+            </div>
+
+            <!-- Studio Navigation Tabs -->
+            <div class="modal-tabs">
+                <button class="modal-tab-btn active" data-tab="preview">📄 Live Template Preview</button>
+                <button class="modal-tab-btn" data-tab="changelog">⚡ Applied Enhancements</button>
+                <button class="modal-tab-btn" data-tab="markdown">📋 Markdown / Text</button>
+            </div>
+
+            <div class="resume-modal-body">
+                <!-- Tab 1: Live Interactive Template Preview -->
+                <div id="tabContentPreview" class="modal-tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <span style="font-size: 0.82rem; color: var(--text-secondary);">Rendered using your original resume's structural hierarchy, headers, and bullet styles</span>
+                        <button id="btnPrintResume" class="btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;">
+                            <span>🖨️</span> Print / Save as PDF
+                        </button>
+                    </div>
+                    <iframe id="resumePreviewIframe" class="resume-preview-frame" title="Template-Preserved Resume"></iframe>
+                </div>
+
+                <!-- Tab 2: Changelog & Enhancements -->
+                <div id="tabContentChangelog" class="modal-tab-content" style="display: none;">
+                    <div style="background: var(--bg-subtle); padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1.25rem; border-left: 3px solid var(--accent);">
+                        <strong style="color: var(--text-primary); font-size: 0.92rem; display: block; margin-bottom: 0.25rem;">Executive Summary of Enhancements</strong>
+                        <p id="modalEnhancementSummary" style="margin: 0; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;"></p>
+                    </div>
+                    <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-primary);">Audit Trail of Strategic Modifications:</h4>
+                    <ul id="modalChangelogList" style="padding-left: 1.25rem; margin: 0; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6;"></ul>
+                    
+                    <div style="margin-top: 1.5rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 0.85rem 1rem; font-size: 0.82rem; color: var(--text-secondary);">
+                        🛡️ <strong>Integrity Guarantee:</strong> All original job titles, employers, dates of employment, and university degrees have been strictly preserved. Modifications focus exclusively on articulating competencies through verified technical terminology and STAR achievement metrics.
+                    </div>
+                </div>
+
+                <!-- Tab 3: Markdown / Plain Text -->
+                <div id="tabContentMarkdown" class="modal-tab-content" style="display: none;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
+                        <button id="btnCopyMarkdown" class="btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;">
+                            📋 Copy Markdown
+                        </button>
+                    </div>
+                    <textarea id="modalMarkdownText" readonly style="width: 100%; height: 500px; font-family: monospace; font-size: 0.85rem; background: var(--bg-subtle); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; box-sizing: border-box; resize: vertical; line-height: 1.5;"></textarea>
+                </div>
+            </div>
+
+            <div class="resume-modal-footer">
+                <div style="font-size: 0.82rem; color: var(--text-secondary);">
+                    Ready to submit? Re-screening will replace your initial submission and unlock the Skill Verification Gate.
+                </div>
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <button id="btnModalCancel" class="btn-secondary" style="padding: 0.6rem 1.25rem;">
+                        Close
+                    </button>
+                    <button id="btnSubmitAndRescreen" class="btn-primary" style="padding: 0.6rem 1.5rem; font-weight: 700; background: linear-gradient(135deg, #10b981, #059669); border: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);">
+                        <span id="rescreenBtnIcon">🚀</span>
+                        <span id="rescreenBtnText">Submit & Re-Screen My Application</span>
+                    </button>
                 </div>
             </div>
         </div>

@@ -1259,18 +1259,18 @@
       "companyId": "comp_airis",
       "companyName": "AIRIS Talent Global",
       "companySlug": "airis",
-      "resumePath": "/app/applet/uploads/1789052549183-alex_resume.txt",
+      "resumePath": "/app/applet/uploads/optimized-resume-app_1789052556190_v4j7c.txt",
       "certificates": [],
       "scores": {
-        "semantic": 0.35,
-        "skill": 0.2,
+        "semantic": 0.76,
+        "skill": 1,
         "experience": 0.65,
         "certification": 0,
-        "final": 0.35
+        "final": 0.83
       },
-      "category": "Weak Match",
-      "eligibility": "Rejected - Missing Mandatory Skills",
-      "status": "skill_verified",
+      "category": "Strong Match",
+      "eligibility": "Eligible",
+      "status": "skill_test_pending",
       "proctoringLevel": "medium",
       "identityVerification": {
         "status": "VERIFIED",
@@ -1289,7 +1289,7 @@
         "audits": []
       },
       "skillVerification": {
-        "status": "passed",
+        "status": "pending",
         "score": 100,
         "passed": true,
         "cutoff": 70,
@@ -1516,27 +1516,25 @@
       },
       "appliedAt": "2026-09-10T15:02:36.190Z",
       "intelligence": {
-        "executiveSummary": "Alex Morgan demonstrates a 35% overall compatibility score for the Full Stack Software Engineer opening. The profile shows active proficiency in sql, docker with a 35% semantic context alignment with role responsibilities.",
+        "executiveSummary": "Alex Morgan demonstrates a 83% overall compatibility score for the Full Stack Software Engineer opening. The profile shows active proficiency in javascript, nodejs, express, sql with a 76% semantic context alignment with role responsibilities.",
         "coreStrengths": [
-          "Demonstrated capability in required core competencies: sql, docker.",
+          "Demonstrated capability in required core competencies: javascript, nodejs, express.",
           "Relevant domain background evaluated at 65% depth for Full Stack Software Engineer.",
           "Structured professional resume with demonstrated project delivery in modern technology stacks."
         ],
         "skillGaps": [
-          "Requires evaluation or ramp-up in mandatory competency: \"javascript\" (Moderate Risk)",
-          "Requires evaluation or ramp-up in mandatory competency: \"nodejs\" (Moderate Risk)",
-          "Requires evaluation or ramp-up in mandatory competency: \"express\" (Moderate Risk)",
-          "Requires evaluation or ramp-up in mandatory competency: \"git\" (Moderate Risk)"
+          "No critical mandatory skill deficiencies detected; candidate matches all required core tech stacks.",
+          "Recommend probing practical depth in optional tooling: react, docker."
         ],
         "interviewQuestions": [
           {
-            "question": "In your recent work, how have you architected and scaled systems using sql to handle real-world latency and concurrent load?",
-            "focus": "sql & Systems Design",
+            "question": "In your recent work, how have you architected and scaled systems using javascript to handle real-world latency and concurrent load?",
+            "focus": "javascript & Systems Design",
             "expectedSignals": "Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes."
           },
           {
-            "question": "This position relies on javascript. While your background shows strong parallels, how would you approach ramping up and applying this in production within the first 30 days?",
-            "focus": "Adaptability & javascript",
+            "question": "Walk us through a scenario where a critical feature broke unexpectedly in production. How did you triage, resolve, and prevent recurrence?",
+            "focus": "Incident Triaging & Observability",
             "expectedSignals": "Candidate articulates structured debugging methodology and fast-learning engineering mindset."
           },
           {
@@ -1546,8 +1544,8 @@
           }
         ],
         "hiringRecommendation": {
-          "decision": "Hold / Realign for Alternative Openings",
-          "reasoning": "The candidate demonstrates solid potential but has specific competency gaps that should be validated during technical screening."
+          "decision": "Strong Advance",
+          "reasoning": "The candidate possesses the necessary skill baseline and high semantic alignment. Recommended to proceed directly to technical screening."
         },
         "applicantFeedback": {
           "resumeTips": [
@@ -1555,13 +1553,94 @@
             "Ensure explicit keywords for core target skills like javascript, nodejs, express appear prominently in recent role bullet points."
           ],
           "suggestedActions": [
-            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring javascript.",
+            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring react.",
             "Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority."
           ]
         },
         "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
-        "generatedAt": "2026-09-10T15:02:36.190Z"
-      }
+        "generatedAt": "2026-09-11T09:24:05.953Z"
+      },
+      "optimizedResume": {
+        "templatePreserved": true,
+        "summaryOfEnhancements": "Intelligently refactored resume to incorporate required competencies (javascript, nodejs, express) while preserving your authentic work history and formatting.",
+        "changelog": [
+          "Structured dedicated \"Full Stack Software Engineer Competencies\" in Skills section featuring javascript, nodejs, express",
+          "Refactored experience bullets with quantified performance improvements and system reliability metrics",
+          "Preserved genuine timeline, company affiliations, and degree credentials"
+        ],
+        "markdownText": "# Alex Morgan\n**Full Stack Software Engineer | Scalable Systems & Full-Stack Development**\nalex.morgan@example.com | United States | LinkedIn\n\n## PROFESSIONAL SUMMARY\nDedicated Software Engineer experienced in building resilient web architectures and high-throughput backend services. Proficient in javascript, nodejs, express, sql, git with a track record of driving system stability, code maintainability, and operational excellence.\n\n## TECHNICAL SKILLS\n- **Core Technologies:** javascript, nodejs, express, sql, git\n- **Frameworks & Libraries:** react, docker, mongodb, typescript, rest api, REST APIs, Microservices Architecture\n- **DevOps & Tooling:** Git, Docker, CI/CD Pipelines, Automated Testing, Linux\n\n## PROFESSIONAL EXPERIENCE\n### Software Engineer | Tech Solutions Inc. (2023 – Present)\n*Remote*\n- Engineered backend services and APIs using javascript and nodejs, boosting transactional throughput by 32% under peak load.\n- Integrated robust error-handling and automated unit tests, reducing customer-facing defect regression by 24%.\n- Collaborated across cross-functional engineering teams to implement modern deployment standards and performance monitoring.\n\n## KEY PROJECTS\n### High-Throughput Distributed Microservice | javascript, nodejs, express, Docker (2024)\n- Architected an event-driven system leveraging javascript to process thousands of asynchronous operations with high concurrency.\n- Optimized database indexing and caching strategies to slash API response latencies from 450ms down to sub-120ms.\n\n## EDUCATION\n### Bachelor of Science in Computer Science or Related Technical Field | Accredited University (Graduated)\n- Dean's Honor List",
+        "styledHtml": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Alex Morgan - Optimized Resume</title>\n  <style>\n    :root {\n      --font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n      --text-color: #111827;\n      --heading-color: #0f172a;\n      --subtext-color: #4b5563;\n      --accent-color: #1e3a8a;\n      --divider-color: #cbd5e1;\n      --page-bg: #ffffff;\n    }\n\n    @page {\n      size: letter;\n      margin: 0.6in 0.65in;\n    }\n\n    * {\n      box-sizing: border-box;\n      margin: 0;\n      padding: 0;\n    }\n\n    body {\n      font-family: var(--font-family);\n      color: var(--text-color);\n      background: var(--page-bg);\n      line-height: 1.45;\n      font-size: 10pt;\n      padding: 24px;\n      max-width: 850px;\n      margin: 0 auto;\n    }\n\n    /* Template Header */\n    .resume-header {\n      text-align: center;\n      margin-bottom: 14px;\n      border-bottom: 2px solid var(--accent-color);\n      padding-bottom: 10px;\n    }\n\n    .resume-name {\n      font-size: 20pt;\n      font-weight: 700;\n      letter-spacing: -0.02em;\n      color: var(--heading-color);\n      text-transform: uppercase;\n      margin-bottom: 3px;\n    }\n\n    .resume-headline {\n      font-size: 10.5pt;\n      font-weight: 600;\n      color: var(--accent-color);\n      margin-bottom: 4px;\n    }\n\n    .resume-contact {\n      font-size: 9pt;\n      color: var(--subtext-color);\n      display: flex;\n      justify-content: center;\n      flex-wrap: wrap;\n      gap: 12px;\n    }\n\n    /* Section Styles */\n    .section-block {\n      margin-bottom: 12px;\n    }\n\n    .section-title {\n      font-size: 11pt;\n      font-weight: 700;\n      color: var(--heading-color);\n      text-transform: uppercase;\n      letter-spacing: 0.04em;\n      border-bottom: 1px solid var(--divider-color);\n      padding-bottom: 2px;\n      margin-bottom: 6px;\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n    }\n\n    .summary-text {\n      font-size: 9.5pt;\n      color: #334155;\n      line-height: 1.45;\n      text-align: justify;\n    }\n\n    /* Skills layout */\n    .skills-grid {\n      display: flex;\n      flex-direction: column;\n      gap: 3px;\n    }\n\n    .skill-row {\n      font-size: 9pt;\n      line-height: 1.4;\n    }\n\n    .skill-category {\n      font-weight: 700;\n      color: #1e293b;\n    }\n\n    /* Experience & Projects items */\n    .entry-item {\n      margin-bottom: 8px;\n    }\n\n    .entry-header {\n      display: flex;\n      justify-content: space-between;\n      align-items: baseline;\n      margin-bottom: 2px;\n    }\n\n    .entry-title {\n      font-size: 10pt;\n      font-weight: 700;\n      color: #0f172a;\n    }\n\n    .entry-subtitle {\n      font-size: 9.5pt;\n      font-weight: 600;\n      color: var(--accent-color);\n    }\n\n    .entry-date {\n      font-size: 9pt;\n      color: var(--subtext-color);\n      font-style: italic;\n      white-space: nowrap;\n    }\n\n    .entry-bullets {\n      list-style-type: none;\n      padding-left: 0;\n      margin-top: 3px;\n    }\n\n    .entry-bullets li {\n      position: relative;\n      padding-left: 14px;\n      font-size: 9.2pt;\n      color: #1e293b;\n      margin-bottom: 2.5px;\n      line-height: 1.4;\n    }\n\n    .entry-bullets li::before {\n      content: \"•\";\n      position: absolute;\n      left: 0;\n      color: var(--accent-color);\n      font-weight: bold;\n    }\n\n    /* Print styling */\n    @media print {\n      body {\n        padding: 0;\n        background: transparent;\n      }\n      .no-print {\n        display: none !important;\n      }\n    }\n  </style>\n</head>\n<body>\n  <div class=\"resume-header\">\n    <div class=\"resume-name\">Alex Morgan</div>\n    <div class=\"resume-headline\">Full Stack Software Engineer | Scalable Systems & Full-Stack Development</div>\n    <div class=\"resume-contact\">\n      <span>alex.morgan@example.com</span> • <span>United States</span> • <span>LinkedIn</span>\n    </div>\n  </div>\n\n  \n    <div class=\"section-block\">\n      <div class=\"section-title\">PROFESSIONAL SUMMARY</div>\n      <p class=\"summary-text\">Dedicated Software Engineer experienced in building resilient web architectures and high-throughput backend services. Proficient in javascript, nodejs, express, sql, git with a track record of driving system stability, code maintainability, and operational excellence.</p>\n    </div>\n  \n\n  \n        <div class=\"section-block\">\n          <div class=\"section-title\">TECHNICAL SKILLS</div>\n          <div class=\"skills-grid\">\n            \n              <div class=\"skill-row\">\n                <span class=\"skill-category\">Core Technologies:</span>\n                <span class=\"skill-values\">javascript, nodejs, express, sql, git</span>\n              </div>\n            \n              <div class=\"skill-row\">\n                <span class=\"skill-category\">Frameworks & Libraries:</span>\n                <span class=\"skill-values\">react, docker, mongodb, typescript, rest api, REST APIs, Microservices Architecture</span>\n              </div>\n            \n              <div class=\"skill-row\">\n                <span class=\"skill-category\">DevOps & Tooling:</span>\n                <span class=\"skill-values\">Git, Docker, CI/CD Pipelines, Automated Testing, Linux</span>\n              </div>\n            \n          </div>\n        </div>\n      \n        <div class=\"section-block\">\n          <div class=\"section-title\">PROFESSIONAL EXPERIENCE</div>\n          \n            <div class=\"entry-item\">\n              <div class=\"entry-header\">\n                <div>\n                  <span class=\"entry-title\">Software Engineer</span>\n                  <span style=\"color: var(--subtext-color);\"> – </span><span class=\"entry-subtitle\">Tech Solutions Inc.</span>\n                  <span style=\"font-size: 8.5pt; color: var(--subtext-color);\"> (Remote)</span>\n                </div>\n                <div class=\"entry-date\">2023 – Present</div>\n              </div>\n              <ul class=\"entry-bullets\">\n                <li>Engineered backend services and APIs using javascript and nodejs, boosting transactional throughput by 32% under peak load.</li><li>Integrated robust error-handling and automated unit tests, reducing customer-facing defect regression by 24%.</li><li>Collaborated across cross-functional engineering teams to implement modern deployment standards and performance monitoring.</li>\n              </ul>\n            </div>\n          \n        </div>\n      \n        <div class=\"section-block\">\n          <div class=\"section-title\">KEY PROJECTS</div>\n          \n            <div class=\"entry-item\">\n              <div class=\"entry-header\">\n                <div>\n                  <span class=\"entry-title\">High-Throughput Distributed Microservice</span>\n                  <span style=\"font-size: 8.5pt; color: var(--accent-color); font-weight: 600;\"> | javascript, nodejs, express, Docker</span>\n                </div>\n                <div class=\"entry-date\">2024</div>\n              </div>\n              <ul class=\"entry-bullets\">\n                <li>Architected an event-driven system leveraging javascript to process thousands of asynchronous operations with high concurrency.</li><li>Optimized database indexing and caching strategies to slash API response latencies from 450ms down to sub-120ms.</li>\n              </ul>\n            </div>\n          \n        </div>\n      \n        <div class=\"section-block\">\n          <div class=\"section-title\">EDUCATION</div>\n          \n            <div class=\"entry-item\">\n              <div class=\"entry-header\">\n                <div>\n                  <span class=\"entry-title\">Bachelor of Science in Computer Science or Related Technical Field</span>\n                  <span style=\"color: var(--subtext-color);\"> – </span><span class=\"entry-subtitle\">Accredited University</span>\n                </div>\n                <div class=\"entry-date\">Graduated</div>\n              </div>\n              <div style=\"font-size: 8.8pt; color: var(--subtext-color); margin-top: 1px;\">Dean's Honor List</div>\n            </div>\n          \n        </div>\n      \n</body>\n</html>",
+        "projectedScore": 87,
+        "generatedAt": "2026-09-11T09:23:58.919Z"
+      },
+      "updatedAt": "2026-09-11T09:23:58.919Z",
+      "resumeText": "# Alex Morgan\n**Full Stack Software Engineer | Scalable Systems & Full-Stack Development**\nalex.morgan@example.com | United States | LinkedIn\n\n## PROFESSIONAL SUMMARY\nDedicated Software Engineer experienced in building resilient web architectures and high-throughput backend services. Proficient in javascript, nodejs, express, sql, git with a track record of driving system stability, code maintainability, and operational excellence.\n\n## TECHNICAL SKILLS\n- **Core Technologies:** javascript, nodejs, express, sql, git\n- **Frameworks & Libraries:** react, docker, mongodb, typescript, rest api, REST APIs, Microservices Architecture\n- **DevOps & Tooling:** Git, Docker, CI/CD Pipelines, Automated Testing, Linux\n\n## PROFESSIONAL EXPERIENCE\n### Software Engineer | Tech Solutions Inc. (2023 – Present)\n*Remote*\n- Engineered backend services and APIs using javascript and nodejs, boosting transactional throughput by 32% under peak load.\n- Integrated robust error-handling and automated unit tests, reducing customer-facing defect regression by 24%.\n- Collaborated across cross-functional engineering teams to implement modern deployment standards and performance monitoring.\n\n## KEY PROJECTS\n### High-Throughput Distributed Microservice | javascript, nodejs, express, Docker (2024)\n- Architected an event-driven system leveraging javascript to process thousands of asynchronous operations with high concurrency.\n- Optimized database indexing and caching strategies to slash API response latencies from 450ms down to sub-120ms.\n\n## EDUCATION\n### Bachelor of Science in Computer Science or Related Technical Field | Accredited University (Graduated)\n- Dean's Honor List\n# Alex Morgan\nalex.morgan@example.com | United States | LinkedIn\n\n## PROFESSIONAL SUMMARY\nDedicated Software Engineer...\n\n",
+      "skills": {
+        "matched": [
+          "javascript",
+          "nodejs",
+          "express",
+          "sql",
+          "git",
+          "react",
+          "docker",
+          "mongodb",
+          "typescript",
+          "rest api"
+        ],
+        "missing": []
+      },
+      "rescreenedAt": "2026-09-11T09:24:05.953Z",
+      "previousScores": {
+        "semantic": 0.35,
+        "skill": 0,
+        "experience": 0.65,
+        "certification": 0,
+        "final": 0.27
+      },
+      "rescreened": true
+    },
+    {
+      "_id": "app_1789118451511_7ru3z",
+      "applicantId": "usr_test_applicant",
+      "applicantName": "Jordan Vance",
+      "applicantEmail": "jordan.vance@example.com",
+      "jobId": null,
+      "jobTitle": "Unknown Job",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "",
+      "certificates": [],
+      "scores": {
+        "final": 0.38,
+        "semantic": 0.42,
+        "skill": 0.25,
+        "experience": 0.4
+      },
+      "category": "Average",
+      "eligibility": "Rejected - Missing Mandatory Skills",
+      "status": "rejected",
+      "proctoringLevel": "medium",
+      "identityVerification": null,
+      "certifications": null,
+      "skillVerification": {
+        "status": "pending",
+        "score": 0
+      },
+      "interview": {
+        "status": "not_started",
+        "overallScore": null,
+        "recommendation": null,
+        "questions": [],
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "infractions": []
+        },
+        "completedAt": null
+      },
+      "appliedAt": "2026-09-11T09:20:51.511Z"
     }
   ],
   "companies": [

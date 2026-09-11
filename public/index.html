@@ -424,6 +424,50 @@
                         <p>Experience a hiring platform built around respect, skill validation, and total transparency at every stage.</p>
                     </div>
 
+                    <!-- D3.js Candidate Skill Fit & Mandatory Requirements Radar Component -->
+                    <div id="applicantSkillRadarContainer" class="applicant-skill-radar-container">
+                        <div class="radar-header">
+                            <div class="radar-badge"><span>D3.js Competency Radar</span></div>
+                            <h4 id="radarTitle">Skill Set vs. Mandatory Requirements</h4>
+                            <p id="radarDesc">Interactive radar comparing candidate competency against target role requirements to visually pinpoint where improvements are needed.</p>
+                        </div>
+
+                        <!-- Role Filter & Simulation Controls -->
+                        <div class="radar-controls">
+                            <label for="radarRoleSelect" class="radar-label">Target Role:</label>
+                            <select id="radarRoleSelect" class="radar-select" aria-label="Target Role">
+                                <option value="fullstack">Full Stack Software Engineer (Node + React + SQL)</option>
+                                <option value="backend">Backend & Distributed Systems (Go + Microservices)</option>
+                                <option value="devops">Cloud DevOps & SRE (Kubernetes + AWS)</option>
+                                <option value="frontend">Senior Frontend Engineer (TypeScript + Web Vitals)</option>
+                            </select>
+                            <button id="radarSimulateBtn" class="radar-toggle-btn" type="button" title="Simulate addressing identified skill gaps">
+                                ✨ Simulate Skill Upgrade
+                            </button>
+                        </div>
+
+                        <!-- D3 SVG Radar Canvas -->
+                        <div class="radar-chart-wrapper" id="radarChartWrapper">
+                            <div id="radarChartSvgContainer" class="radar-svg-container"></div>
+                            <div id="radarTooltip" class="radar-tooltip" style="display: none;"></div>
+                        </div>
+
+                        <!-- Radar Legend -->
+                        <div class="radar-legend">
+                            <div class="legend-item">
+                                <span class="legend-indicator legend-required"></span>
+                                <span>Mandatory Requirement (Target Benchmark)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-indicator legend-candidate"></span>
+                                <span>Candidate Current Skill Profile</span>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Improvement Recommendations Box -->
+                        <div id="radarGapSummary" class="radar-gap-summary"></div>
+                    </div>
+
                     <ul class="value-list">
                         <li class="value-item">
                             <div class="value-item-icon">🚫</div>
@@ -692,6 +736,9 @@
         </div>
     </footer>
 
+    <!-- D3.js Library & Skill Radar Module -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="/js/skillRadar.js"></script>
     <script src="/js/main.js"></script>
 </body>
 </html>

@@ -669,6 +669,13 @@ const applications = {
     saveToDisk();
     return app;
   },
+  update(id, data) {
+    const app = state.applications.find(a => a._id === id);
+    if (!app) return null;
+    Object.assign(app, data);
+    saveToDisk();
+    return app;
+  },
   updateIntelligence(id, intelligence) {
     const app = state.applications.find(a => a._id === id);
     if (!app) return null;

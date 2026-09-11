@@ -218,7 +218,17 @@ async function loadMyApplications() {
                 let skillGateTag = '';
                 let interviewBtn = '';
 
-                if (!isSkillPassed) {
+                // Post-Screening Rejection Check
+                const isScreeningRejected = app.status === 'rejected' || (app.eligibility && app.eligibility.includes('Rejected'));
+
+                if (isScreeningRejected) {
+                    skillGateTag = `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; border: 1px solid var(--danger);">⚠️ Screening Unmet</span>`;
+                    interviewBtn = `
+                        <button class="btn-primary" style="padding: 0.45rem 1.15rem; font-size: 0.88rem; background: linear-gradient(135deg, #f59e0b, #ea580c); border: none; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);" onclick="window.location.href='/apply?jobId=${app.jobId}'">
+                            <span>✨</span> Review Feedback & Optimize Resume
+                        </button>
+                    `;
+                } else if (!isSkillPassed) {
                     if (isSkillFailed) {
                         if (canRetake) {
                             skillGateTag = `<span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; border: 1px solid var(--danger);">⚠️ Gate Unmet (${sv.score || 0}% / Cutoff: ${sv.cutoff || 70}%)</span>`;

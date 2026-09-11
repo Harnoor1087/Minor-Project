@@ -58,8 +58,8 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
 
     // If questions have not been generated yet, generate them dynamically
     if (!app.interview || !Array.isArray(app.interview.questions) || app.interview.questions.length === 0) {
-      let resumeText = '';
-      if (app.resumePath && fs.existsSync(app.resumePath)) {
+      let resumeText = app.resumeText || '';
+      if (!resumeText && app.resumePath && fs.existsSync(app.resumePath)) {
         try {
           resumeText = await extractTextFromFile(app.resumePath);
         } catch (err) {

@@ -24,7 +24,120 @@ function getGeminiClient() {
 }
 
 /**
- * Generate context-aware interview questions based on Job, Resume, and Identified Skill Gaps
+ * Extract named candidate projects and architectural details from resume text
+ */
+function extractCandidateProjects(resumeText = '', skills = { matched: [], missing: [] }) {
+  const projects = [];
+  if (!resumeText || typeof resumeText !== 'string') {
+    return getDefaultProjects(skills);
+  }
+
+  // 1. Look for explicit project headings in resume
+  const projectSectionMatch = resumeText.match(/(?:projects?|technical projects?|academic projects?|key projects?|selected projects?|recent work|portfolio)\b[:\s\n-]*([\s\S]*?)(?=(?:\n[A-Z][A-Za-z\s]{2,20}:|\n(?:education|experience|work experience|employment|certifications|awards|summary)\b|$))/i);
+  
+  const rawProjectBlock = projectSectionMatch ? projectSectionMatch[1] : '';
+  const searchSource = rawProjectBlock.length > 50 ? rawProjectBlock : resumeText;
+
+  // Split into potential project chunks
+  const lines = searchSource.split('\n').map(l => l.trim()).filter(Boolean);
+  let currentProject = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Check if line looks like a project bullet or action verb
+    const isBullet = line.startsWith('•') || line.startsWith('-') || line.startsWith('*') ||
+      /^(built|developed|architected|engineered|designed|implemented|spearheaded|scaled|created|deployed)\b/i.test(line);
+
+    // Check if line looks like a project title: e.g. "Distributed Kafka Ledger | Node.js, Kafka"
+    const isHeaderLine = !isBullet && !line.endsWith('.') &&
+      line.length >= 4 && line.length <= 90 &&
+      !/^(experience|education|skills|certifications|responsibilities|technologies|tools|languages|summary|about|profile)/i.test(line);
+
+    if (isHeaderLine) {
+      if (currentProject && currentProject.name && currentProject.details.length > 0) {
+        projects.push(finalizeProject(currentProject));
+      }
+      currentProject = {
+        name: line.replace(/^(?:project\s*\d*\s*[:\-]|###|##|\*|\-)\s*/i, '').trim(),
+        details: []
+      };
+    } else if (currentProject) {
+      if (isBullet) {
+        currentProject.details.push(line.replace(/^[•\-\*]\s*/, '').trim());
+      } else if (currentProject.details.length < 3 && line.length > 15 && !line.includes('@')) {
+        currentProject.details.push(line);
+      }
+    }
+  }
+
+  if (currentProject && currentProject.name && currentProject.details.length > 0) {
+    projects.push(finalizeProject(currentProject));
+  }
+
+  // 2. If no project was parsed cleanly via headers, look for action lines in general text
+  if (projects.length === 0) {
+    const actionLines = lines.filter(l => /^(?:•|\-|\*)?\s*(?:built|developed|architected|engineered|designed|implemented|spearheaded|scaled)\b/i.test(l));
+    if (actionLines.length > 0) {
+      projects.push({
+        name: 'Production Engineering Project',
+        summary: actionLines.slice(0, 3).join('; ').replace(/^[•\-\*]\s*/g, ''),
+        tech: extractTechWords(actionLines.join(' '), skills)
+      });
+    }
+  }
+
+  // 3. Fallback if still empty
+  if (projects.length === 0) {
+    return getDefaultProjects(skills);
+  }
+
+  return projects.slice(0, 3);
+}
+
+function finalizeProject(p) {
+  const allText = [p.name, ...p.details].join(' ');
+  const tech = extractTechWords(allText, { matched: [] });
+  return {
+    name: p.name.split(/[|–—\(\[]/)[0].trim(),
+    summary: p.details.slice(0, 3).join(' '),
+    tech: tech.length > 0 ? tech : ['Modern Architecture Stack']
+  };
+}
+
+function extractTechWords(text, skills) {
+  const commonTech = [
+    'Node.js', 'React', 'TypeScript', 'JavaScript', 'Python', 'Java', 'Golang',
+    'PostgreSQL', 'MongoDB', 'Redis', 'Kafka', 'Docker', 'Kubernetes', 'AWS',
+    'GCP', 'GraphQL', 'Express', 'Django', 'FastAPI', 'Spring Boot', 'Next.js',
+    'TensorFlow', 'PyTorch', 'Microservices', 'REST', 'Tailwind', 'Elasticsearch'
+  ];
+  const found = [];
+  const lower = text.toLowerCase();
+  commonTech.forEach(t => {
+    if (lower.includes(t.toLowerCase())) found.push(t);
+  });
+  (skills.matched || []).forEach(m => {
+    if (lower.includes(m.toLowerCase()) && !found.some(f => f.toLowerCase() === m.toLowerCase())) {
+      found.push(m);
+    }
+  });
+  return found.slice(0, 6);
+}
+
+function getDefaultProjects(skills) {
+  const matched = (skills && Array.isArray(skills.matched) && skills.matched.length > 0) ? skills.matched : ['Full-Stack Engineering', 'API Integration'];
+  return [
+    {
+      name: `${matched[0] || 'Cloud-Native'} Application Architecture`,
+      summary: `End-to-end production service leveraging ${matched.slice(0, 3).join(', ')} with automated CI/CD and telemetry.`,
+      tech: matched.slice(0, 4)
+    }
+  ];
+}
+
+/**
+ * Generate context-aware interview questions based on Job, Resume, Identified Skill Gaps, and Project Deep-Dive
  */
 async function generateInterviewQuestions({ job, resumeText = '', skills = { matched: [], missing: [] }, candidateName = 'Candidate' }) {
   const mandatorySkills = Array.isArray(job.mandatory_skills) ? job.mandatory_skills : [];
@@ -32,11 +145,15 @@ async function generateInterviewQuestions({ job, resumeText = '', skills = { mat
   const matchedSkills = Array.isArray(skills.matched) ? skills.matched : [];
   const missingSkills = Array.isArray(skills.missing) ? skills.missing : mandatorySkills.filter(s => !matchedSkills.includes(s.toLowerCase()));
 
+  // Extract structured projects from candidate resume
+  const candidateProjects = extractCandidateProjects(resumeText, skills);
+  const primaryProject = candidateProjects[0] || getDefaultProjects(skills)[0];
+
   const client = getGeminiClient();
   if (client) {
     try {
       const prompt = `You are the Lead Technical Interviewer and Evaluation Architect at ${job.companyName || 'AIRIS Talent'}.
-Generate exactly 4 contextual, highly relevant technical interview questions for the role: "${job.title}".
+Generate exactly 5 contextual, highly relevant technical interview questions for the role: "${job.title}".
 
 Context:
 Candidate Name: ${candidateName}
@@ -46,33 +163,50 @@ Mandatory Skills for Job: ${mandatorySkills.join(', ') || 'Software Engineering'
 Optional Skills for Job: ${optionalSkills.join(', ') || 'Best Practices'}
 Candidate's Verified Skills: ${matchedSkills.join(', ') || 'General Technical Background'}
 Identified Candidate Skill Gaps: ${missingSkills.join(', ') || 'Advanced production tooling'}
-Candidate Resume Snippet (First 2000 chars):
+
+Candidate's Parsed Resume Projects:
+${candidateProjects.map((p, idx) => `Project ${idx + 1}: "${p.name}" (Tech: ${p.tech.join(', ')}). Details: ${p.summary}`).join('\n')}
+
+Candidate Resume Snippet (First 2500 chars):
 """
-${resumeText.slice(0, 2000)}
+${resumeText.slice(0, 2500)}
 """
 
-Formulate 4 distinct questions:
-1. Core Competency: Focuses on candidate's strongest verified skills aligned with the job.
-2. Skill Gap Investigation: Specifically tests how the candidate navigates their identified skill gaps (${missingSkills.slice(0, 3).join(', ') || 'new technologies'}) or applies analogous concepts.
-3. System Architecture & Real-World Scenario: A realistic production challenge tailored to ${job.title} at ${job.companyName || 'our company'}.
-4. Troubleshooting & Operational Trade-offs: A complex production incident, debugging challenge, or engineering trade-off.
+Formulate exactly 5 distinct questions covering these essential evaluation dimensions:
+1. Core Competency Alignment: Tests candidate's verified primary skill in practical production code.
+2. Project Deep-Dive (MANDATORY): A dedicated interrogation directly referencing the candidate's actual resume project: "${primaryProject.name}".
+   - Drill into specific architectural choices, component boundaries, and why specific technologies were selected over alternatives.
+   - Challenge candidate on their specific individual contributions and ownership vs third-party packages or team scope.
+   - Ask about the hardest technical hurdle, bottleneck, concurrency issue, or data consistency constraint encountered in that project and how it was solved.
+   - Investigate how testing, deployment, and production observability were handled.
+3. Skill Gap Investigation: Specifically tests how the candidate navigates their identified skill gaps (${missingSkills.slice(0, 3).join(', ') || 'new technologies'}) or applies analogous concepts.
+4. System Architecture & Real-World Scenario: A realistic production challenge tailored to ${job.title} at ${job.companyName || 'our company'}.
+5. Troubleshooting & Operational Trade-offs: A complex production incident, debugging challenge, or engineering trade-off.
 
 Output ONLY valid JSON matching this exact array structure:
 [
   {
     "id": 1,
-    "category": "Core Competency",
+    "category": "Core Competency Alignment",
     "targetArea": "Primary skill focus",
     "rationale": "Why this question matters for this candidate",
     "question": "The comprehensive question text",
     "keyFocusPoints": ["Point 1", "Point 2", "Point 3"]
+  },
+  {
+    "id": 2,
+    "category": "Project Deep-Dive",
+    "targetArea": "${primaryProject.name} Architecture & Individual Contribution",
+    "rationale": "Directly cross-examines candidate on concrete implementation, architectural trade-offs, and technical ownership in their stated project: ${primaryProject.name}",
+    "question": "Comprehensive project deep-dive question referencing ${primaryProject.name}...",
+    "keyFocusPoints": ["Architectural decisions & trade-offs in ${primaryProject.name}", "Personal contributions vs library abstractions", "Resolution of scalability/concurrency bottlenecks"]
   },
   ...
 ]`;
 
       const response = await Promise.race([
         client.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: prompt
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Question generation timed out')), 7000))
@@ -83,7 +217,7 @@ Output ONLY valid JSON matching this exact array structure:
         raw = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
       }
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length >= 3) {
+      if (Array.isArray(parsed) && parsed.length >= 4) {
         return parsed.map((q, idx) => ({
           ...q,
           id: idx + 1
@@ -94,16 +228,22 @@ Output ONLY valid JSON matching this exact array structure:
     }
   }
 
-  // Fallback: Intelligent heuristic generation using skills and role context
-  return generateHeuristicQuestions({ job, matchedSkills, missingSkills, mandatorySkills });
+  // Fallback: Intelligent heuristic generation using parsed projects, skills and role context
+  return generateHeuristicQuestions({ job, matchedSkills, missingSkills, mandatorySkills, candidateProjects });
 }
 
-function generateHeuristicQuestions({ job, matchedSkills, missingSkills, mandatorySkills }) {
+function generateHeuristicQuestions({ job, matchedSkills, missingSkills, mandatorySkills, candidateProjects = [] }) {
   const primarySkill = matchedSkills[0] || mandatorySkills[0] || 'software architecture';
   const secondarySkill = matchedSkills[1] || mandatorySkills[1] || 'API design';
   const gapSkill = missingSkills[0] || (mandatorySkills.length > 2 ? mandatorySkills[2] : 'cloud deployment');
   const role = job.title || 'Software Engineer';
   const company = job.companyName || 'the enterprise';
+
+  const project = (Array.isArray(candidateProjects) && candidateProjects.length > 0)
+    ? candidateProjects[0]
+    : { name: 'Full-Stack Architecture & Microservices Pipeline', tech: [primarySkill, secondarySkill], summary: 'Enterprise production service' };
+
+  const projectTechStr = Array.isArray(project.tech) && project.tech.length > 0 ? project.tech.join(', ') : `${primarySkill} and related frameworks`;
 
   return [
     {
@@ -120,6 +260,18 @@ function generateHeuristicQuestions({ job, matchedSkills, missingSkills, mandato
     },
     {
       id: 2,
+      category: 'Project Deep-Dive',
+      targetArea: `Architecture & Ownership: "${project.name}" (${projectTechStr})`,
+      rationale: `Examines candidate's authentic technical ownership, engineering decisions, and problem-solving depth on their stated project: "${project.name}".`,
+      question: `In your project "${project.name}" (utilizing ${projectTechStr}), walk us through the end-to-end architecture from data ingestion to persistence and client delivery. What was your specific individual contribution, what design alternatives did you reject, and how did you diagnose and resolve the single most critical performance bottleneck or data consistency challenge in that system?`,
+      keyFocusPoints: [
+        `System component boundaries and data flow in ${project.name}`,
+        'Candidate individual technical contribution vs team scope/libraries',
+        'Key technical trade-offs, bottlenecks, and how resolution was measured'
+      ]
+    },
+    {
+      id: 3,
       category: 'Skill Gap & Adaptability',
       targetArea: `Adoption of ${gapSkill.toUpperCase()} in Production`,
       rationale: `Our screening identified ${gapSkill} as a core requirement for ${job.title}. This investigates your problem-solving adaptability.`,
@@ -131,7 +283,7 @@ function generateHeuristicQuestions({ job, matchedSkills, missingSkills, mandato
       ]
     },
     {
-      id: 3,
+      id: 4,
       category: 'System Architecture & Scalability',
       targetArea: `End-to-End System Design for ${role}`,
       rationale: `Evaluates holistic architectural thinking, security boundaries, and scalability for high-load systems.`,
@@ -143,7 +295,7 @@ function generateHeuristicQuestions({ job, matchedSkills, missingSkills, mandato
       ]
     },
     {
-      id: 4,
+      id: 5,
       category: 'Engineering Trade-offs & Production Incident',
       targetArea: 'Incident Triage, Root-Cause Analysis & Quality Assurance',
       rationale: `Assesses operational maturity, calm under pressure, and systemic learning from outages.`,
@@ -190,7 +342,10 @@ Candidate's Answer:
 ${candidateAnswer}
 """
 
-Evaluate the answer objectively. Return ONLY valid JSON:
+Evaluate the answer objectively.
+${question.category === 'Project Deep-Dive' ? 'CRITICAL EVALUATION FOCUS: Specifically assess the candidate\'s authentic technical ownership, architectural justification of tech choices, personal contributions vs third-party packages, and their systematic resolution of bottlenecks and constraints.' : ''}
+
+Return ONLY valid JSON:
 {
   "technicalAccuracy": <number 0-100>,
   "depthAndPracticality": <number 0-100>,
@@ -203,7 +358,7 @@ Evaluate the answer objectively. Return ONLY valid JSON:
 
       const response = await Promise.race([
         client.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: prompt
         }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Answer evaluation timed out')), 6000))
@@ -257,17 +412,42 @@ function evaluateHeuristicAnswer({ question, candidateAnswer }) {
   else if (wordCount < 30) baseScore -= 15;
 
   baseScore += Math.min(25, matchedTechCount * 4);
+
+  // Bonus for Project Deep-Dive personal ownership and trade-off justification
+  const isProjectDeepDive = (question.category || '').toLowerCase().includes('project');
+  if (isProjectDeepDive) {
+    const ownershipTerms = ['i designed', 'i built', 'i implemented', 'my contribution', 'we chose', 'trade-off', 'alternative', 'bottleneck', 'migrated', 'refactored', 'decision', 'latency', 'benchmark'];
+    let ownershipCount = 0;
+    ownershipTerms.forEach(term => {
+      if (text.includes(term)) ownershipCount++;
+    });
+    baseScore += Math.min(15, ownershipCount * 3);
+  }
+
   const finalScore = Math.min(95, Math.max(30, Math.round(baseScore)));
 
   const strengths = [];
   const improvements = [];
+
+  if (isProjectDeepDive) {
+    if (text.includes('trade-off') || text.includes('chose') || text.includes('alternative') || text.includes('decision')) {
+      strengths.push('Articulated specific architectural trade-offs and justified technology selections.');
+    } else {
+      improvements.push('Clarify why specific libraries or database architectures were chosen over alternatives.');
+    }
+    if (text.includes('bottleneck') || text.includes('latency') || text.includes('concurrency') || text.includes('scale')) {
+      strengths.push('Demonstrated strong problem-solving under real-world performance constraints.');
+    } else {
+      improvements.push('Discuss quantitative throughput, latency metrics, and performance limits.');
+    }
+  }
 
   if (wordCount >= 80) {
     strengths.push('Provided a well-structured and detailed explanation.');
   }
   if (matchedTechCount >= 3) {
     strengths.push('Effectively referenced industry-standard architectural terms and best practices.');
-  } else {
+  } else if (!isProjectDeepDive) {
     improvements.push('Could include more specific architectural tooling and protocol choices.');
   }
 
