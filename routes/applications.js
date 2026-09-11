@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { applications, jobs, users } = require('../db/store');
-const { verifyToken } = require('./auth');
+const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 const { analyzeResume, generateCandidateIntelligence, extractTextFromFile } = require('../services/analyzer');
 
 // Configure multer for file uploads
@@ -202,17 +202,15 @@ router.get('/my-applications', verifyToken, (req, res) => {
   }
 });
 
-// Get all applications (Admin only, optional company filter)
-router.get('/all', verifyToken, (req, res) => {
+// Get all applications (Admin only, strictly tenant isolated)
+router.get('/all', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
-    }
-
-    const { companyId } = req.query;
     const filter = {};
-    if (companyId && companyId !== 'all') {
-      filter.companyId = companyId;
+    if (req.isSuperAdmin && req.query.companyId && req.query.companyId !== 'all') {
+      filter.companyId = req.query.companyId;
+    } else if (!req.isSuperAdmin) {
+      // Non-super-admins are strictly isolated to their own tenant
+      filter.companyId = req.tenantId;
     }
 
     const allApps = applications.getAll(filter);
@@ -222,11 +220,17 @@ router.get('/all', verifyToken, (req, res) => {
   }
 });
 
-// Update application status (Admin only)
-router.patch('/:id/status', verifyToken, (req, res) => {
+// Update application status (Admin only, strictly tenant isolated)
+router.patch('/:id/status', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Cross-tenant access protection
+    if (!assertTenantAccess(req, res, app.companyId, 'Candidate application')) {
+      return;
     }
 
     const { status } = req.body;
@@ -235,9 +239,6 @@ router.patch('/:id/status', verifyToken, (req, res) => {
     }
 
     const updated = applications.updateStatus(req.params.id, status);
-    if (!updated) {
-      return res.status(404).json({ message: 'Application not found' });
-    }
 
     res.json({
       message: 'Status updated',
@@ -256,8 +257,17 @@ router.get('/:id/intelligence', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'Application not found' });
     }
 
-    // Ensure applicant can only view their own, unless admin
-    if (req.user.role !== 'admin' && app.applicantId !== req.user.id) {
+    // Tenant boundary & identity validation
+    if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+      let authorized = false;
+      await new Promise(resolve => {
+        requireTenant(req, res, () => {
+          authorized = assertTenantAccess(req, res, app.companyId, 'Candidate application intelligence');
+          resolve();
+        });
+      });
+      if (!authorized) return;
+    } else if (app.applicantId !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -323,7 +333,17 @@ router.post('/:id/ask-candidate-ai', verifyToken, async (req, res) => {
       return res.status(404).json({ message: 'Application not found' });
     }
 
-    if (req.user.role !== 'admin' && app.applicantId !== req.user.id) {
+    // Tenant boundary & identity validation
+    if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+      let authorized = false;
+      await new Promise(resolve => {
+        requireTenant(req, res, () => {
+          authorized = assertTenantAccess(req, res, app.companyId, 'Candidate application intelligence');
+          resolve();
+        });
+      });
+      if (!authorized) return;
+    } else if (app.applicantId !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 

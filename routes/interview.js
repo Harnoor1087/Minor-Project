@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const { applications, jobs, companies } = require('../db/store');
-const { verifyToken } = require('./auth');
+const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 const { extractTextFromFile } = require('../services/analyzer');
 const {
   generateInterviewQuestions,
@@ -293,7 +293,13 @@ router.get('/session/:appId/report', verifyToken, (req, res) => {
       return res.status(404).json({ message: 'Application not found' });
     }
 
-    if (req.user.role !== 'admin' && app.applicantId !== req.user.id) {
+    if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+      let authorized = false;
+      requireTenant(req, res, () => {
+        authorized = assertTenantAccess(req, res, app.companyId, 'Interview report');
+      });
+      if (!authorized) return;
+    } else if (app.applicantId !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 

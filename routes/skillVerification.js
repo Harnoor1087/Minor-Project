@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { applications, jobs, users } = require('../db/store');
-const { verifyToken } = require('./auth');
+const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 const {
   createSkillVerificationTest,
   sanitizeTestForClient,
@@ -272,13 +272,14 @@ router.post('/submit/:appId', verifyToken, async (req, res) => {
  * POST /api/skill-verification/waive/:appId
  * Recruiter override: waive Pre-Interview Gate for candidate
  */
-router.post('/waive/:appId', verifyToken, async (req, res) => {
+router.post('/waive/:appId', verifyToken, requireAdmin, requireTenant, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
-    }
     const app = applications.getById(req.params.appId);
     if (!app) return res.status(404).json({ message: 'Application not found' });
+
+    if (!assertTenantAccess(req, res, app.companyId, 'Pre-Interview Gate waiver')) {
+      return;
+    }
 
     const reason = req.body.reason || 'Recruiter verified portfolio / production engineering background';
 
@@ -307,13 +308,14 @@ router.post('/waive/:appId', verifyToken, async (req, res) => {
  * POST /api/skill-verification/grant-retake/:appId
  * Recruiter action: grant an additional skill gate attempt to candidate
  */
-router.post('/grant-retake/:appId', verifyToken, async (req, res) => {
+router.post('/grant-retake/:appId', verifyToken, requireAdmin, requireTenant, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
-    }
     const app = applications.getById(req.params.appId);
     if (!app) return res.status(404).json({ message: 'Application not found' });
+
+    if (!assertTenantAccess(req, res, app.companyId, 'Pre-Interview Gate retake grant')) {
+      return;
+    }
 
     const currentMax = app.skillVerification?.maxAttempts || 2;
 
@@ -338,18 +340,15 @@ router.post('/grant-retake/:appId', verifyToken, async (req, res) => {
 
 /**
  * GET /api/skill-verification/gate-stats
- * Pre-Interview Gate funnel & compute cost savings metrics for recruiter dashboard
+ * Pre-Interview Gate funnel & compute cost savings metrics for recruiter dashboard (strictly tenant isolated)
  */
-router.get('/gate-stats', verifyToken, (req, res) => {
+router.get('/gate-stats', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
-    }
-
-    const { companyId } = req.query;
     const filter = {};
-    if (companyId && companyId !== 'all') {
-      filter.companyId = companyId;
+    if (req.isSuperAdmin && req.query.companyId && req.query.companyId !== 'all') {
+      filter.companyId = req.query.companyId;
+    } else if (!req.isSuperAdmin) {
+      filter.companyId = req.tenantId;
     }
 
     const apps = applications.getAll(filter);

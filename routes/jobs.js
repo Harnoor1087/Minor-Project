@@ -1,15 +1,47 @@
 const express = require('express');
 const router = express.Router();
 const { jobs } = require('../db/store');
-const { verifyToken } = require('./auth');
+const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 
-// Get all jobs (with optional companyId/companySlug query filter)
-router.get('/', (req, res) => {
+// Helper to optionally extract authenticated user if token is present
+function optionalAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return next();
   try {
-    const { companyId, companySlug } = req.query;
-    const allJobs = jobs.getAll({ companyId, companySlug });
+    verifyToken(req, res, () => {
+      // If user is admin, resolve tenant context
+      if (req.user?.role === 'admin' || req.user?.role === 'super_admin') {
+        requireTenant(req, res, next);
+      } else {
+        next();
+      }
+    });
+  } catch (e) {
+    next();
+  }
+}
+
+// Get all jobs (with tenant isolation for recruiters, public filter for candidates)
+router.get('/', optionalAuth, (req, res) => {
+  try {
+    const { companyId, companySlug, scope } = req.query;
+    let filter = {};
+
+    // If request comes from an authenticated recruiter/admin, enforce their tenant
+    if (req.user && (req.user.role === 'admin' || scope === 'admin') && !req.isSuperAdmin) {
+      filter.companyId = req.tenantId;
+    } else if (req.isSuperAdmin && companyId && companyId !== 'all') {
+      filter.companyId = companyId;
+    } else {
+      // Public candidate browsing
+      if (companyId && companyId !== 'all') filter.companyId = companyId;
+      if (companySlug) filter.companySlug = companySlug;
+    }
+
+    const allJobs = jobs.getAll(filter);
     res.json({
       total_jobs: allJobs.length,
+      tenant_id: req.tenantId || null,
       jobs: allJobs
     });
   } catch (error) {
@@ -48,13 +80,9 @@ router.get('/:id', (req, res) => {
   }
 });
 
-// Create job (Admin only)
-router.post('/', verifyToken, (req, res) => {
+// Create job (Admin only, tenant isolated)
+router.post('/', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
-    }
-
     const {
       title,
       description,
@@ -77,8 +105,9 @@ router.post('/', verifyToken, (req, res) => {
       return res.status(400).json({ message: 'Title and description are required' });
     }
 
-    // Default companyId to authenticated admin's company if available
-    const resolvedCompanyId = companyId || req.user.companyId || 'comp_airis';
+    // Strictly enforce tenant boundary: non-super-admins can ONLY create jobs for their tenant
+    const targetCompanyId = req.isSuperAdmin && companyId ? companyId : req.tenantId;
+
     const resolvedProctoring = req.body.proctoring_config || proctoring || (proctoring_level ? { level: proctoring_level } : null);
     const resolvedPreGate = req.body.pre_interview_gate_config || preInterviewGate || pre_interview_gate || null;
 
@@ -89,7 +118,7 @@ router.post('/', verifyToken, (req, res) => {
       optional_skills,
       certification_enabled,
       certification_weight,
-      companyId: resolvedCompanyId,
+      companyId: targetCompanyId,
       department,
       location,
       employmentType,
@@ -100,7 +129,8 @@ router.post('/', verifyToken, (req, res) => {
     });
 
     res.status(201).json({
-      message: 'Job created successfully',
+      message: 'Job created successfully within tenant workspace',
+      tenant_id: targetCompanyId,
       job_id: newJob.id,
       job: newJob
     });
@@ -109,11 +139,17 @@ router.post('/', verifyToken, (req, res) => {
   }
 });
 
-// Update job (Admin only)
-router.put('/:id', verifyToken, (req, res) => {
+// Update job (Admin only, tenant isolated)
+router.put('/:id', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    const existingJob = jobs.getById(req.params.id);
+    if (!existingJob) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    // Cross-tenant protection
+    if (!assertTenantAccess(req, res, existingJob.companyId, 'Job opening')) {
+      return;
     }
 
     const payload = { ...req.body };
@@ -121,11 +157,12 @@ router.put('/:id', verifyToken, (req, res) => {
       payload.proctoring = payload.proctoring_config;
     }
 
-    const updated = jobs.update(req.params.id, payload);
-    if (!updated) {
-      return res.status(404).json({ message: 'Job not found' });
+    // Do not allow reassigning job to another tenant unless super_admin
+    if (!req.isSuperAdmin) {
+      delete payload.companyId;
     }
 
+    const updated = jobs.update(req.params.id, payload);
     res.json({
       message: 'Job updated successfully',
       job_id: updated.id,
@@ -136,17 +173,20 @@ router.put('/:id', verifyToken, (req, res) => {
   }
 });
 
-// Delete job (Admin only)
-router.delete('/:id', verifyToken, (req, res) => {
+// Delete job (Admin only, tenant isolated)
+router.delete('/:id', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Admin only.' });
-    }
-
-    const deleted = jobs.delete(req.params.id);
-    if (!deleted) {
+    const existingJob = jobs.getById(req.params.id);
+    if (!existingJob) {
       return res.status(404).json({ message: 'Job not found' });
     }
+
+    // Cross-tenant protection
+    if (!assertTenantAccess(req, res, existingJob.companyId, 'Job opening')) {
+      return;
+    }
+
+    jobs.delete(req.params.id);
 
     res.json({
       message: 'Job deleted successfully',

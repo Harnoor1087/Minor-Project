@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { companies, jobs, users } = require('../db/store');
-const { verifyToken } = require('./auth');
+const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 
-// Get all companies with active job counts
+// Get all companies with active job counts (or current company if non-superadmin recruiter)
 router.get('/', (req, res) => {
   try {
     const list = companies.getAll();
@@ -16,53 +16,26 @@ router.get('/', (req, res) => {
   }
 });
 
-// Get authenticated recruiter's company workspace
-router.get('/me/workspace', verifyToken, (req, res) => {
+// Get authenticated recruiter's company workspace (Tenant Isolated)
+router.get('/me/workspace', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Recruiter/Admin only.' });
-    }
-
-    const user = users.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    let comp = null;
-    if (user.companyId) {
-      comp = companies.getById(user.companyId);
-    }
-    if (!comp && user.company) {
-      comp = companies.getBySlug(user.company.toLowerCase().replace(/[^a-z0-9]/g, '-')) ||
-             companies.getAll().find(c => c.name.toLowerCase() === user.company.toLowerCase());
-    }
-    if (!comp) {
-      comp = companies.getById('comp_airis');
-    }
-
+    const comp = req.tenant;
     const companyJobs = jobs.getAll({ companyId: comp.id });
     res.json({
+      tenantId: comp.id,
       company: comp,
-      jobs: companyJobs
+      jobs: companyJobs,
+      isSuperAdmin: req.isSuperAdmin || false
     });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching company workspace', error: err.message });
   }
 });
 
-// Update authenticated recruiter's company workspace
-router.put('/me/workspace', verifyToken, (req, res) => {
+// Update authenticated recruiter's company workspace (Tenant Isolated)
+router.put('/me/workspace', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Recruiter/Admin only.' });
-    }
-
-    const user = users.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const targetCompanyId = user.companyId || 'comp_airis';
+    const targetCompanyId = req.tenantId;
     const updated = companies.update(targetCompanyId, req.body);
 
     if (!updated) {
@@ -71,6 +44,7 @@ router.put('/me/workspace', verifyToken, (req, res) => {
 
     res.json({
       message: 'Company workspace updated successfully',
+      tenantId: targetCompanyId,
       company: updated
     });
   } catch (err) {

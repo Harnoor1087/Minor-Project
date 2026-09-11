@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { users, otps } = require('../db/store');
+const { users, otps, companies } = require('../db/store');
 const { generateOtpCode, sendOtpEmail, isSmtpConfigured } = require('../services/emailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'airis_secret_jwt_key_2026';
@@ -60,7 +60,7 @@ function validatePasswordPolicy(password) {
 // Register: Validates input, sends OTP verification code
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role, company } = req.body;
+    const { name, email, password, role, company, companyId } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
@@ -94,7 +94,8 @@ router.post('/register', async (req, res) => {
         email: normalizedEmail,
         passwordHash,
         role: role || 'applicant',
-        company: company || ''
+        company: company || '',
+        companyId: companyId || ''
       },
       expiresInMinutes: 10
     });
@@ -155,7 +156,7 @@ router.post('/register/verify-otp', async (req, res) => {
       return res.status(400).json({ message: verification.error });
     }
 
-    const { name, email: userEmail, passwordHash, role, company } = verification.metadata;
+    const { name, email: userEmail, passwordHash, role, company, companyId } = verification.metadata;
 
     // Double check user doesn't already exist
     const existing = users.findByEmail(userEmail);
@@ -169,11 +170,21 @@ router.post('/register/verify-otp', async (req, res) => {
       email: userEmail,
       passwordHash,
       role,
-      company
+      company,
+      companyId
     });
 
+    const comp = newUser.companyId ? companies.getById(newUser.companyId) : null;
+
     const token = jwt.sign(
-      { id: newUser._id, role: newUser.role, name: newUser.name, email: newUser.email },
+      {
+        id: newUser._id,
+        role: newUser.role,
+        name: newUser.name,
+        email: newUser.email,
+        companyId: newUser.companyId || '',
+        companySlug: comp?.slug || ''
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -186,7 +197,10 @@ router.post('/register/verify-otp', async (req, res) => {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
-        company: newUser.company
+        company: newUser.company,
+        companyId: newUser.companyId || '',
+        companySlug: comp?.slug || '',
+        companyLogo: comp?.logo || '🏢'
       }
     });
   } catch (error) {
@@ -288,8 +302,17 @@ router.post('/login/verify-otp', async (req, res) => {
       return res.status(404).json({ message: 'User account not found' });
     }
 
+    const comp = user.companyId ? companies.getById(user.companyId) : null;
+
     const token = jwt.sign(
-      { id: user._id, role: user.role, name: user.name, email: user.email },
+      {
+        id: user._id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        companyId: user.companyId || '',
+        companySlug: comp?.slug || ''
+      },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -302,7 +325,10 @@ router.post('/login/verify-otp', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        company: user.company
+        company: user.company,
+        companyId: user.companyId || '',
+        companySlug: comp?.slug || '',
+        companyLogo: comp?.logo || '🏢'
       }
     });
   } catch (error) {
@@ -410,12 +436,18 @@ router.get('/me', verifyToken, (req, res) => {
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
   }
+  const comp = user.companyId ? companies.getById(user.companyId) : null;
   res.json({
     id: user._id,
     name: user.name,
     email: user.email,
     role: user.role,
-    company: user.company
+    company: user.company,
+    companyId: user.companyId || '',
+    companySlug: comp?.slug || '',
+    companyLogo: comp?.logo || '🏢',
+    tenant: comp || null,
+    isSuperAdmin: user.role === 'super_admin'
   });
 });
 

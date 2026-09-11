@@ -60,6 +60,7 @@ function updateWorkspaceBanner() {
     const indEl = document.getElementById('adminCompIndustryBadge');
     const tagEl = document.getElementById('adminCompTagline');
     const linkEl = document.getElementById('adminPublicCareersLink');
+    const badgeEl = document.getElementById('adminTenantBadge');
 
     if (logoEl) logoEl.textContent = currentCompany.logo || '🏢';
     if (nameEl) nameEl.textContent = currentCompany.name || 'Company Workspace';
@@ -69,9 +70,12 @@ function updateWorkspaceBanner() {
         linkEl.href = `/company/${currentCompany.slug}`;
         linkEl.title = `View public careers page for ${currentCompany.name}`;
     }
+    if (badgeEl) {
+        badgeEl.innerHTML = `🛡️ Tenant: <strong>${currentCompany.name}</strong> <span style="opacity: 0.8; font-weight: normal; margin-left: 4px;">(${currentCompany.id})</span>`;
+    }
 }
 
-// Populate company dropdown options
+// Populate company dropdown options (enforcing B2B tenant boundaries)
 function populateCompanySelects() {
     const jobFilter = document.getElementById('jobCompanyFilter');
     const appFilter = document.getElementById('appCompanyFilter');
@@ -79,27 +83,60 @@ function populateCompanySelects() {
     const createSelect = document.getElementById('create_companyId');
     const editSelect = document.getElementById('edit_companyId');
 
-    const optionsHtml = allCompanies.map(c => 
-        `<option value="${c.id}">${c.logo || '🏢'} ${c.name}</option>`
-    ).join('');
+    const isSuper = user && (user.role === 'super_admin' || user.isSuperAdmin);
 
-    if (jobFilter) {
-        jobFilter.innerHTML = '<option value="all">🏢 All Companies</option>' + optionsHtml;
-    }
-    if (appFilter) {
-        appFilter.innerHTML = '<option value="all">🏢 All Companies</option>' + optionsHtml;
-    }
-    if (matrixCompFilter) {
-        matrixCompFilter.innerHTML = '<option value="all">🏢 All Companies</option>' + optionsHtml;
-    }
-    if (createSelect) {
-        createSelect.innerHTML = optionsHtml;
-        if (currentCompany && currentCompany.id) {
-            createSelect.value = currentCompany.id;
+    if (!isSuper && currentCompany) {
+        // Enforce strict tenant boundary in dropdowns for standard recruiters
+        const tenantOptionHtml = `<option value="${currentCompany.id}">${currentCompany.logo || '🏢'} ${currentCompany.name} (Tenant Scoped)</option>`;
+        
+        if (jobFilter) {
+            jobFilter.innerHTML = tenantOptionHtml;
+            jobFilter.disabled = true;
+            jobFilter.title = 'Filtered strictly to your organization tenant';
         }
-    }
-    if (editSelect) {
-        editSelect.innerHTML = optionsHtml;
+        if (appFilter) {
+            appFilter.innerHTML = tenantOptionHtml;
+            appFilter.disabled = true;
+            appFilter.title = 'Filtered strictly to your organization tenant';
+        }
+        if (matrixCompFilter) {
+            matrixCompFilter.innerHTML = tenantOptionHtml;
+            matrixCompFilter.disabled = true;
+            matrixCompFilter.title = 'Filtered strictly to your organization tenant';
+        }
+        if (createSelect) {
+            createSelect.innerHTML = tenantOptionHtml;
+            createSelect.value = currentCompany.id;
+            createSelect.disabled = true;
+        }
+        if (editSelect) {
+            editSelect.innerHTML = tenantOptionHtml;
+            editSelect.value = currentCompany.id;
+            editSelect.disabled = true;
+        }
+    } else {
+        const optionsHtml = allCompanies.map(c => 
+            `<option value="${c.id}">${c.logo || '🏢'} ${c.name}</option>`
+        ).join('');
+
+        if (jobFilter) {
+            jobFilter.innerHTML = '<option value="all">🏢 All Companies</option>' + optionsHtml;
+        }
+        if (appFilter) {
+            appFilter.innerHTML = '<option value="all">🏢 All Companies</option>' + optionsHtml;
+        }
+        if (matrixCompFilter) {
+            matrixCompFilter.innerHTML = '<option value="all">🏢 All Companies</option>' + optionsHtml;
+        }
+        if (createSelect) {
+            createSelect.innerHTML = optionsHtml;
+            if (currentCompany && currentCompany.id) {
+                createSelect.value = currentCompany.id;
+            }
+        }
+        if (editSelect) {
+            editSelect.innerHTML = optionsHtml;
+        }
     }
 }
 
@@ -393,14 +430,18 @@ function filterJobsList() {
     }
 }
 
-// Load jobs from API
+// Load jobs from API (Tenant Isolated for recruiter session)
 async function loadJobs() {
     const jobsList = document.getElementById('jobsList');
     if (!jobsList) return;
     jobsList.innerHTML = '<div class="loading"><span>⏳ Loading jobs...</span></div>';
     
     try {
-        const response = await fetch('/api/jobs');
+        const response = await fetch('/api/jobs?scope=admin', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         const data = await response.json();
         
         allJobs = data.jobs || [];

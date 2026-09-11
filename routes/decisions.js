@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { applications, jobs, companies } = require('../db/store');
-const { verifyToken } = require('./auth');
+const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 const {
   calculateCompositeHiringIndex,
   calibrateLevelingAndCompensation,
@@ -9,20 +9,22 @@ const {
   generateRejectionFeedback
 } = require('../services/decisionEngine');
 
-const requireAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Access denied. Recruiter / Admin privilege required.' });
-  }
-  next();
-};
-
 // GET /calibration/:appId and /calibrate/:appId
 router.get(['/calibration/:appId', '/calibrate/:appId'], verifyToken, async (req, res) => {
   try {
     const app = applications.getById(req.params.appId);
     if (!app) return res.status(404).json({ message: 'Application not found' });
 
-    if (req.user.role !== 'admin' && app.applicantId !== req.user.id) {
+    if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+      let authorized = false;
+      await new Promise(resolve => {
+        requireTenant(req, res, () => {
+          authorized = assertTenantAccess(req, res, app.companyId, 'Candidate calibration');
+          resolve();
+        });
+      });
+      if (!authorized) return;
+    } else if (app.applicantId !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
@@ -114,11 +116,13 @@ router.get(['/calibration/:appId', '/calibrate/:appId'], verifyToken, async (req
 });
 
 // POST /generate-letter/:appId and /generate-letter
-router.post(['/generate-letter/:appId', '/generate-letter'], verifyToken, requireAdmin, async (req, res) => {
+router.post(['/generate-letter/:appId', '/generate-letter'], verifyToken, requireAdmin, requireTenant, async (req, res) => {
   try {
     const appId = req.params.appId || req.body.applicationId;
     const app = applications.getById(appId);
     if (!app) return res.status(404).json({ message: 'Application not found' });
+
+    if (!assertTenantAccess(req, res, app.companyId, 'Candidate decision letter')) return;
 
     const { type, verdict, baseSalary, equity, startDate, compensation, customNotes } = req.body;
     const job = jobs.getById(app.jobId) || { title: app.jobTitle, companyName: app.companyName };
@@ -165,11 +169,13 @@ router.post(['/generate-letter/:appId', '/generate-letter'], verifyToken, requir
 });
 
 // POST /finalize/:appId and /finalize
-router.post(['/finalize/:appId', '/finalize'], verifyToken, requireAdmin, async (req, res) => {
+router.post(['/finalize/:appId', '/finalize'], verifyToken, requireAdmin, requireTenant, async (req, res) => {
   try {
     const appId = req.params.appId || req.body.applicationId;
     const app = applications.getById(appId);
     if (!app) return res.status(404).json({ message: 'Application not found' });
+
+    if (!assertTenantAccess(req, res, app.companyId, 'Candidate decision')) return;
 
     const {
       verdict,
@@ -234,14 +240,12 @@ router.post(['/finalize/:appId', '/finalize'], verifyToken, requireAdmin, async 
 });
 
 // GET /talent-matrix and /matrix
-router.get(['/talent-matrix', '/matrix'], verifyToken, requireAdmin, async (req, res) => {
+router.get(['/talent-matrix', '/matrix'], verifyToken, requireAdmin, requireTenant, async (req, res) => {
   try {
     const { jobId, companyId } = req.query;
-    let allApps = applications.getAll();
+    const targetCompanyId = req.isSuperAdmin && companyId && companyId !== 'all' ? companyId : (!req.isSuperAdmin ? req.tenantId : null);
 
-    if (companyId && companyId !== 'all') {
-      allApps = allApps.filter(a => a.companyId === companyId);
-    }
+    let allApps = targetCompanyId ? applications.getAll({ companyId: targetCompanyId }) : applications.getAll();
 
     if (jobId && jobId !== 'all') {
       const targetJobId = parseInt(jobId, 10);
@@ -268,6 +272,7 @@ router.get(['/talent-matrix', '/matrix'], verifyToken, requireAdmin, async (req,
         applicantEmail: app.applicantEmail,
         jobId: app.jobId,
         jobTitle: app.jobTitle,
+        companyId: app.companyId,
         companyName: app.companyName,
         scores: app.scores,
         skills: app.skills || { matched: [], missing: [] },
@@ -332,7 +337,7 @@ router.get(['/talent-matrix', '/matrix'], verifyToken, requireAdmin, async (req,
 });
 
 // POST /compare-candidates and /compare
-router.post(['/compare-candidates', '/compare'], verifyToken, requireAdmin, async (req, res) => {
+router.post(['/compare-candidates', '/compare'], verifyToken, requireAdmin, requireTenant, async (req, res) => {
   try {
     const { applicationIds } = req.body;
     if (!Array.isArray(applicationIds) || applicationIds.length === 0) {
@@ -345,6 +350,13 @@ router.post(['/compare-candidates', '/compare'], verifyToken, requireAdmin, asyn
 
     if (selectedApps.length < 2) {
       return res.status(400).json({ message: 'Please select at least 2 valid candidates to compare' });
+    }
+
+    // Cross-tenant protection: verify all candidates belong to this tenant
+    for (const app of selectedApps) {
+      if (!assertTenantAccess(req, res, app.companyId, `Candidate (${app.applicantName})`)) {
+        return;
+      }
     }
 
     const compared = selectedApps.map(app => {
