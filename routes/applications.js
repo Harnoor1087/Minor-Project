@@ -58,8 +58,39 @@ router.post(
       const certFiles = req.files.certificates || [];
       const certificatePaths = certFiles.map(c => c.path);
 
-      const applicantName = req.body.name || req.user.name || 'Candidate';
-      const applicantEmail = req.body.email || req.user.email || 'candidate@example.com';
+      // Retrieve authoritative registered account identity for authenticated applicant
+      const authenticatedUser = (req.user && req.user.id) ? users.findById(req.user.id) : null;
+      const verifiedAccountName = authenticatedUser?.name || req.user?.name || 'Candidate';
+      const verifiedAccountEmail = authenticatedUser?.email || req.user?.email || 'candidate@example.com';
+
+      // Anti-Tampering Check: Prevent user from modifying name or email to bypass resume identity verification
+      if (req.body.name && req.body.name.trim() !== '') {
+        const submittedName = req.body.name.trim();
+        if (submittedName.toLowerCase() !== verifiedAccountName.toLowerCase()) {
+          return res.status(400).json({
+            message: `Account Identity Tampering Prevented: You are authenticated as "${verifiedAccountName}". You cannot change your application name to "${submittedName}". Application fields are locked to your verified account credentials.`,
+            identityTampered: true,
+            expectedName: verifiedAccountName,
+            submittedName
+          });
+        }
+      }
+
+      if (req.body.email && req.body.email.trim() !== '') {
+        const submittedEmail = req.body.email.trim();
+        if (submittedEmail.toLowerCase() !== verifiedAccountEmail.toLowerCase()) {
+          return res.status(400).json({
+            message: `Account Identity Tampering Prevented: You are authenticated with email "${verifiedAccountEmail}". You cannot change your application email to "${submittedEmail}". Application fields are locked to your verified account credentials.`,
+            identityTampered: true,
+            expectedEmail: verifiedAccountEmail,
+            submittedEmail
+          });
+        }
+      }
+
+      // Always bind applicant identity strictly to authenticated account
+      const applicantName = verifiedAccountName;
+      const applicantEmail = verifiedAccountEmail;
 
       // Perform NLP, AI Resume Analysis, and Integrity & Identity Verification
       const analysis = await analyzeResume({

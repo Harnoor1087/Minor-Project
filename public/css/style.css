@@ -3679,5 +3679,478 @@ footer {
     }
 }
 
+/* ==========================================================================
+   Interactive Persona Switcher & Recruiter Portal Access Styles
+   ========================================================================== */
+
+/* Navbar Recruiter Portal Direct Access Button */
+.btn-recruiter-portal {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.18) 0%, rgba(6, 182, 212, 0.12) 100%);
+    color: #ffffff !important;
+    border: 1.5px solid rgba(129, 140, 248, 0.45);
+    padding: 0.48rem 1.05rem;
+    border-radius: 9999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-recruiter-portal:hover {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.35) 0%, rgba(6, 182, 212, 0.25) 100%);
+    border-color: #818cf8;
+    transform: translateY(-1.5px);
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+}
+
+.btn-recruiter-portal .portal-badge {
+    background: rgba(255, 255, 255, 0.2);
+    font-size: 0.72rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Navbar active user badge */
+.nav-user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.82rem;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.nav-user-chip .nav-user-role {
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    background: var(--primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Persona Switcher Bar in Hero */
+.persona-switcher-bar {
+    max-width: 960px;
+    margin: 2.25rem auto 0 auto;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border-color);
+    border-radius: 18px;
+    box-shadow: var(--card-shadow-hover);
+    padding: 1.5rem;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.persona-switcher-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #10b981 100%);
+}
+
+.persona-tabs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.persona-switcher-label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.persona-pill-group {
+    display: flex;
+    gap: 0.5rem;
+    background: var(--bg-subtle);
+    padding: 0.3rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.persona-pill-btn {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 1rem;
+    border-radius: 9px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.persona-pill-btn:hover {
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="dark"] .persona-pill-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.persona-pill-btn.active {
+    background: var(--bg-surface-elevated, #ffffff);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.persona-pill-btn.active[data-persona="recruiter"] {
+    color: var(--primary);
+}
+
+.persona-pill-btn.active[data-persona="candidate"] {
+    color: var(--accent);
+}
+
+.persona-pill-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 9999px;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+}
+
+.persona-pill-btn.active .persona-pill-badge {
+    background: var(--primary-light);
+    color: var(--primary);
+}
+
+.persona-pill-btn.active[data-persona="candidate"] .persona-pill-badge {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+/* Persona Context & Launch Box */
+.persona-context-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding: 1.15rem 1.35rem;
+    border-radius: 14px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    transition: all 0.25s ease;
+}
+
+.persona-context-card.recruiter-mode {
+    border-left: 4px solid var(--primary);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.01) 100%);
+}
+
+.persona-context-card.candidate-mode {
+    border-left: 4px solid var(--accent);
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(6, 182, 212, 0.01) 100%);
+}
+
+.persona-profile-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    flex: 1;
+    min-width: 280px;
+}
+
+.persona-avatar-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.persona-meta {
+    flex: 1;
+}
+
+.persona-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.3rem;
+}
+
+.persona-title-row h4 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.persona-role-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.persona-tenant-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.persona-desc-text {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.persona-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.recruiter-tenant-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.recruiter-tenant-picker select {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.45rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.persona-launch-btn {
+    padding: 0.75rem 1.4rem;
+    font-size: 0.94rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.persona-alt-btn {
+    padding: 0.75rem 1.15rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+
+/* Quick Instant Access action button inside dual-gateway cards */
+.gateway-instant-btn {
+    margin-top: 0.65rem;
+    font-size: 0.88rem;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+}
+
+.gateway-secondary-links {
+    margin-top: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.gateway-secondary-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.gateway-secondary-links a:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+/* Active gateway card highlight corresponding to persona */
+.hero-persona-card.active-persona-focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 2px var(--primary-glow), var(--card-shadow-hover) !important;
+    transform: translateY(-4px);
+}
+
+.hero-persona-card.applicant-card.active-persona-focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.25), var(--card-shadow-hover) !important;
+}
+
+/* Floating Persona Toast Notification */
+.persona-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text-primary);
+    color: var(--bg-surface);
+    padding: 0.85rem 1.35rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+}
+
+.persona-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .persona-tabs-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .persona-pill-group {
+        width: 100%;
+        justify-content: stretch;
+    }
+    .persona-pill-btn {
+        flex: 1;
+        justify-content: center;
+    }
+    .persona-context-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .persona-actions-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .persona-launch-btn, .persona-alt-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .recruiter-tenant-picker {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .recruiter-tenant-picker select {
+        flex: 1;
+    }
+}
+
+/* Locked Candidate Identity Input Styles */
+.input-locked {
+    background: var(--bg-subtle) !important;
+    color: var(--text-primary) !important;
+    cursor: not-allowed !important;
+    border-color: var(--border-color) !important;
+    opacity: 0.95;
+    font-weight: 500;
+    user-select: none;
+}
+
+.input-locked:focus {
+    outline: none !important;
+    border-color: var(--border-color) !important;
+    box-shadow: none !important;
+}
+
+.locked-badge {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 6px;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    vertical-align: middle;
+}
+
+[data-theme="dark"] .locked-badge {
+    background: rgba(129, 140, 248, 0.15);
+    color: #a5b4fc;
+    border-color: rgba(129, 140, 248, 0.3);
+}
+
+.field-locked-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+}
+
+
 
 

@@ -171,13 +171,21 @@
                     <input type="hidden" id="apply_job_id" name="jobId">
                     
                     <div class="form-group">
-                        <label for="apply_name">Full Name *</label>
-                        <input type="text" id="apply_name" name="name" required>
+                        <label for="apply_name">
+                            Full Name *
+                            <span class="locked-badge" title="Locked to verified account credentials">🔒 Verified Account</span>
+                        </label>
+                        <input type="text" id="apply_name" name="name" readonly class="input-locked" required>
+                        <small class="field-locked-note">🔒 Locked to your authenticated credentials to prevent candidate identity tampering.</small>
                     </div>
                     
                     <div class="form-group">
-                        <label for="apply_email">Email *</label>
-                        <input type="email" id="apply_email" name="email" required>
+                        <label for="apply_email">
+                            Email *
+                            <span class="locked-badge" title="Locked to verified account credentials">🔒 Verified Account</span>
+                        </label>
+                        <input type="email" id="apply_email" name="email" readonly class="input-locked" required>
+                        <small class="field-locked-note">🔒 Locked to your authenticated credentials to prevent candidate identity tampering.</small>
                     </div>
                     
                     <div class="form-group">

@@ -1641,6 +1641,114 @@
         "completedAt": null
       },
       "appliedAt": "2026-09-11T09:20:51.511Z"
+    },
+    {
+      "_id": "app_1789219391867_okfo5",
+      "applicantId": "usr_applicant_1",
+      "applicantName": "Alex Morgan",
+      "applicantEmail": "alex.morgan@example.com",
+      "jobId": 1,
+      "jobTitle": "Full Stack Software Engineer",
+      "companyId": "comp_airis",
+      "companyName": "AIRIS Talent Global",
+      "companySlug": "airis",
+      "resumePath": "/app/applet/uploads/1789219384859-alex_resume.txt",
+      "certificates": [],
+      "scores": {
+        "semantic": 0.53,
+        "skill": 0.6,
+        "experience": 0.95,
+        "certification": 0,
+        "final": 0.64
+      },
+      "category": "Moderate Match",
+      "eligibility": "Rejected - Missing Mandatory Skills",
+      "status": "rejected",
+      "proctoringLevel": "medium",
+      "identityVerification": {
+        "status": "VERIFIED",
+        "verified": true,
+        "similarity": 1,
+        "claimedName": "Alex Morgan",
+        "resumeName": "Alex Morgan",
+        "confidence": "HIGH",
+        "message": "Candidate identity successfully matched with resume header."
+      },
+      "certifications": {
+        "total_uploaded": 0,
+        "authentic": 0,
+        "relevant": 0,
+        "rejected_mismatches": 0,
+        "audits": []
+      },
+      "skillVerification": {
+        "status": "pending",
+        "score": null,
+        "passed": false,
+        "cutoff": 70,
+        "durationMinutes": 5,
+        "maxAttempts": 3,
+        "attemptsCount": 0,
+        "completedAt": null
+      },
+      "interview": {
+        "status": "not_started",
+        "overallScore": null,
+        "recommendation": null,
+        "questions": [],
+        "proctoringReport": {
+          "integrityStatus": "CLEAN",
+          "infractionCount": 0,
+          "infractions": []
+        },
+        "completedAt": null
+      },
+      "appliedAt": "2026-09-12T13:23:11.867Z",
+      "intelligence": {
+        "executiveSummary": "Alex Morgan demonstrates a 64% overall compatibility score for the Full Stack Software Engineer opening. The profile shows active proficiency in javascript, nodejs, sql, react with a 53% semantic context alignment with role responsibilities.",
+        "coreStrengths": [
+          "Demonstrated capability in required core competencies: javascript, nodejs, sql.",
+          "Relevant domain background evaluated at 95% depth for Full Stack Software Engineer.",
+          "Structured professional resume with demonstrated project delivery in modern technology stacks."
+        ],
+        "skillGaps": [
+          "Requires evaluation or ramp-up in mandatory competency: \"express\" (Moderate Risk)",
+          "Requires evaluation or ramp-up in mandatory competency: \"git\" (Moderate Risk)"
+        ],
+        "interviewQuestions": [
+          {
+            "question": "In your recent work, how have you architected and scaled systems using javascript to handle real-world latency and concurrent load?",
+            "focus": "javascript & Systems Design",
+            "expectedSignals": "Look for concrete architectural trade-offs, caching or database optimization, and metric-backed outcomes."
+          },
+          {
+            "question": "This position relies on express. While your background shows strong parallels, how would you approach ramping up and applying this in production within the first 30 days?",
+            "focus": "Adaptability & express",
+            "expectedSignals": "Candidate articulates structured debugging methodology and fast-learning engineering mindset."
+          },
+          {
+            "question": "How do you approach automated testing, continuous delivery, and code review standards when shipping under tight deadlines?",
+            "focus": "Engineering Rigor & Team Velocity",
+            "expectedSignals": "Demonstrates balanced velocity with code quality, automated test pipelines, and constructive peer collaboration."
+          }
+        ],
+        "hiringRecommendation": {
+          "decision": "Advance to Technical Screening",
+          "reasoning": "The candidate demonstrates solid potential but has specific competency gaps that should be validated during technical screening."
+        },
+        "applicantFeedback": {
+          "resumeTips": [
+            "Quantify project achievements with measurable business impact (e.g., reduced response times by 30%, served 50k+ daily users).",
+            "Ensure explicit keywords for core target skills like javascript, nodejs, express appear prominently in recent role bullet points."
+          ],
+          "suggestedActions": [
+            "Highlight hands-on open-source repositories or demonstrable portfolio projects featuring express.",
+            "Pursue industry-recognized certifications in cloud platforms or modern frameworks to reinforce technical authority."
+          ]
+        },
+        "generatedBy": "AIRIS AI Screening Engine (Deterministic Heuristic)",
+        "generatedAt": "2026-09-12T13:23:11.867Z"
+      }
     }
   ],
   "companies": [

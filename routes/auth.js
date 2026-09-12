@@ -451,5 +451,80 @@ router.get('/me', verifyToken, (req, res) => {
   });
 });
 
+// Quick Demo Login endpoint for interactive persona switching and 1-click portal access
+router.post('/demo-login', async (req, res) => {
+  try {
+    const { persona = 'recruiter', companyId } = req.body;
+    let targetEmail = 'admin@company.com';
+
+    if (persona === 'candidate' || persona === 'applicant') {
+      targetEmail = 'alex.morgan@example.com';
+    } else if (persona === 'recruiter' || persona === 'admin') {
+      targetEmail = 'admin@company.com';
+    }
+
+    let user = users.findByEmail(targetEmail);
+    if (!user) {
+      if (persona === 'candidate' || persona === 'applicant') {
+        user = await users.create({
+          name: 'Alex Morgan',
+          email: 'alex.morgan@example.com',
+          passwordHash: await bcrypt.hash('alex123', 10),
+          role: 'applicant',
+          company: '',
+          companyId: ''
+        });
+      } else {
+        user = await users.create({
+          name: 'Sarah Jenkins',
+          email: 'admin@company.com',
+          passwordHash: await bcrypt.hash('admin123', 10),
+          role: 'admin',
+          company: 'AIRIS Talent Global',
+          companyId: 'comp_airis'
+        });
+      }
+    }
+
+    let comp = user.companyId ? companies.getById(user.companyId) : null;
+    if (companyId && user.role === 'admin') {
+      const specifiedComp = companies.getById(companyId);
+      if (specifiedComp) comp = specifiedComp;
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+        name: user.name,
+        email: user.email,
+        companyId: comp?.id || user.companyId || '',
+        companySlug: comp?.slug || ''
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: `Demo authentication successful as ${user.name} (${user.role})`,
+      token,
+      targetUrl: user.role === 'admin' ? '/admin' : '/applicant',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        company: comp?.name || user.company,
+        companyId: comp?.id || user.companyId || '',
+        companySlug: comp?.slug || '',
+        companyLogo: comp?.logo || '🏢'
+      }
+    });
+  } catch (error) {
+    console.error('Demo login error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 router.verifyToken = verifyToken;
 module.exports = router;

@@ -33,9 +33,31 @@ async function loadJobDetails() {
         document.getElementById('job_id').value = job.job_id;
         document.getElementById('confirmJobIdText').textContent = job.job_id;
         
-        // Pre-fill user data
-        document.getElementById('name').value = user.name;
-        document.getElementById('email').value = user.email;
+        // Pre-fill user data and enforce uneditable lock
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+
+        if (nameInput) {
+            nameInput.value = user.name || '';
+            nameInput.readOnly = true;
+            nameInput.setAttribute('readonly', 'true');
+            nameInput.classList.add('input-locked');
+            nameInput.title = 'Locked to your verified account credentials';
+            nameInput.addEventListener('keydown', (e) => { e.preventDefault(); });
+            nameInput.addEventListener('paste', (e) => { e.preventDefault(); });
+            nameInput.addEventListener('drop', (e) => { e.preventDefault(); });
+        }
+
+        if (emailInput) {
+            emailInput.value = user.email || '';
+            emailInput.readOnly = true;
+            emailInput.setAttribute('readonly', 'true');
+            emailInput.classList.add('input-locked');
+            emailInput.title = 'Locked to your verified account credentials';
+            emailInput.addEventListener('keydown', (e) => { e.preventDefault(); });
+            emailInput.addEventListener('paste', (e) => { e.preventDefault(); });
+            emailInput.addEventListener('drop', (e) => { e.preventDefault(); });
+        }
     } catch (error) {
         console.error('Error loading job:', error);
         alert('Error loading job details');
@@ -70,11 +92,11 @@ applyForm.addEventListener('submit', async (e) => {
         return;
     }
     
-    // Prepare form data
+    // Prepare form data - strictly bound to verified user credentials
     const formData = new FormData();
     formData.append('jobId', document.getElementById('job_id').value);
-    formData.append('name', document.getElementById('name').value);
-    formData.append('email', document.getElementById('email').value);
+    formData.append('name', (user && user.name) ? user.name : document.getElementById('name').value);
+    formData.append('email', (user && user.email) ? user.email : document.getElementById('email').value);
     formData.append('resume', resumeFile);
     
     // Add certificates
@@ -128,6 +150,7 @@ applyForm.addEventListener('submit', async (e) => {
         } else {
             const err = new Error(data.message || 'Error submitting application');
             err.identityMismatch = data.identityMismatch;
+            err.identityTampered = data.identityTampered;
             err.claimedName = data.claimedName;
             err.resumeName = data.resumeName;
             throw err;
@@ -137,12 +160,14 @@ applyForm.addEventListener('submit', async (e) => {
         if (loaderEl) loaderEl.style.display = 'none';
         document.getElementById('analysisContainer').classList.remove('active');
         document.getElementById('applicationForm').style.display = 'block';
-        if (error.identityMismatch) {
+        if (error.identityMismatch || error.identityTampered) {
             errorDiv.innerHTML = `
                 <div style="display: flex; gap: 0.75rem; align-items: flex-start; text-align: left;">
                     <span style="font-size: 1.6rem; line-height: 1;">🛑</span>
                     <div>
-                        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem; color: #ef4444;">Identity Verification Failed</strong>
+                        <strong style="display: block; font-size: 0.95rem; margin-bottom: 0.25rem; color: #ef4444;">
+                            ${error.identityTampered ? 'Account Identity Tampering Prevented' : 'Identity Verification Failed'}
+                        </strong>
                         <p style="margin: 0; font-size: 0.88rem; line-height: 1.4; color: var(--text-secondary);">${error.message}</p>
                     </div>
                 </div>

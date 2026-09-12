@@ -25,13 +25,19 @@
                 <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
                     <span class="theme-icon">🌙</span>
                 </button>
-                <a href="/login" id="navLoginLink">Login</a>
-                <a href="/register" id="navRegisterLink" class="btn-primary">Register</a>
+                <!-- Direct 1-Click Recruiter Portal Access Button -->
+                <button id="navRecruiterPortalBtn" class="btn-recruiter-portal" onclick="quickLaunchDemo('recruiter')" title="Launch Enterprise Recruiter Suite">
+                    🏢 Recruiter Portal <span class="portal-badge">Instant Demo</span>
+                </button>
+                <div id="navAuthLinks" class="nav-auth-group" style="display: inline-flex; align-items: center; gap: 0.65rem;">
+                    <a href="/login" id="navLoginLink">Login</a>
+                    <a href="/register" id="navRegisterLink" class="btn-primary">Register</a>
+                </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section with Dual-Audience Value Gateway -->
+    <!-- Hero Section with Interactive Persona Switcher & Dual-Audience Value Gateway -->
     <section class="hero">
         <div class="container">
             <div class="hero-badge">
@@ -41,13 +47,75 @@
             <p>From automated semantic resume screening and anti-cheat proctored interviews to cohort calibration and instant offers—AIRIS empowers companies to hire top talent 78% faster, while delivering a transparent merit-based experience for candidates.</p>
             
             <div class="hero-buttons">
-                <a href="/register?role=admin" id="heroCompanyBtn" class="btn-primary btn-large">Post a Role (Enterprise)</a>
-                <a href="/register?role=applicant" id="heroApplicantBtn" class="btn-secondary btn-large">Explore Open Roles</a>
+                <button onclick="quickLaunchDemo('recruiter')" id="heroCompanyBtn" class="btn-primary btn-large">
+                    <span>🏢</span> Launch Recruiter Suite (Instant)
+                </button>
+                <button onclick="quickLaunchDemo('candidate')" id="heroApplicantBtn" class="btn-secondary btn-large">
+                    <span>🎯</span> Explore as Candidate (Instant)
+                </button>
+            </div>
+
+            <!-- Interactive Persona Switcher Bar & Live Demo Access Console -->
+            <div id="personaSwitcherBar" class="persona-switcher-bar">
+                <div class="persona-tabs-header">
+                    <span class="persona-switcher-label">
+                        <span>⚡</span> Interactive Persona Switcher:
+                    </span>
+                    <div class="persona-pill-group" role="tablist" aria-label="Audience Persona Switcher">
+                        <button id="personaTabRecruiter" class="persona-pill-btn active" role="tab" aria-selected="true" data-persona="recruiter" onclick="switchActivePersona('recruiter')">
+                            <span class="persona-pill-icon">🏢</span>
+                            <span class="persona-pill-title">Enterprise Recruiter</span>
+                            <span class="persona-pill-badge">Hiring Team</span>
+                        </button>
+                        <button id="personaTabCandidate" class="persona-pill-btn" role="tab" aria-selected="false" data-persona="candidate" onclick="switchActivePersona('candidate')">
+                            <span class="persona-pill-icon">🎯</span>
+                            <span class="persona-pill-title">Job Candidate</span>
+                            <span class="persona-pill-badge">Tech Talent</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Persona Context Card with 1-Click Launch -->
+                <div id="personaContextCard" class="persona-context-card recruiter-mode">
+                    <div class="persona-profile-info">
+                        <div class="persona-avatar-badge" id="personaAvatar">🏢</div>
+                        <div class="persona-meta">
+                            <div class="persona-title-row">
+                                <h4 id="personaNameTitle">Sarah Jenkins</h4>
+                                <span class="persona-role-badge" id="personaRoleBadge">Lead Talent Partner &amp; Admin</span>
+                                <span class="persona-tenant-badge" id="personaTenantBadge">🏢 AIRIS Talent Global</span>
+                            </div>
+                            <p id="personaDescText" class="persona-desc-text">
+                                Automate multi-vector resume screening, anti-cheat proctored interview telemetry, candidate leveling matrices, and calibrated offer dispatches.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="persona-actions-group">
+                        <div id="recruiterTenantPickerGroup" class="recruiter-tenant-picker">
+                            <label for="personaTenantSelect">Workspace:</label>
+                            <select id="personaTenantSelect" onchange="onTenantChange(this.value)">
+                                <option value="comp_airis">AIRIS Talent Global (Tech)</option>
+                                <option value="comp_infosys">Infosys Technologies (Consulting)</option>
+                                <option value="comp_nexus">Nexus AI Robotics (Robotics &amp; AI)</option>
+                            </select>
+                        </div>
+
+                        <button id="personaLaunchBtn" class="btn-primary persona-launch-btn" onclick="launchActivePersonaPortal()">
+                            <span id="personaLaunchIcon">🚀</span>
+                            <span id="personaLaunchText">Launch Recruiter Portal &rarr;</span>
+                        </button>
+
+                        <button id="personaAlternativeBtn" class="btn-secondary persona-alt-btn">
+                            <span>🎯</span> Switch to Candidate View
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Dual-Audience Gateway Cards -->
             <div class="hero-dual-gateway">
-                <div id="gatewayCompanyCard" class="hero-persona-card company-card">
+                <div id="gatewayCompanyCard" class="hero-persona-card company-card active-persona-focus">
                     <div>
                         <div class="persona-header">
                             <div class="persona-icon-badge">🏢</div>
@@ -64,7 +132,15 @@
                             <li><span class="check">✔</span> <strong>1-Click AI Offer Dispatch:</strong> Real-time legally structured corporate offers</li>
                         </ul>
                     </div>
-                    <a href="/register?role=admin" id="gatewayCompanyActionBtn" class="btn-primary btn-block">Launch Recruiter Suite &rarr;</a>
+                    <div>
+                        <button onclick="quickLaunchDemo('recruiter')" id="gatewayCompanyActionBtn" class="btn-primary btn-block">
+                            <span>🏢</span> Launch Recruiter Suite (Instant Demo) &rarr;
+                        </button>
+                        <div class="gateway-secondary-links">
+                            <a href="/login">Sign in with custom email</a>
+                            <a href="/register?role=admin">Register new company &rarr;</a>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="gatewayApplicantCard" class="hero-persona-card applicant-card">
@@ -84,7 +160,15 @@
                             <li><span class="check">✔</span> <strong>Transparent Outcomes:</strong> Official digital offer letters or actionable career roadmaps</li>
                         </ul>
                     </div>
-                    <a href="/register?role=applicant" id="gatewayApplicantActionBtn" class="btn-secondary btn-block">Create Candidate Profile &rarr;</a>
+                    <div>
+                        <button onclick="quickLaunchDemo('candidate')" id="gatewayApplicantActionBtn" class="btn-secondary btn-block" style="border-color: var(--accent); color: var(--text-primary) !important;">
+                            <span>🎯</span> Launch Candidate Portal (Instant Demo) &rarr;
+                        </button>
+                        <div class="gateway-secondary-links">
+                            <a href="/login">Candidate login</a>
+                            <a href="/register?role=applicant">Create candidate profile &rarr;</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -736,9 +820,10 @@
         </div>
     </footer>
 
-    <!-- D3.js Library & Skill Radar Module -->
+    <!-- D3.js Library, Skill Radar Module & Interactive Persona Switcher -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
     <script src="/js/skillRadar.js"></script>
+    <script src="/js/personaSwitcher.js"></script>
     <script src="/js/main.js"></script>
 </body>
 </html>
