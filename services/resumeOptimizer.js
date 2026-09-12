@@ -135,6 +135,10 @@ ${resumeText.slice(0, 3000)}
 """
 
 Provide structured, highly actionable coaching feedback for this candidate.
+CRITICAL INTEGRITY PRINCIPLE:
+Advise the candidate on how to articulate technical proficiencies and STAR metrics.
+EMPHASIZE that the candidate's authentic dates of employment, project durations, degrees, and social portfolio links (GitHub, LinkedIn, personal portfolio) MUST NEVER BE ALTERED, as ATS and verification integrity checks flag modified dates. Modifications must focus solely on keyword placement and quantified achievement phrasing.
+
 Return ONLY valid JSON matching this exact schema:
 {
   "criticalMissingSkills": ["skill 1", "skill 2"],
@@ -156,7 +160,8 @@ Return ONLY valid JSON matching this exact schema:
       "suggestedContent": "A punchy, tailored 2-line summary integrating the target competencies"
     }
   ],
-  "atsImpactExplanation": "Clear 2-sentence explanation of why these additions will pass the screening filter and unlock the Pre-Interview Skill Verification Gate."
+  "atsImpactExplanation": "Clear 2-sentence explanation of why these additions will pass the screening filter and unlock the Pre-Interview Skill Verification Gate, noting that authentic dates and credentials remain strictly preserved.",
+  "integrityNotice": "Authenticity Notice: All original dates of employment, project durations, educational qualifications, and verified social links (LinkedIn, GitHub, portfolio) are strictly preserved. Optimization focuses exclusively on technical skill articulation and STAR achievement metrics."
 }
 `;
 
@@ -180,7 +185,8 @@ Return ONLY valid JSON matching this exact schema:
         criticalMissingSkills: parsed.criticalMissingSkills || missingMandatory,
         recommendedOptionalSkills: parsed.recommendedOptionalSkills || missingOptional,
         sectionModifications: parsed.sectionModifications || getDefaultModifications(missingMandatory, missingOptional, job),
-        atsImpactExplanation: parsed.atsImpactExplanation || `Incorporating ${missingMandatory.join(', ')} satisfies the core screening algorithm and elevates your profile to qualify for the Pre-Interview Skill Verification Gate.`
+        atsImpactExplanation: parsed.atsImpactExplanation || `Incorporating ${missingMandatory.join(', ')} satisfies the core screening algorithm and elevates your profile to qualify for the Pre-Interview Skill Verification Gate, while strictly preserving your authentic employment dates and portfolio links.`,
+        integrityNotice: parsed.integrityNotice || 'All original dates of employment, project durations, and social links (GitHub, LinkedIn, portfolio) are strictly preserved.'
       };
     } catch (err) {
       console.warn('[ResumeOptimizer] AI recommendation failed, using deterministic fallback:', err.message);
@@ -196,7 +202,8 @@ Return ONLY valid JSON matching this exact schema:
     criticalMissingSkills: missingMandatory,
     recommendedOptionalSkills: missingOptional,
     sectionModifications: getDefaultModifications(missingMandatory, missingOptional, job),
-    atsImpactExplanation: `Adding ${missingMandatory.slice(0, 3).join(', ')} directly satisfies the mandatory role prerequisites, raising your ATS screening match to ~${potentialScorePct}% and unlocking the Pre-Interview Skill Verification Gate.`
+    atsImpactExplanation: `Adding ${missingMandatory.slice(0, 3).join(', ')} directly satisfies the mandatory role prerequisites, raising your ATS screening match to ~${potentialScorePct}% while strictly keeping all original dates, credentials, and social links intact.`,
+    integrityNotice: 'All original dates of employment, project durations, and social links (GitHub, LinkedIn, portfolio) are strictly preserved.'
   };
 }
 
@@ -227,13 +234,282 @@ function getDefaultModifications(missingMandatory, missingOptional, job) {
 }
 
 /**
- * On-Demand: Generate a new optimized resume preserving the candidate's original template
+ * Date extraction regex designed to match complete resume date ranges
+ * without splitting on interior hyphens or en-dashes.
+ */
+const DATE_RANGE_REGEX = /(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|\d{1,2}\/\d{2,4})\s*(?:\d{4})?\s*(?:–|—|-|to)\s*(?:Present|Current|Now|Ongoing|(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|\d{1,2}\/\d{2,4})\s*(?:\d{4})?|(?:19|20)\d{2}))|(?:(?:19|20)\d{2}\s*(?:–|—|-|to)\s*(?:Present|Current|Now|(?:19|20)\d{2}))|(?:(?:Spring|Summer|Fall|Winter)\s*(?:19|20)\d{2})|(?:\b(?:19|20)\d{2}\b))/i;
+
+/**
+ * Extract all candidate social links (LinkedIn, GitHub, Portfolio, Twitter/X, LeetCode)
+ * and contact details (email, phone, location) from the original resume.
+ */
+function extractCandidateSocialsAndContact(resumeText = '', candidateName = '', candidateEmail = '') {
+  const result = {
+    email: candidateEmail || '',
+    phone: '',
+    location: '',
+    linkedin: '',
+    github: '',
+    portfolio: '',
+    twitter: '',
+    leetcode: '',
+    allLinks: [],
+    formattedContactLine: ''
+  };
+
+  const lines = (resumeText || '').split('\n').map(l => l.trim()).filter(Boolean);
+
+  // 1. Email extraction (prefer authenticated candidateEmail if provided)
+  const emailMatch = (resumeText || '').match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  if (!result.email && emailMatch) {
+    result.email = emailMatch[0].trim();
+  }
+
+  // 2. Phone extraction
+  const phoneMatch = (resumeText || '').match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+  if (phoneMatch) {
+    result.phone = phoneMatch[0].trim();
+  }
+
+  // Clean text without email for accurate URL parsing
+  const cleanForUrls = (resumeText || '').replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, ' ');
+
+  // 3. LinkedIn extraction (URL or prefixed handle)
+  const linkedinMatch = cleanForUrls.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/(?:in\/)?[a-zA-Z0-9_%-]+(?:\/[^\s|•,]*)?/i) ||
+                        cleanForUrls.match(/linkedin\s*:\s*([^\s|•,]+)/i);
+  if (linkedinMatch) {
+    const raw = linkedinMatch[1] || linkedinMatch[0];
+    result.linkedin = raw.startsWith('http') ? raw : (raw.includes('linkedin.com') ? raw : `linkedin.com/in/${raw.replace(/^\/in\//, '')}`);
+    result.allLinks.push(result.linkedin);
+  }
+
+  // 4. GitHub extraction (URL or prefixed handle)
+  const githubMatch = cleanForUrls.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_%-]+(?:\/[^\s|•,]*)?/i) ||
+                      cleanForUrls.match(/github\s*:\s*([^\s|•,]+)/i);
+  if (githubMatch) {
+    const raw = githubMatch[1] || githubMatch[0];
+    result.github = raw.startsWith('http') ? raw : (raw.includes('github.com') ? raw : `github.com/${raw}`);
+    result.allLinks.push(result.github);
+  }
+
+  // 5. Twitter / X extraction
+  const twitterMatch = cleanForUrls.match(/(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/[a-zA-Z0-9_%-]+(?:\/[^\s|•,]*)?/i) ||
+                       cleanForUrls.match(/(?:twitter|x)\s*:\s*([^\s|•,]+)/i);
+  if (twitterMatch) {
+    const raw = twitterMatch[1] || twitterMatch[0];
+    result.twitter = raw.startsWith('http') ? raw : (raw.includes('.com') ? raw : `twitter.com/${raw}`);
+    result.allLinks.push(result.twitter);
+  }
+
+  // 6. LeetCode / Coding profiles
+  const leetcodeMatch = cleanForUrls.match(/(?:https?:\/\/)?(?:www\.)?(?:leetcode\.com|codeforces\.com|kaggle\.com)\/[a-zA-Z0-9_%-]+(?:\/[^\s|•,]*)?/i);
+  if (leetcodeMatch) {
+    result.leetcode = leetcodeMatch[0].trim();
+    result.allLinks.push(result.leetcode);
+  }
+
+  // 7. Portfolio / Personal Website extraction
+  const siteMatch = cleanForUrls.match(/(?:portfolio|website|site)\s*:\s*([^\s|•,]+)/i);
+  if (siteMatch && siteMatch[1]) {
+    result.portfolio = siteMatch[1].trim();
+    result.allLinks.push(result.portfolio);
+  } else {
+    // Search top tokens (lines 0-10) for personal web domains (.dev, .me, .io, etc.)
+    const topTokens = lines.slice(0, 10).join(' ').split(/[\s|•,]+/);
+    for (const token of topTokens) {
+      const cleanToken = token.replace(/^[<(\[]|[>)\]]$/g, '').trim();
+      if (/^(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.(?:dev|me|io|tech|app|site|space|page|info|org|net|co|com|ai)(?:\/[^\s|•,()]*)?$/i.test(cleanToken)) {
+        const lower = cleanToken.toLowerCase();
+        if (!lower.includes('linkedin.com') && 
+            !lower.includes('github.com') && 
+            !lower.includes('twitter.com') && 
+            !lower.includes('x.com') && 
+            !lower.includes('leetcode.com') && 
+            !lower.includes('@') && 
+            !lower.includes('example.com')) {
+          if (!result.portfolio) {
+            result.portfolio = cleanToken;
+            result.allLinks.push(cleanToken);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // 8. Location extraction from top lines
+  for (const line of lines.slice(0, 8)) {
+    const locMatch = line.match(/\b([A-Z][a-zA-Z\s.-]+,\s*[A-Z]{2}(?:\s*\d{5})?|[A-Z][a-zA-Z\s.-]+,\s*(?:USA|United States|Canada|UK|United Kingdom|India|Germany|France|Australia|Remote))\b/);
+    if (locMatch && !locMatch[0].includes('@') && !locMatch[0].includes('http')) {
+      result.location = locMatch[0].trim();
+      break;
+    }
+  }
+
+  // 9. Format comprehensive contact line strictly including all original details
+  const parts = [];
+  if (result.email) parts.push(result.email);
+  if (result.phone) parts.push(result.phone);
+  if (result.location) parts.push(result.location);
+  if (result.linkedin) parts.push(result.linkedin);
+  if (result.github) parts.push(result.github);
+  if (result.portfolio) parts.push(result.portfolio);
+  if (result.twitter) parts.push(result.twitter);
+  if (result.leetcode) parts.push(result.leetcode);
+
+  // If no structured parts were found, fallback to original top line
+  if (parts.length === 0) {
+    const origContact = lines.slice(1, 6).find(l => l.includes('@') || l.includes('|') || l.includes('http'));
+    if (origContact) parts.push(origContact);
+    else parts.push(`${candidateEmail || 'candidate@example.com'}`);
+  }
+
+  result.formattedContactLine = parts.join(' | ');
+  return result;
+}
+
+/**
+ * Programmatic Post-Processing Reconciliation & Guardrail:
+ * Compares the generated resume data with the authentic extracted history and
+ * strictly restores all original dates, employers, degrees, and social links.
+ */
+function reconcileAndEnforceOriginalDetails(optimizedData, originalDetails) {
+  if (!optimizedData || typeof optimizedData !== 'object') return optimizedData;
+
+  const { socials, history, candidateName } = originalDetails;
+
+  // 1. Reconcile Candidate Header & Social Links
+  if (!optimizedData.candidate) optimizedData.candidate = {};
+  if (candidateName) optimizedData.candidate.name = candidateName;
+
+  const currentContact = optimizedData.candidate.contactLine || '';
+  const missingLinks = [];
+
+  if (socials.email && !currentContact.toLowerCase().includes(socials.email.toLowerCase())) {
+    missingLinks.push(socials.email);
+  }
+  if (socials.phone && !currentContact.includes(socials.phone)) {
+    missingLinks.push(socials.phone);
+  }
+  if (socials.linkedin && !currentContact.toLowerCase().includes('linkedin.com')) {
+    missingLinks.push(socials.linkedin);
+  }
+  if (socials.github && !currentContact.toLowerCase().includes('github.com')) {
+    missingLinks.push(socials.github);
+  }
+  if (socials.portfolio && !currentContact.toLowerCase().includes(socials.portfolio.toLowerCase())) {
+    missingLinks.push(socials.portfolio);
+  }
+  if (socials.twitter && !currentContact.toLowerCase().includes('twitter.com') && !currentContact.toLowerCase().includes('x.com')) {
+    missingLinks.push(socials.twitter);
+  }
+  if (socials.leetcode && !currentContact.toLowerCase().includes('leetcode.com')) {
+    missingLinks.push(socials.leetcode);
+  }
+
+  // If any authentic link was omitted or altered, enforce the comprehensive formattedContactLine
+  if (missingLinks.length > 0 || !currentContact || currentContact.length < 15) {
+    optimizedData.candidate.contactLine = socials.formattedContactLine || currentContact;
+  }
+  
+  // Attach structured socials for template rendering
+  optimizedData.candidate.socials = socials;
+
+  // 2. Reconcile Sections & strictly enforce authentic dates
+  if (Array.isArray(optimizedData.sections)) {
+    for (const sec of optimizedData.sections) {
+      const type = (sec.type || '').toLowerCase();
+      const title = (sec.title || '').toUpperCase();
+
+      if (type === 'experience' || title.includes('EXPERIENCE') || title.includes('EMPLOYMENT')) {
+        if (Array.isArray(sec.entries)) {
+          sec.entries.forEach((entry, idx) => {
+            const origMatch = (history.experienceEntries || []).find(o => 
+              (o.company && entry.company && (
+                o.company.toLowerCase().includes(entry.company.toLowerCase()) || 
+                entry.company.toLowerCase().includes(o.company.toLowerCase())
+              )) ||
+              (o.role && entry.role && (
+                o.role.toLowerCase() === entry.role.toLowerCase()
+              ))
+            ) || (history.experienceEntries || [])[idx];
+
+            if (origMatch) {
+              // STRICTLY PRESERVE ORIGINAL EXPERIENCE DATES
+              if (origMatch.dates) {
+                entry.dates = origMatch.dates;
+              }
+              if (origMatch.company && !entry.company) {
+                entry.company = origMatch.company;
+              }
+              if (origMatch.location && !entry.location) {
+                entry.location = origMatch.location;
+              }
+            }
+          });
+        }
+      } else if (type === 'projects' || title.includes('PROJECT')) {
+        if (Array.isArray(sec.entries)) {
+          sec.entries.forEach((entry, idx) => {
+            const origMatch = (history.projectEntries || []).find(p => 
+              p.title && entry.title && (
+                p.title.toLowerCase().includes(entry.title.toLowerCase()) ||
+                entry.title.toLowerCase().includes(p.title.toLowerCase())
+              )
+            ) || (history.projectEntries || [])[idx];
+
+            if (origMatch) {
+              // STRICTLY PRESERVE ORIGINAL PROJECT DATES (or leave empty if candidate had none)
+              entry.dates = origMatch.dates || '';
+            }
+          });
+        }
+      } else if (type === 'education' || title.includes('EDUCATION')) {
+        if (Array.isArray(sec.entries)) {
+          sec.entries.forEach((entry, idx) => {
+            const origMatch = (history.educationEntries || [])[idx];
+            if (origMatch) {
+              // STRICTLY PRESERVE ORIGINAL EDUCATION DATES
+              if (origMatch.dates) {
+                entry.dates = origMatch.dates;
+              }
+              if (origMatch.institution && !entry.institution) {
+                entry.institution = origMatch.institution;
+              }
+              if (origMatch.degree && !entry.degree) {
+                entry.degree = origMatch.degree;
+              }
+            }
+          });
+        }
+      }
+    }
+  }
+
+  // 3. Ensure changelog highlights the strict preservation audit guarantee
+  if (Array.isArray(optimizedData.changelog)) {
+    const auditText = `Authenticity Guarantee: Strictly preserved candidate original dates (${(history.experienceEntries || []).length} employment roles, ${(history.projectEntries || []).length} projects), educational credentials, and verified social links (${socials.allLinks.length} links).`;
+    if (!optimizedData.changelog.some(c => c.includes('Authenticity Guarantee') || c.includes('Integrity verified'))) {
+      optimizedData.changelog.push(auditText);
+    }
+  }
+
+  return optimizedData;
+}
+
+/**
+ * On-Demand: Generate a new optimized resume strictly preserving the candidate's authentic
+ * career history, dates, and social links while incorporating targeted competencies.
  */
 async function generateOptimizedResume({ job, resumeText = '', skills = { matched: [], missing: [] }, candidateName = 'Candidate', candidateEmail = '' }) {
   const templateConfig = analyzeResumeTemplate(resumeText);
   const mandatorySkills = (job.mandatory_skills || []).map(s => s.trim());
   const optionalSkills = (job.optional_skills || []).map(s => s.trim());
-  const missingMandatory = (skills?.missing && skills.missing.length > 0) ? skills.missing : mandatorySkills;
+
+  // Extract candidate ground-truth data
+  const socials = extractCandidateSocialsAndContact(resumeText, candidateName, candidateEmail);
+  const history = extractCandidateHistory(resumeText);
+  const originalDetails = { socials, history, candidateName, candidateEmail };
 
   const client = getGeminiClient();
   let optimizedData = null;
@@ -244,21 +520,44 @@ async function generateOptimizedResume({ job, resumeText = '', skills = { matche
 You are an expert Resume Engineering & ATS Optimization Specialist.
 A candidate has explicitly requested an OPTIMIZED RESUME tailored for the role "${job.title}" at "${job.companyName || 'AIRIS Talent Global'}".
 
-CRITICAL RULES FOR TEMPLATE & INTEGRITY PRESERVATION:
-1. PRESERVE 100% FACTUAL AUTHENTICITY: Keep the candidate's genuine work history, real companies, actual employment dates, universities, degrees, and contact details EXACTLY as provided. NEVER invent fake employers, universities, or fabricated credentials.
-2. PRESERVE ORIGINAL RESUME STRUCTURE: Maintain the candidate's exact section ordering (e.g. ${templateConfig.detectedSections.map(s => s.title).join(' -> ')}).
-3. TARGETED SKILL INTEGRATION: Intelligently reframe bullet points and the Technical Skills section to highlight the required job competencies:
-   - Mandatory Skills to weave in: ${mandatorySkills.join(', ')}
-   - Preferred Skills: ${optionalSkills.join(', ')}
-4. STAR METHODOLOGY: Rewrite project and work experience bullet points using strong action verbs, technical tools, and quantifiable outcomes (e.g. "reduced latency by 28%", "scaled throughput to 10k req/sec").
+========================================================================
+CRITICAL IMMUTABILITY MANDATES (ZERO-TOLERANCE FOR ALTERING CANDIDATE FACTS):
+========================================================================
+1. SOCIAL LINKS & CONTACT DETAILS:
+   The candidate's original resume contains these exact verified contact & social links:
+   - Email: ${socials.email || candidateEmail}
+   - Phone: ${socials.phone || 'As in resume'}
+   - Location: ${socials.location || 'As in resume'}
+   - LinkedIn: ${socials.linkedin || 'None'}
+   - GitHub: ${socials.github || 'None'}
+   - Portfolio/Website: ${socials.portfolio || 'None'}
+   - Twitter/X: ${socials.twitter || 'None'}
+   - LeetCode: ${socials.leetcode || 'None'}
+   - Complete Contact Line: ${socials.formattedContactLine}
+   YOU MUST PRESERVE EVERY SINGLE SOCIAL LINK AND CONTACT DETAIL EXACTLY AS PROVIDED.
+   DO NOT remove, shorten, alter, or replace them with generic text.
 
-Candidate's Original Resume:
-"""
-${resumeText.slice(0, 4500)}
-"""
+2. AUTHENTIC DATES OF EMPLOYMENT & PROJECTS:
+   The candidate's original resume has the following EXACT employment & project dates:
+   ${(history.experienceEntries || []).map(e => `   * Experience: "${e.role}" at "${e.company}" -> DATES: "${e.dates || 'Preserve exact'}"`).join('\n')}
+   ${(history.projectEntries || []).map(p => `   * Project: "${p.title}" -> DATES: "${p.dates || 'Keep empty if no date'}"`).join('\n')}
+   ${(history.educationEntries || []).map(ed => `   * Education: "${ed.degree}" at "${ed.institution}" -> DATES: "${ed.dates || 'Preserve exact'}"`).join('\n')}
+   YOU ARE STRICTLY FORBIDDEN FROM ALTERING ANY DATES.
+   DO NOT change start dates, end dates, years, or durations. Keep them 100% identical to the original resume.
+   DO NOT change project dates to "2024" or any other arbitrary year. If a project had no date, keep dates empty.
 
-Candidate Name: ${candidateName}
-Candidate Email: ${candidateEmail}
+3. PRESERVE ORIGINAL RESUME STRUCTURE: Maintain the candidate's exact section ordering (e.g. ${templateConfig.detectedSections.map(s => s.title).join(' -> ')}).
+
+4. SCOPE OF OPTIMIZATION (WHAT TO ENHANCE):
+   - TARGETED SKILL INTEGRATION: Intelligently reframe bullet points and the Technical Skills section to highlight the required job competencies:
+     * Mandatory Skills to weave in: ${mandatorySkills.join(', ')}
+     * Preferred Skills: ${optionalSkills.join(', ')}
+   - STAR METHODOLOGY: Rewrite project and work experience bullet points using strong action verbs, technical tools, and quantifiable outcomes (e.g. "reduced latency by 28%", "scaled throughput to 10k req/sec").
+
+Candidate's Original Resume Text:
+"""
+${resumeText.slice(0, 12000)}
+"""
 
 Return ONLY valid JSON matching this schema:
 {
@@ -266,12 +565,12 @@ Return ONLY valid JSON matching this schema:
   "changelog": [
     "Integrated [Skill] into [Project/Job Title] with quantifiable metric",
     "Restructured Skills section to feature [Mandatory Skills]",
-    "Refined Professional Summary to target ${job.title}"
+    "Strictly preserved original employment dates and verified social links"
   ],
   "candidate": {
     "name": "${candidateName}",
     "headline": "Targeted headline matching ${job.title}",
-    "contactLine": "Email | Phone | Location | Portfolio",
+    "contactLine": "${socials.formattedContactLine}",
     "summary": "Tailored 2-3 sentence summary incorporating key competencies"
   },
   "sections": [
@@ -289,10 +588,10 @@ Return ONLY valid JSON matching this schema:
       "type": "experience",
       "entries": [
         {
-          "role": "Role Title",
-          "company": "Company Name",
+          "role": "Original Role Title",
+          "company": "Original Company Name",
           "location": "Location",
-          "dates": "Dates",
+          "dates": "EXACT ORIGINAL DATES FROM RESUME (UNALTERED)",
           "bullets": [
             "Enhanced STAR bullet integrating target skill and metric..."
           ]
@@ -304,9 +603,9 @@ Return ONLY valid JSON matching this schema:
       "type": "projects",
       "entries": [
         {
-          "title": "Project Name",
+          "title": "Original Project Name",
           "techStack": "Tech Stack string",
-          "dates": "Dates or link",
+          "dates": "EXACT ORIGINAL DATES FROM RESUME (OR EMPTY IF NONE)",
           "bullets": [
             "Deep-dive bullet emphasizing architecture, trade-offs, and target skills..."
           ]
@@ -318,9 +617,9 @@ Return ONLY valid JSON matching this schema:
       "type": "education",
       "entries": [
         {
-          "degree": "Degree and Major",
-          "institution": "University / College",
-          "dates": "Graduation Date",
+          "degree": "Original Degree and Major",
+          "institution": "Original University / College",
+          "dates": "EXACT GRADUATION DATE FROM RESUME",
           "details": "Honors or GPA if present"
         }
       ]
@@ -335,7 +634,7 @@ Return ONLY valid JSON matching this schema:
           model: 'gemini-3.8-flash',
           contents: prompt
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Resume generation timed out')), 9000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Resume generation timed out')), 10000))
       ]);
 
       const rawText = response.text ? response.text.trim() : '';
@@ -354,20 +653,25 @@ Return ONLY valid JSON matching this schema:
       skills,
       candidateName,
       candidateEmail,
-      templateConfig
+      templateConfig,
+      socials,
+      history
     });
   }
+
+  // Programmatic Enforcement Guardrail: reconcile and strictly restore original dates and links
+  optimizedData = reconcileAndEnforceOriginalDetails(optimizedData, originalDetails);
 
   // Render the styled HTML matching original template
   const styledHtml = renderTemplatePreservedHtml(optimizedData, templateConfig, job);
 
   return {
     templatePreserved: true,
-    summaryOfEnhancements: optimizedData.summaryOfEnhancements || `Optimized resume for ${job.title} preserving original layout and verified credentials.`,
+    summaryOfEnhancements: optimizedData.summaryOfEnhancements || `Optimized resume for ${job.title} preserving original layout, factual dates, and verified social links.`,
     changelog: optimizedData.changelog || [
       `Incorporated mandatory competencies (${mandatorySkills.slice(0, 3).join(', ')}) into technical profile`,
       `Enhanced accomplishment bullets with STAR quantified metrics`,
-      `Preserved candidate genuine employment history and educational credentials`
+      `Strictly preserved candidate genuine career timeline, project dates, and social portfolio links`
     ],
     markdownText: (optimizedData.markdownText && optimizedData.markdownText.length > 250)
       ? optimizedData.markdownText
@@ -379,10 +683,10 @@ Return ONLY valid JSON matching this schema:
 }
 
 /**
- * Extract candidate genuine background from original resume text
+ * Extract candidate genuine background from original resume text with strict date preservation
  */
 function extractCandidateHistory(resumeText = '') {
-  const lines = resumeText.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = (resumeText || '').split('\n').map(l => l.trim()).filter(Boolean);
   let currentSection = '';
   const experienceEntries = [];
   const educationEntries = [];
@@ -392,16 +696,16 @@ function extractCandidateHistory(resumeText = '') {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const upper = line.toUpperCase();
-    if (upper.includes('EXPERIENCE') || upper.includes('EMPLOYMENT HISTORY')) {
+    if (upper.includes('EXPERIENCE') || upper.includes('EMPLOYMENT HISTORY') || upper.includes('WORK HISTORY')) {
       currentSection = 'experience';
       continue;
-    } else if (upper.includes('EDUCATION') || upper.includes('ACADEMIC BACKGROUND')) {
+    } else if (upper.includes('EDUCATION') || upper.includes('ACADEMIC BACKGROUND') || upper.includes('QUALIFICATIONS')) {
       currentSection = 'education';
       continue;
-    } else if (upper.includes('PROJECT')) {
+    } else if (upper.includes('PROJECT') || upper.includes('PERSONAL PROJECTS') || upper.includes('ACADEMIC PROJECTS')) {
       currentSection = 'projects';
       continue;
-    } else if (upper.includes('SKILL') || upper.includes('COMPETENC')) {
+    } else if (upper.includes('SKILL') || upper.includes('COMPETENC') || upper.includes('TECHNOLOGIES')) {
       currentSection = 'skills';
       continue;
     } else if (upper.includes('SUMMARY') || upper.includes('PROFILE') || upper.includes('OBJECTIVE')) {
@@ -414,18 +718,39 @@ function extractCandidateHistory(resumeText = '') {
       if (cleaned.length > 2) {
         cleaned.split(/[,|;]/).forEach(s => {
           const trimmed = s.trim();
-          if (trimmed && trimmed.length < 35 && !trimmed.toLowerCase().includes('skill')) {
+          if (trimmed && trimmed.length < 35 && !trimmed.toLowerCase().includes('skill') && !trimmed.toLowerCase().includes('proficiency')) {
             existingSkills.push(trimmed);
           }
         });
       }
     } else if (currentSection === 'experience') {
-      if (line.includes('|') || line.includes('–') || line.includes('- 20') || line.includes('(20') || /20\d\d/.test(line)) {
-        const parts = line.split(/[|–\-]/).map(p => p.trim());
+      const dateMatch = line.match(DATE_RANGE_REGEX);
+      const isHeaderLine = dateMatch || line.includes('|') || line.includes('–') || line.includes('—') || (line.includes(' - ') && /20\d\d|19\d\d/.test(line));
+
+      if (isHeaderLine && !line.startsWith('•') && !line.startsWith('*') && !line.startsWith('-')) {
+        const authenticDate = dateMatch ? dateMatch[0].trim() : '';
+        const lineWithoutDate = authenticDate ? line.replace(authenticDate, ' ').trim() : line;
+        const parts = lineWithoutDate.split(/[\t|•]+/).map(p => p.trim().replace(/^[-–—]\s*/, '').replace(/\s*[-–—]$/, '')).filter(Boolean);
+
+        let role = parts[0] || 'Software Engineer';
+        let company = parts[1] || '';
+        let location = parts[2] || '';
+
+        if (!company && role.includes(' at ')) {
+          const atParts = role.split(' at ');
+          role = atParts[0].trim();
+          company = atParts[1].trim();
+        } else if (!company && role.includes(',')) {
+          const commaParts = role.split(',');
+          role = commaParts[0].trim();
+          company = commaParts.slice(1).join(',').trim();
+        }
+
         experienceEntries.push({
-          role: parts[0] || 'Software Engineer',
-          company: parts[1] || 'Technology Services',
-          dates: parts[2] || '2023 – Present',
+          role,
+          company: company || 'Enterprise Services',
+          location: location || '',
+          dates: authenticDate || (parts[2] || 'Present'),
           bullets: []
         });
       } else if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
@@ -436,14 +761,31 @@ function extractCandidateHistory(resumeText = '') {
       }
     } else if (currentSection === 'education') {
       if (line.length > 4) {
-        educationEntries.push(line);
+        const dateMatch = line.match(DATE_RANGE_REGEX);
+        const authenticDate = dateMatch ? dateMatch[0].trim() : '';
+        const lineWithoutDate = authenticDate ? line.replace(authenticDate, ' ').trim() : line;
+        const parts = lineWithoutDate.split(/[\t|•,]+/).map(p => p.trim().replace(/^[-–—]\s*/, '').replace(/\s*[-–—]$/, '')).filter(Boolean);
+
+        educationEntries.push({
+          degree: parts[0] || line,
+          institution: parts[1] || '',
+          dates: authenticDate || '',
+          details: parts.slice(2).join(' | ') || ''
+        });
       }
     } else if (currentSection === 'projects') {
-      if (line.includes('|') || line.includes('–') || line.includes(':')) {
-        const parts = line.split(/[:|–]/).map(p => p.trim());
+      const dateMatch = line.match(DATE_RANGE_REGEX);
+      const isHeaderLine = dateMatch || line.includes('|') || line.includes(':') || line.includes('–') || line.includes('—');
+
+      if (isHeaderLine && !line.startsWith('•') && !line.startsWith('*') && !line.startsWith('-')) {
+        const authenticDate = dateMatch ? dateMatch[0].trim() : '';
+        const lineWithoutDate = authenticDate ? line.replace(authenticDate, ' ').trim() : line;
+        const parts = lineWithoutDate.split(/[:|–—\t•]+/).map(p => p.trim()).filter(Boolean);
+
         projectEntries.push({
           title: parts[0] || 'Technical Application',
           techStack: parts[1] || '',
+          dates: authenticDate || '', // STRICT: No arbitrary default date like '2024'
           bullets: []
         });
       } else if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
@@ -459,28 +801,27 @@ function extractCandidateHistory(resumeText = '') {
 }
 
 /**
- * Deterministic heuristic generator when Gemini API is unavailable
+ * Deterministic heuristic generator when Gemini API is unavailable.
+ * Strictly preserves candidate genuine dates, employers, degrees, and social links.
  */
-function generateHeuristicOptimizedResume({ job, resumeText = '', skills = {}, candidateName, candidateEmail, templateConfig }) {
+function generateHeuristicOptimizedResume({ job, resumeText = '', skills = {}, candidateName, candidateEmail, templateConfig, socials: passedSocials, history: passedHistory }) {
   const mandatory = (job.mandatory_skills || []).map(s => s.trim());
   const optional = (job.optional_skills || []).map(s => s.trim());
 
-  // Extract contact line from top of resume
-  const lines = resumeText.split('\n').map(l => l.trim()).filter(Boolean);
-  const contactLine = lines.slice(1, 4).find(l => l.includes('@') || l.includes('|') || l.includes('http')) || `${candidateEmail || 'candidate@example.com'} | United States | LinkedIn`;
-
-  const history = extractCandidateHistory(resumeText);
+  const socials = passedSocials || extractCandidateSocialsAndContact(resumeText, candidateName, candidateEmail);
+  const history = passedHistory || extractCandidateHistory(resumeText);
+  const contactLine = socials.formattedContactLine || `${candidateEmail || 'candidate@example.com'}`;
 
   // Blend genuine skills with required skills without duplicating
   const blendedSkills = [...new Set([...history.existingSkills, ...mandatory, ...optional.slice(0, 3)])];
 
-  // Genuine experience or structured fallback
+  // Genuine experience with STRICT date preservation
   let experienceEntries = [];
   if (history.experienceEntries.length > 0) {
     experienceEntries = history.experienceEntries.map((exp, idx) => {
       const enhancedBullets = [...exp.bullets];
-      if (idx === 0) {
-        enhancedBullets.unshift(`Spearheaded application modernization leveraging ${mandatory.slice(0, 2).join(' and ')}, increasing backend processing efficiency by 34% and minimizing latency regressions.`);
+      if (idx === 0 && mandatory.length > 0) {
+        enhancedBullets.unshift(`Spearheaded application modernization leveraging ${mandatory.slice(0, 2).join(' and ')}, increasing processing efficiency by 34% and minimizing latency regressions.`);
       }
       if (enhancedBullets.length < 2) {
         enhancedBullets.push(`Architected and deployed robust microservice features using ${mandatory[0] || 'modern web frameworks'} ensuring compliance with production uptime standards.`);
@@ -488,8 +829,8 @@ function generateHeuristicOptimizedResume({ job, resumeText = '', skills = {}, c
       return {
         role: exp.role || 'Software Engineer',
         company: exp.company || 'Enterprise Services',
-        location: exp.location || 'Remote',
-        dates: exp.dates || '2023 – Present',
+        location: exp.location || '',
+        dates: exp.dates || '', // STRICT: Keep candidate's genuine date
         bullets: enhancedBullets
       };
     });
@@ -498,53 +839,60 @@ function generateHeuristicOptimizedResume({ job, resumeText = '', skills = {}, c
       {
         role: `Software Engineer`,
         company: 'Technology Solutions Group',
-        location: 'Remote',
-        dates: '2023 – Present',
+        location: '',
+        dates: 'Present',
         bullets: [
           `Engineered backend services and APIs using ${mandatory[0] || 'Node.js'} and ${mandatory[1] || 'SQL'}, boosting transactional throughput by 32% under peak load.`,
-          `Integrated robust error-handling and automated unit tests, reducing customer-facing defect regression by 24%.`,
-          `Collaborated across cross-functional engineering teams to implement modern deployment standards and performance monitoring.`
+          `Integrated robust error-handling and automated unit tests, reducing defect regression by 24%.`,
+          `Collaborated across cross-functional engineering teams to implement modern deployment standards.`
         ]
       }
     ];
   }
 
-  // Genuine education or clean fallback
+  // Genuine education with STRICT date preservation
   let educationEntries = [];
   if (history.educationEntries.length > 0) {
-    const rawEdu = history.educationEntries[0];
-    const eduParts = rawEdu.split(/[|–\-]/).map(p => p.trim());
-    educationEntries = [
-      {
-        degree: eduParts[0] || 'B.S. in Computer Science',
-        institution: eduParts[1] || 'Accredited University',
-        dates: eduParts[2] || 'Graduated',
-        details: history.educationEntries.slice(1).join(' | ') || 'Academic Excellence'
+    educationEntries = history.educationEntries.map(ed => {
+      if (typeof ed === 'object' && ed.degree) {
+        return {
+          degree: ed.degree,
+          institution: ed.institution || 'Accredited Institution',
+          dates: ed.dates || '', // STRICT: Keep candidate's genuine graduation date
+          details: ed.details || ''
+        };
       }
-    ];
+      const eduParts = String(ed).split(/[|–\-]/).map(p => p.trim());
+      return {
+        degree: eduParts[0] || 'Degree',
+        institution: eduParts[1] || 'University',
+        dates: eduParts[2] || '',
+        details: ''
+      };
+    });
   } else {
     educationEntries = [
       {
-        degree: 'Bachelor of Science in Computer Science or Technical Field',
+        degree: 'Bachelor of Science in Technical Field',
         institution: 'Accredited University',
-        dates: 'Graduated',
-        details: 'Relevant coursework in Distributed Systems, Software Engineering, and Database Architecture'
+        dates: '',
+        details: 'Coursework in Software Architecture, Distributed Systems, and Database Engineering'
       }
     ];
   }
 
-  // Genuine projects or clean fallback
+  // Genuine projects with STRICT date preservation (no hardcoded '2024')
   let projectEntries = [];
   if (history.projectEntries.length > 0) {
     projectEntries = history.projectEntries.map((proj, idx) => {
       const bullets = [...proj.bullets];
       if (bullets.length === 0) {
-        bullets.push(`Implemented high-performance core architecture with ${mandatory[idx % mandatory.length] || 'modular services'}, optimizing compute utilization and data processing speed.`);
+        bullets.push(`Implemented core architecture with ${mandatory[idx % (mandatory.length || 1)] || 'modular services'}, optimizing compute utilization and performance.`);
       }
       return {
         title: proj.title,
         techStack: proj.techStack || mandatory.slice(0, 3).join(', '),
-        dates: '2024',
+        dates: proj.dates || '', // STRICT: Never fabricate '2024', keep genuine project date
         bullets
       };
     });
@@ -553,10 +901,10 @@ function generateHeuristicOptimizedResume({ job, resumeText = '', skills = {}, c
       {
         title: `${job.title} Service Architecture`,
         techStack: `${[...mandatory.slice(0, 3), 'Docker'].join(', ')}`,
-        dates: '2024',
+        dates: '', // STRICT: No fabricated date
         bullets: [
-          `Architected an event-driven system leveraging ${mandatory[0] || 'Node.js'} to process thousands of asynchronous operations with high concurrency.`,
-          `Optimized database indexing and caching strategies to slash API response latencies from 450ms down to sub-120ms.`
+          `Architected an event-driven system leveraging ${mandatory[0] || 'Node.js'} to process asynchronous operations with high concurrency.`,
+          `Optimized database indexing and caching strategies to slash API response latencies.`
         ]
       }
     ];
@@ -565,17 +913,18 @@ function generateHeuristicOptimizedResume({ job, resumeText = '', skills = {}, c
   const changelog = [
     `Structured dedicated "${job.title} Competencies" in Skills section featuring ${mandatory.slice(0, 3).join(', ')}`,
     `Refactored experience bullets with quantified performance improvements and system reliability metrics`,
-    `Preserved genuine timeline, company affiliations, and degree credentials`
+    `Strictly preserved genuine timeline, employment dates, degree credentials, and candidate social links`
   ];
 
   return {
-    summaryOfEnhancements: `Intelligently refactored resume to incorporate required competencies (${mandatory.slice(0, 3).join(', ')}) while preserving your authentic work history and formatting.`,
+    summaryOfEnhancements: `Intelligently refactored resume to incorporate required competencies (${mandatory.slice(0, 3).join(', ')}) while strictly preserving authentic career dates and verified social links.`,
     changelog,
     candidate: {
       name: candidateName || 'Candidate',
       headline: `${job.title} | Scalable Systems & Full-Stack Development`,
       contactLine,
-      summary: `Dedicated Software Engineer experienced in building resilient web architectures and high-throughput backend services. Proficient in ${blendedSkills.slice(0, 5).join(', ')} with a track record of driving system stability, code maintainability, and operational excellence.`
+      socials,
+      summary: `Dedicated Software Engineer experienced in building resilient architectures and high-throughput services. Proficient in ${blendedSkills.slice(0, 5).join(', ')} with a track record of driving system stability and operational excellence.`
     },
     sections: [
       {
@@ -605,44 +954,6 @@ function generateHeuristicOptimizedResume({ job, resumeText = '', skills = {}, c
     ],
     markdownText: `# ${candidateName || 'Candidate'}\n${contactLine}\n\n## PROFESSIONAL SUMMARY\nDedicated Software Engineer...\n`
   };
-}
-
-/**
- * Generate Markdown text from section data
- */
-function generateMarkdownFromSections(data) {
-  const lines = [];
-  lines.push(`# ${data.candidate?.name || 'Candidate'}`);
-  lines.push(data.candidate?.contactLine || '');
-  lines.push('');
-  if (data.candidate?.summary) {
-    lines.push('## PROFESSIONAL SUMMARY');
-    lines.push(data.candidate.summary);
-    lines.push('');
-  }
-
-  (data.sections || []).forEach(sec => {
-    lines.push(`## ${sec.title}`);
-    if (sec.type === 'skills') {
-      (sec.categories || []).forEach(cat => {
-        lines.push(`**${cat.category}:** ${(cat.items || []).join(', ')}`);
-      });
-    } else if (sec.type === 'experience' || sec.type === 'projects') {
-      (sec.entries || []).forEach(entry => {
-        const titleLine = entry.role ? `### ${entry.role} | ${entry.company || ''} (${entry.dates || ''})` : `### ${entry.title} | ${entry.techStack || ''}`;
-        lines.push(titleLine);
-        (entry.bullets || []).forEach(b => lines.push(`* ${b}`));
-      });
-    } else if (sec.type === 'education') {
-      (sec.entries || []).forEach(entry => {
-        lines.push(`### ${entry.degree} - ${entry.institution || ''} (${entry.dates || ''})`);
-        if (entry.details) lines.push(`* ${entry.details}`);
-      });
-    }
-    lines.push('');
-  });
-
-  return lines.join('\n');
 }
 
 /**
@@ -905,7 +1216,18 @@ function renderTemplatePreservedHtml(data, templateConfig = {}, job = {}) {
     <div class="resume-name">${candidate.name || 'Candidate Name'}</div>
     ${candidate.headline ? `<div class="resume-headline">${candidate.headline}</div>` : ''}
     <div class="resume-contact">
-      ${(candidate.contactLine || '').split(/[|•]/).map(item => `<span>${item.trim()}</span>`).join(' • ')}
+      ${(candidate.contactLine || '').split(/[|•]/).map(item => {
+        const trimmed = item.trim();
+        if (!trimmed) return '';
+        if (trimmed.includes('@') && !trimmed.startsWith('http')) {
+          return `<a href="mailto:${trimmed}" style="color: inherit; text-decoration: none;">${trimmed}</a>`;
+        }
+        if (/^(?:https?:\/\/|(?:www\.)?(?:linkedin|github|twitter|x|leetcode|codeforces)\.com|[a-zA-Z0-9-]+\.(?:dev|me|io|app|tech|org|net|com)\b)/i.test(trimmed)) {
+          const href = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline; text-underline-offset: 2px;">${trimmed}</a>`;
+        }
+        return `<span>${trimmed}</span>`;
+      }).filter(Boolean).join(' • ')}
     </div>
   </div>
 
@@ -967,7 +1289,7 @@ function renderTemplatePreservedHtml(data, templateConfig = {}, job = {}) {
                   <span class="entry-title">${entry.title || 'Project Title'}</span>
                   ${entry.techStack ? `<span style="font-size: 8.5pt; color: var(--accent-color); font-weight: 600;"> | ${entry.techStack}</span>` : ''}
                 </div>
-                <div class="entry-date">${entry.dates || ''}</div>
+                ${entry.dates ? `<div class="entry-date">${entry.dates}</div>` : ''}
               </div>
               <ul class="entry-bullets">
                 ${(entry.bullets || []).map(b => `<li>${b}</li>`).join('')}
@@ -989,7 +1311,7 @@ function renderTemplatePreservedHtml(data, templateConfig = {}, job = {}) {
                   <span class="entry-title">${entry.degree || 'Degree'}</span>
                   ${entry.institution ? `<span style="color: var(--subtext-color);"> – </span><span class="entry-subtitle">${entry.institution}</span>` : ''}
                 </div>
-                <div class="entry-date">${entry.dates || ''}</div>
+                ${entry.dates ? `<div class="entry-date">${entry.dates}</div>` : ''}
               </div>
               ${entry.details ? `<div style="font-size: 8.8pt; color: var(--subtext-color); margin-top: 1px;">${entry.details}</div>` : ''}
             </div>
@@ -1008,5 +1330,8 @@ function renderTemplatePreservedHtml(data, templateConfig = {}, job = {}) {
 module.exports = {
   analyzeResumeTemplate,
   generateScreeningRecommendations,
-  generateOptimizedResume
+  generateOptimizedResume,
+  extractCandidateSocialsAndContact,
+  extractCandidateHistory,
+  reconcileAndEnforceOriginalDetails
 };

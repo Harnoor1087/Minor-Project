@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "lint": "node -c server.js services/*.js routes/*.js",
     "build": "echo 'Build complete'"
   },
   "keywords": [],
