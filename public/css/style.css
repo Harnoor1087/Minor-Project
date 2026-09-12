@@ -4151,6 +4151,1346 @@ footer {
     margin-top: 0.35rem;
 }
 
+/* ==========================================================================
+   Unified Homepage & Role Gateways
+   ========================================================================== */
+
+.unified-hero {
+    padding: 4.5rem 0 3.5rem 0;
+}
+
+.hero-subtext {
+    font-size: 1.15rem;
+    color: var(--text-secondary);
+    max-width: 760px;
+    margin: 0 auto 2.5rem auto;
+    line-height: 1.65;
+}
+
+.unified-gateway-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 1.75rem;
+    max-width: 980px;
+    margin: 0 auto 3rem auto;
+    text-align: left;
+}
+
+.unified-role-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 2.25rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.unified-role-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--card-shadow-hover);
+    border-color: var(--primary);
+}
+
+.recruiter-gateway-card {
+    border-top: 4px solid var(--primary);
+}
+
+.student-gateway-card {
+    border-top: 4px solid var(--accent);
+}
+
+.role-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.15rem;
+}
+
+.role-avatar-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.role-avatar-badge.student-badge {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: rgba(6, 182, 212, 0.25);
+}
+
+.role-title-block {
+    display: flex;
+    flex-direction: column;
+}
+
+.role-eyebrow {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.role-title-block h3 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin: 0.15rem 0 0 0;
+    color: var(--text-primary);
+}
+
+.role-card-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+}
+
+.role-card-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+}
+
+.feature-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.role-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.student-btn-accent {
+    background: #0891b2 !important;
+    border-color: #0891b2 !important;
+}
+
+.student-btn-accent:hover {
+    background: #0e7490 !important;
+}
+
+.nav-highlight-link.recruiter-link {
+    color: var(--primary) !important;
+    font-weight: 600;
+}
+
+.nav-highlight-link.student-link {
+    color: var(--accent) !important;
+    font-weight: 600;
+}
+
+/* System Pillars */
+.system-intro-section {
+    padding: 5rem 0;
+    background: var(--bg-page);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.system-pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.75rem;
+    margin-top: 3rem;
+}
+
+.system-pillar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease;
+}
+
+.system-pillar-card:hover {
+    transform: translateY(-3px);
+}
+
+.pillar-icon {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+}
+
+.system-pillar-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.system-pillar-card p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Brief Services Section */
+.brief-services-section {
+    padding: 5rem 0;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.brief-services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.brief-service-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.25rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.service-box-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.box-icon {
+    font-size: 2rem;
+}
+
+.service-box-header h3 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.box-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.brief-service-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.brief-service-list li {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.brief-service-list li::before {
+    content: "✔";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.student-box .brief-service-list li::before {
+    color: var(--accent);
+}
+
+.service-link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.75rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.recruiter-link-btn {
+    background: var(--primary-light);
+    color: var(--primary) !important;
+    border: 1px solid rgba(79, 70, 229, 0.25);
+}
+
+.recruiter-link-btn:hover {
+    background: var(--primary);
+    color: #ffffff !important;
+}
+
+.student-link-btn {
+    background: var(--accent-light);
+    color: #0891b2 !important;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.student-link-btn:hover {
+    background: #0891b2;
+    color: #ffffff !important;
+}
+
+/* Unified Steps Grid */
+.how-it-works-unified {
+    padding: 5rem 0;
+    background: var(--bg-page);
+}
+
+.unified-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+}
+
+.unified-step-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1.75rem;
+    box-shadow: var(--card-shadow);
+    position: relative;
+}
+
+.step-badge-num {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--primary);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 1.15rem;
+}
+
+.unified-step-item h4 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.unified-step-item p {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+
+/* ==========================================================================
+   Recruiter Deep-Dive Architecture Styles
+   ========================================================================== */
+
+.recruiter-hero {
+    background: linear-gradient(180deg, rgba(79, 70, 229, 0.08) 0%, rgba(79, 70, 229, 0) 100%);
+    padding: 5rem 0 3.5rem 0;
+}
+
+.recruiter-quick-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+}
+
+.recruiter-quick-stats .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.recruiter-quick-stats .stat-num {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.recruiter-quick-stats .stat-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.recruiter-details-section {
+    padding: 5rem 0;
+    background: var(--bg-surface);
+}
+
+.recruiter-stages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2.25rem;
+    margin-top: 3.5rem;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.recruiter-stage-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 2.25rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.stage-card-num {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--primary);
+    opacity: 0.45;
+    line-height: 1;
+    font-family: monospace;
+}
+
+.stage-card-content {
+    flex: 1;
+}
+
+.stage-badge {
+    display: inline-block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    margin-bottom: 0.75rem;
+}
+
+.stage-card-content h3 {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.stage-card-content p {
+    font-size: 0.96rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+}
+
+.stage-feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.stage-feat-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.feat-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.chi-formula-box {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin: 1.25rem 0;
+}
+
+.chi-formula-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.chi-formula-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.chi-pill {
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.88rem;
+}
+
+.chi-resume {
+    background: rgba(79, 70, 229, 0.12);
+    color: var(--primary);
+}
+
+.chi-test {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--success-text);
+}
+
+.chi-integrity {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning-text);
+}
+
+.chi-plus {
+    font-weight: 800;
+    color: var(--text-muted);
+}
+
+/* Candidate Requirements for Recruiters */
+.candidate-requirements-section {
+    padding: 5rem 0;
+    background: var(--bg-page);
+}
+
+.requirements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.75rem;
+    margin: 3.5rem 0 2.5rem 0;
+}
+
+.requirement-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+}
+
+.req-icon {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+}
+
+.requirement-card h4 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.requirement-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 1rem;
+}
+
+.req-bullet-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.req-bullet-list li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: 1.25rem;
+}
+
+.req-bullet-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.student-prep-notice-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent);
+    border-radius: 14px;
+    padding: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: var(--card-shadow);
+}
+
+.notice-icon {
+    font-size: 2.2rem;
+    flex-shrink: 0;
+}
+
+.notice-content h4 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    color: var(--text-primary);
+}
+
+.notice-content p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.recruiter-action-hub, .student-action-hub {
+    padding: 4.5rem 0;
+    background: var(--bg-surface);
+}
+
+.action-hub-box {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 3.5rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.hub-text h2 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin-bottom: 0.65rem;
+    color: var(--text-primary);
+}
+
+.hub-text p {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    max-width: 580px;
+    margin: 0;
+}
+
+.hub-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   Student Guide & Ethical Hiring Styles
+   ========================================================================== */
+
+.student-hero {
+    background: linear-gradient(180deg, rgba(6, 182, 212, 0.08) 0%, rgba(6, 182, 212, 0) 100%);
+    padding: 5rem 0 3.5rem 0;
+}
+
+.student-badge-pill {
+    background: var(--accent-light) !important;
+    color: #0891b2 !important;
+    border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.student-quick-highlights {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2.75rem;
+    flex-wrap: wrap;
+}
+
+.highlight-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1.15rem;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: var(--card-shadow);
+}
+
+.student-playbook-section {
+    padding: 5rem 0;
+    background: var(--bg-surface);
+}
+
+.playbook-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.75rem;
+    margin-top: 3.5rem;
+}
+
+.playbook-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+}
+
+.playbook-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.playbook-icon {
+    font-size: 2rem;
+}
+
+.playbook-step-tag {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    border-radius: 6px;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+}
+
+.playbook-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.playbook-card p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+}
+
+.playbook-example-box {
+    background: var(--bg-subtle);
+    border-radius: 10px;
+    padding: 1rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-top: auto;
+}
+
+.example-bad {
+    color: var(--danger-text);
+    margin-bottom: 0.5rem;
+}
+
+.example-good {
+    color: var(--success-text);
+    font-weight: 500;
+}
+
+.playbook-tip-box {
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-top: auto;
+}
+
+/* Transparency Simulator */
+.transparency-simulator-section {
+    padding: 5rem 0;
+    background: var(--bg-page);
+}
+
+.dossier-toggle-container {
+    display: flex;
+    justify-content: center;
+    margin: 2.5rem 0 2rem 0;
+}
+
+.dossier-tabs {
+    display: inline-flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.35rem;
+    box-shadow: var(--card-shadow);
+}
+
+.dossier-tab-btn {
+    background: transparent;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-radius: 9px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.dossier-tab-btn.active {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.dossier-view-panel {
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+.submission-raw-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: var(--card-shadow);
+}
+
+.raw-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.raw-card-header h4 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.file-size-badge {
+    font-size: 0.8rem;
+    background: var(--bg-subtle);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    color: var(--text-muted);
+}
+
+.raw-resume-preview {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.raw-resume-preview h5 {
+    font-size: 1.35rem;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.raw-contact {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 1rem 0;
+}
+
+.raw-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 1rem 0;
+}
+
+.raw-resume-preview h6 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    margin: 1.25rem 0 0.5rem 0;
+}
+
+/* Recruiter Dossier Card in Simulator */
+.recruiter-dossier-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 2.5rem;
+    box-shadow: var(--card-shadow-hover);
+    border-top: 4px solid var(--success);
+}
+
+.dossier-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dossier-candidate-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dossier-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.dossier-candidate-meta h3 {
+    margin: 0;
+    font-size: 1.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.verified-pill {
+    font-size: 0.75rem;
+    background: var(--success-light);
+    color: var(--success-text);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.dossier-role-target {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.25rem 0 0 0;
+}
+
+.dossier-chi-scorebox {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.chi-score-val {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--primary);
+    line-height: 1;
+}
+
+.chi-score-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin: 0.2rem 0;
+}
+
+.chi-rank-tag {
+    font-size: 0.75rem;
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning-text);
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.dossier-triad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.triad-item {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.triad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.65rem;
+}
+
+.triad-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.triad-pct {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--primary);
+}
+
+.triad-progress-bar {
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.triad-progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 999px;
+}
+
+.triad-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin: 0;
+}
+
+.dossier-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+}
+
+.dossier-block {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.dossier-block h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem 0;
+    color: var(--text-primary);
+}
+
+.verified-cert-badge {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    font-size: 0.88rem;
+}
+
+.verified-cert-badge span {
+    font-size: 1.75rem;
+}
+
+.verified-cert-badge strong {
+    color: var(--text-primary);
+}
+
+.verified-cert-badge p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0.15rem 0 0 0;
+}
+
+.leveling-result-box {
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.leveling-tier {
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.salary-range {
+    color: var(--success-text);
+    font-weight: 600;
+}
+
+.dossier-footer-note {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    padding: 0.9rem 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.dossier-footer-note span {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.dossier-footer-note p {
+    margin: 0;
+}
+
+/* Ethical Facilities Section */
+.ethical-facilities-section {
+    padding: 5rem 0;
+    background: var(--bg-surface);
+}
+
+.ethical-facilities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.75rem;
+    margin-top: 3.5rem;
+}
+
+.ethical-facility-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+}
+
+.facility-icon {
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+}
+
+.ethical-facility-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+.ethical-facility-card p {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+}
+
+.facility-benefit {
+    margin-top: auto;
+    background: var(--bg-subtle);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+/* Readiness Checklist Section */
+.readiness-checklist-section {
+    padding: 5rem 0;
+    background: var(--bg-page);
+}
+
+.checklist-card-wrapper {
+    max-width: 820px;
+    margin: 3rem auto 0 auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 2.5rem;
+    box-shadow: var(--card-shadow);
+}
+
+.checklist-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.checklist-progress-header h4 {
+    font-size: 1.25rem;
+    margin: 0 0 0.25rem 0;
+    color: var(--text-primary);
+}
+
+.checklist-progress-header p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.readiness-score-display {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.readiness-pct {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.readiness-badge {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+}
+
+.badge-pending {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning-text);
+}
+
+.badge-ready {
+    background: var(--success-light);
+    color: var(--success-text);
+}
+
+.readiness-bar-container {
+    height: 10px;
+    background: var(--border-color);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+}
+
+.readiness-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 100%);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.checklist-items-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.checklist-item-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.15rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.checklist-item-label:hover {
+    border-color: var(--primary);
+}
+
+.readiness-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 0.2rem;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.checklist-item-text strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.checklist-item-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+}
+
+.radar-visualizer-section {
+    padding: 5rem 0;
+    background: var(--bg-surface);
+}
+
+/* Mobile Media Queries */
+@media (max-width: 768px) {
+    .unified-gateway-grid, .brief-services-grid {
+        grid-template-columns: 1fr;
+    }
+    .recruiter-stage-card {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .action-hub-box {
+        padding: 2rem 1.5rem;
+    }
+    .student-prep-notice-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .dossier-header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .dossier-chi-scorebox {
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+
 
 
 

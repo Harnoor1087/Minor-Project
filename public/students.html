@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student & Candidate Guide - Ethical AI Hiring & Application Playbook | AIRIS</title>
+    <meta name="description" content="A comprehensive guide for students and job seekers: what to take care of while applying, what recruiters actually see, and how AIRIS ensures ethical, merit-based hiring.">
+    <meta property="og:title" content="Student & Candidate Guide - Ethical AI Hiring & Application Playbook | AIRIS">
+    <meta property="og:description" content="A comprehensive guide for students and job seekers: what to take care of while applying, what recruiters actually see, and how AIRIS ensures ethical, merit-based hiring.">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h2><a href="/">🤖 AIRIS <span class="brand-badge student-brand-badge">Candidate Hub</span></a></h2>
+            </div>
+            <div class="nav-links">
+                <a href="/">← Unified Home</a>
+                <a href="#applicationPlaybook">Application Playbook</a>
+                <a href="#transparencySimulator">What Recruiters See</a>
+                <a href="#ethicalHiring">Ethical Facilities</a>
+                <a href="#readinessChecklist">Readiness Checklist</a>
+                <a href="#competencyRadar">Skill Radar</a>
+                <a href="/recruiter" class="nav-highlight-link recruiter-link">🏢 Recruiter Suite</a>
+                <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark mode" title="Toggle theme">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button id="navApplicantPortalBtn" class="btn-recruiter-portal student-portal-btn" onclick="quickLaunchDemo('candidate')" title="Launch Candidate Portal Demo">
+                    🎯 Candidate Portal <span class="portal-badge">Instant Demo</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Student Hero Section -->
+    <section class="hero student-hero">
+        <div class="container">
+            <div class="hero-badge student-badge-pill">
+                <span>🎯 Candidate Empowerment &amp; Ethical Hiring Guide</span>
+            </div>
+            <h1>Get Hired for Your True Skills, <span class="hero-highlight">Not Empty Buzzwords</span></h1>
+            <p class="hero-subtext">Learn what companies actually evaluate, inspect the recruiter's verified dossier in our transparency simulator, and discover how our ethical AI facilities protect you from bias and automated black holes.</p>
+            
+            <div class="hero-buttons">
+                <button onclick="quickLaunchDemo('candidate')" id="studentHeroLaunchBtn" class="btn-primary btn-large student-btn-accent">
+                    <span>🎯</span> Launch Candidate Portal (Instant Demo)
+                </button>
+                <a href="#transparencySimulator" class="btn-secondary btn-large">
+                    <span>👁️</span> See What The Recruiter Sees &rarr;
+                </a>
+                <a href="#readinessChecklist" class="btn-secondary btn-large">
+                    <span>📋</span> Application Readiness Checklist
+                </a>
+            </div>
+
+            <!-- Student Value Highlights -->
+            <div class="student-quick-highlights">
+                <div class="highlight-item">
+                    <span class="highlight-icon">🚫</span>
+                    <span class="highlight-text">No Resume Black Holes</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-icon">🏆</span>
+                    <span class="highlight-text">Verified Certificate Credit</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-icon">⚖️</span>
+                    <span class="highlight-text">Objective Code Scoring</span>
+                </div>
+                <div class="highlight-item">
+                    <span class="highlight-icon">🌱</span>
+                    <span class="highlight-text">Guaranteed Career Feedback</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 1: What You Need to Take Care of While Applying (The Candidate Playbook) -->
+    <section id="applicationPlaybook" class="student-playbook-section">
+        <div class="container">
+            <div class="section-header-centered">
+                <div class="section-pill">
+                    <span>📘 The Candidate Playbook</span>
+                </div>
+                <h2>What You Need to Take Care of While Applying</h2>
+                <p>Top engineering recruiters look for authenticity, measurable impact, and verifiable skill. Here are the 6 key principles to guarantee your application stands out.</p>
+            </div>
+
+            <div class="playbook-grid">
+                <!-- Card 1 -->
+                <div class="playbook-card">
+                    <div class="playbook-card-header">
+                        <span class="playbook-icon">📊</span>
+                        <div class="playbook-step-tag">Rule 1</div>
+                    </div>
+                    <h3>Quantify Your Impact &amp; Technical Scope</h3>
+                    <p>Recruiters pass on vague bullet points like <em>"built a web app"</em>. Instead, use the <strong>Action + Context + Metric</strong> framework: state the technologies used, architecture decisions made, and measurable outcomes achieved.</p>
+                    <div class="playbook-example-box">
+                        <div class="example-bad">❌ <em>"Worked on backend APIs and optimized database."</em></div>
+                        <div class="example-good">✔ <em>"Engineered Node.js/PostgreSQL microservices handling 25,000 daily requests, reducing p99 latency from 450ms to 120ms through Redis caching."</em></div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="playbook-card">
+                    <div class="playbook-card-header">
+                        <span class="playbook-icon">🧠</span>
+                        <div class="playbook-step-tag">Rule 2</div>
+                    </div>
+                    <h3>The Truth About Keyword Stuffing</h3>
+                    <p>Old ATS tools parsed raw keyword counts. <strong>AIRIS does not use word counters.</strong> Our semantic model understands architectural concepts and skill context. Dumping a block of 50 disconnected buzzwords in white text or footnotes is flagged and does not boost your score.</p>
+                    <div class="playbook-tip-box">
+                        <strong>💡 Pro-Tip:</strong> Mention technologies naturally within the context of your actual projects, libraries imported, and engineering challenges solved.
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="playbook-card">
+                    <div class="playbook-card-header">
+                        <span class="playbook-icon">🎯</span>
+                        <div class="playbook-step-tag">Rule 3</div>
+                    </div>
+                    <h3>Check Mandatory vs. Optional Skills</h3>
+                    <p>In AIRIS, every job posting clearly distinguishes between <strong>Mandatory (deal-breaker)</strong> skills and <strong>Optional (bonus)</strong> competencies. Before submitting, review the target role's mandatory qualifications.</p>
+                    <div class="playbook-tip-box">
+                        <strong>💡 Pro-Tip:</strong> If a role mandates <em>Node.js + SQL</em>, ensure your resume highlights practical experience in both. If you are missing an optional skill like <em>Docker</em>, you can still be shortlisted!
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="playbook-card">
+                    <div class="playbook-card-header">
+                        <span class="playbook-icon">📜</span>
+                        <div class="playbook-step-tag">Rule 4</div>
+                    </div>
+                    <h3>Upload Verifiable Certifications</h3>
+                    <p>Have you completed an AWS Certified Developer exam, Google Cloud Engineer cert, Kubernetes CKA, or accredited technical courses? Upload the certificate PDF or credentials alongside your resume.</p>
+                    <div class="playbook-tip-box">
+                        <strong>💡 Pro-Tip:</strong> AIRIS validates document authenticity and applies an automated score multiplier to verified credentials, giving your profile an immediate competitive edge.
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="playbook-card">
+                    <div class="playbook-card-header">
+                        <span class="playbook-icon">📅</span>
+                        <div class="playbook-step-tag">Rule 5</div>
+                    </div>
+                    <h3>Strict Factual Dates &amp; Authentic Repos</h3>
+                    <p>Always use accurate employment and graduation dates. Ensure your GitHub and portfolio links are public and working. AIRIS strictly preserves candidate career timelines and verifies repository commit histories.</p>
+                    <div class="playbook-tip-box">
+                        <strong>💡 Pro-Tip:</strong> Honest timelines with a continuous trail of GitHub commits beat exaggerated resumes every single time.
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="playbook-card">
+                    <div class="playbook-card-header">
+                        <span class="playbook-icon">🖥️</span>
+                        <div class="playbook-step-tag">Rule 6</div>
+                    </div>
+                    <h3>Assessment Day Preparation &amp; Integrity</h3>
+                    <p>When invited to the proctored technical assessment, prepare your hardware in advance: test your webcam, microphone, and internet connection. Ensure you test in a quiet, single-monitor environment.</p>
+                    <div class="playbook-tip-box">
+                        <strong>💡 Pro-Tip:</strong> Do not switch browser tabs, split screens, or copy-paste external AI snippets. The proctoring engine monitors browser focus to guarantee your integrity score remains at 100%!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: What The Company Actually Sees (Interactive Transparency Simulator) -->
+    <section id="transparencySimulator" class="transparency-simulator-section">
+        <div class="container">
+            <div class="section-header-centered">
+                <div class="section-pill">
+                    <span>👁️ Transparency Simulator</span>
+                </div>
+                <h2>What The Company Actually Sees</h2>
+                <p>We eliminate the mystery of the hiring black box. Toggle between what you submit and what the recruiter's verified evaluation dossier displays.</p>
+            </div>
+
+            <!-- Interactive Toggle Bar -->
+            <div class="dossier-toggle-container">
+                <div class="dossier-tabs" role="tablist" aria-label="Dossier View Switcher">
+                    <button class="dossier-tab-btn" data-target-view="submission" role="tab" aria-selected="false">
+                        <span>📄</span> What You Submit (Raw Application)
+                    </button>
+                    <button class="dossier-tab-btn active" data-target-view="recruiter" role="tab" aria-selected="true">
+                        <span>🏢</span> What The Recruiter Sees (AIRIS Verified Dossier)
+                    </button>
+                </div>
+            </div>
+
+            <!-- View A: Raw Submission -->
+            <div id="dossierSubmissionView" class="dossier-view-panel" style="display: none;">
+                <div class="submission-raw-card">
+                    <div class="raw-card-header">
+                        <h4>Candidate Upload: Alex_Morgan_Resume.pdf</h4>
+                        <span class="file-size-badge">248 KB &bull; PDF</span>
+                    </div>
+                    <div class="raw-resume-preview">
+                        <h5>ALEX MORGAN</h5>
+                        <p class="raw-contact">alex.morgan@example.com | (555) 345-6789 | github.com/alexmorgan | San Francisco, CA</p>
+                        <hr class="raw-divider">
+                        <h6>TECHNICAL SKILLS</h6>
+                        <p>Node.js, TypeScript, PostgreSQL, React, Express, Redis, Docker, Git, REST APIs, Jest</p>
+                        <h6>EXPERIENCE</h6>
+                        <p><strong>Software Engineer &bull; CloudTech Solutions (2023 – Present)</strong></p>
+                        <ul>
+                            <li>Engineered backend microservices using Node.js and PostgreSQL.</li>
+                            <li>Integrated Redis caching layer, improving API response times by 32%.</li>
+                            <li>Wrote unit and integration tests with Jest, achieving 88% test coverage.</li>
+                        </ul>
+                        <h6>VERIFIED CERTIFICATES ATTACHED</h6>
+                        <p>✔ AWS Certified Developer - Associate (Credential ID: AWS-2024-9182)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View B: Recruiter Verified Dossier -->
+            <div id="dossierRecruiterView" class="dossier-view-panel" style="display: block;">
+                <div class="recruiter-dossier-card">
+                    <div class="dossier-header-bar">
+                        <div class="dossier-candidate-meta">
+                            <div class="dossier-avatar">AM</div>
+                            <div>
+                                <h3>Alex Morgan <span class="verified-pill">✔ Identity &amp; Credential Verified</span></h3>
+                                <p class="dossier-role-target">Target Requisition: Senior Full Stack Engineer &bull; Applied: 2 hours ago</p>
+                            </div>
+                        </div>
+                        <div class="dossier-chi-scorebox">
+                            <span class="chi-score-val">88%</span>
+                            <span class="chi-score-label">Composite Hiring Index</span>
+                            <span class="chi-rank-tag">🏆 Top 5% of Cohort</span>
+                        </div>
+                    </div>
+
+                    <!-- Triad Breakdown Grid -->
+                    <div class="dossier-triad-grid">
+                        <div class="triad-item">
+                            <div class="triad-header">
+                                <span class="triad-title">Resume &amp; Skill Fit</span>
+                                <span class="triad-pct">86%</span>
+                            </div>
+                            <div class="triad-progress-bar"><div class="triad-progress-fill" style="width: 86%;"></div></div>
+                            <p class="triad-desc">All mandatory skills present (Node.js, SQL, PostgreSQL). Optional: Docker, Redis verified in project context.</p>
+                        </div>
+
+                        <div class="triad-item">
+                            <div class="triad-header">
+                                <span class="triad-title">Technical Assessment</span>
+                                <span class="triad-pct">92%</span>
+                            </div>
+                            <div class="triad-progress-bar"><div class="triad-progress-fill" style="width: 92%;"></div></div>
+                            <p class="triad-desc">Completed algorithmic coding in 28 mins. Passed 5/5 test cases with optimal time complexity.</p>
+                        </div>
+
+                        <div class="triad-item">
+                            <div class="triad-header">
+                                <span class="triad-title">Integrity Score</span>
+                                <span class="triad-pct">98%</span>
+                            </div>
+                            <div class="triad-progress-bar"><div class="triad-progress-fill" style="width: 98%;"></div></div>
+                            <p class="triad-desc">Single-screen verified. Zero unauthorized tab switches, zero external clipboard paste anomalies.</p>
+                        </div>
+                    </div>
+
+                    <!-- Dossier Insights Breakdown -->
+                    <div class="dossier-details-grid">
+                        <div class="dossier-block">
+                            <h4>Verified Credentials</h4>
+                            <div class="verified-cert-badge">
+                                <span>🏆</span>
+                                <div>
+                                    <strong>AWS Certified Developer - Associate</strong>
+                                    <p>Validated via Amazon Web Services issuer registry (+5% bonus applied)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dossier-block">
+                            <h4>Leveling &amp; Offer Recommendation</h4>
+                            <div class="leveling-result-box">
+                                <div class="leveling-tier">Recommended Tier: <strong>L4 - Mid/Senior Engineer</strong></div>
+                                <div class="salary-range">Calibrated Market Range: <strong>$135,000 – $155,000 USD</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dossier-footer-note">
+                        <span>💡</span>
+                        <p><strong>Candidate Takeaway:</strong> The recruiter sees a clean, objective breakdown based entirely on your code test, verified skills, and integrity. No bias, no guesswork, and no manual screening delay.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: What Our System Gives Recruiters for Ethical Hiring -->
+    <section id="ethicalHiring" class="ethical-facilities-section">
+        <div class="container">
+            <div class="section-header-centered">
+                <div class="section-pill">
+                    <span>⚖️ Ethical Architecture</span>
+                </div>
+                <h2>What Our System Gives Recruiters for Ethical Hiring</h2>
+                <p>We provide hiring teams with state-of-the-art facilities engineered to eliminate bias, protect honest candidates, and ensure merit-first hiring.</p>
+            </div>
+
+            <div class="ethical-facilities-grid">
+                <!-- Facility 1 -->
+                <div class="ethical-facility-card">
+                    <div class="facility-icon">🙈</div>
+                    <h3>Blind Resume Evaluation Option</h3>
+                    <p>AIRIS provides recruiters with a 1-click blind review mode that redacts candidate photos, personal addresses, names, and age indicators during initial screening. Candidates are judged solely on engineering architecture, project achievements, and demonstrated code competency.</p>
+                    <div class="facility-benefit">
+                        <span>🛡️</span> <strong>Protects you from:</strong> Unconscious bias regarding demographic background or geography.
+                    </div>
+                </div>
+
+                <!-- Facility 2 -->
+                <div class="ethical-facility-card">
+                    <div class="facility-icon">📐</div>
+                    <h3>Objective, Standardized Code Evaluation</h3>
+                    <p>Traditional technical interviews often suffer from interviewer mood variance or obscure brain-teaser questions. AIRIS runs standardized test suites against production problem sets, scoring code on algorithmic correctness, modularity, and runtime execution efficiency.</p>
+                    <div class="facility-benefit">
+                        <span>🛡️</span> <strong>Protects you from:</strong> Subjective interviewer bias and trick trivia questions.
+                    </div>
+                </div>
+
+                <!-- Facility 3 -->
+                <div class="ethical-facility-card">
+                    <div class="facility-icon">🔍</div>
+                    <h3>Auditable Proctoring Without False Accusations</h3>
+                    <p>Rather than automatically failing a candidate for an accidental window blur or network stutter, our proctoring engine generates an auditable, timestamped log for human recruiter verification. Honest candidates are never unfairly disqualified by algorithms.</p>
+                    <div class="facility-benefit">
+                        <span>🛡️</span> <strong>Protects you from:</strong> Sudden automated disqualifications due to accidental browser clicks.
+                    </div>
+                </div>
+
+                <!-- Facility 4 -->
+                <div class="ethical-facility-card">
+                    <div class="facility-icon">🌱</div>
+                    <h3>Zero-Ghosting &amp; Constructive Career Roadmaps</h3>
+                    <p>We mandate that every candidate receives closure. Hired applicants receive calibrated digital offer letters; non-selected applicants receive a personalized AI Career Growth Roadmap detailing verified strengths and exact recommendations for missing skills.</p>
+                    <div class="facility-benefit">
+                        <span>🛡️</span> <strong>Protects you from:</strong> Weeks of silent rejection and demoralizing ATS ghosting.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Interactive Pre-Application Readiness Checklist -->
+    <section id="readinessChecklist" class="readiness-checklist-section">
+        <div class="container">
+            <div class="section-header-centered">
+                <div class="section-pill">
+                    <span>📋 Pre-Application Check</span>
+                </div>
+                <h2>Interactive Application Readiness Checklist</h2>
+                <p>Check off these essential preparation steps before submitting your application to maximize your match score and proctoring compliance.</p>
+            </div>
+
+            <div class="checklist-card-wrapper">
+                <!-- Progress Header -->
+                <div class="checklist-progress-header">
+                    <div>
+                        <h4 id="readinessTitle">Your Application Calibration Score</h4>
+                        <p id="readinessMessageText">Complete the checklist items below before submitting to ensure your application passes automated screening.</p>
+                    </div>
+                    <div class="readiness-score-display">
+                        <span id="readinessPercentText" class="readiness-pct">0% Ready</span>
+                        <span id="readinessStatusBadge" class="readiness-badge badge-pending">⏳ Action Needed</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Progress Bar -->
+                <div class="readiness-bar-container">
+                    <div id="readinessProgressFill" class="readiness-bar-fill" style="width: 0%;"></div>
+                </div>
+
+                <!-- Interactive Checklist Items -->
+                <div class="checklist-items-grid">
+                    <label class="checklist-item-label">
+                        <input type="checkbox" class="readiness-checkbox" id="checkItem1">
+                        <div class="checklist-item-text">
+                            <strong>1. Resume formatting is clean with authentic dates</strong>
+                            <p>Standard PDF/text format, zero invisible keyword blocks, genuine employment and education timelines.</p>
+                        </div>
+                    </label>
+
+                    <label class="checklist-item-label">
+                        <input type="checkbox" class="readiness-checkbox" id="checkItem2">
+                        <div class="checklist-item-text">
+                            <strong>2. Quantified engineering metrics included in projects</strong>
+                            <p>Bullet points contain numbers, technical stack used, and measured performance improvements.</p>
+                        </div>
+                    </label>
+
+                    <label class="checklist-item-label">
+                        <input type="checkbox" class="readiness-checkbox" id="checkItem3">
+                        <div class="checklist-item-text">
+                            <strong>3. Public GitHub and working portfolio links tested</strong>
+                            <p>Repositories are accessible, commit histories are genuine, and project live demos load properly.</p>
+                        </div>
+                    </label>
+
+                    <label class="checklist-item-label">
+                        <input type="checkbox" class="readiness-checkbox" id="checkItem4">
+                        <div class="checklist-item-text">
+                            <strong>4. Verified cloud or programming certificates uploaded</strong>
+                            <p>PDF/image proofs of AWS, Google Cloud, CKA, or technical certifications ready for bonus multiplier.</p>
+                        </div>
+                    </label>
+
+                    <label class="checklist-item-label">
+                        <input type="checkbox" class="readiness-checkbox" id="checkItem5">
+                        <div class="checklist-item-text">
+                            <strong>5. Device setup verified for single-screen proctored assessment</strong>
+                            <p>Webcam and microphone functional, single active monitor, and quiet environment prepared.</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Competency Radar (D3.js Skill Gap Visualizer) -->
+    <section id="competencyRadar" class="radar-visualizer-section">
+        <div class="container">
+            <div class="section-header-centered">
+                <div class="section-pill">
+                    <span>📈 Skill Gap Visualizer</span>
+                </div>
+                <h2>Interactive Competency Radar</h2>
+                <p>Simulate how your current skill profile compares to target company benchmarks, and see how upgrading key skills boosts your match score.</p>
+            </div>
+
+            <!-- D3.js Candidate Skill Fit & Mandatory Requirements Radar Component -->
+            <div id="applicantSkillRadarContainer" class="applicant-skill-radar-container" style="max-width: 820px; margin: 0 auto;">
+                <div class="radar-header">
+                    <div class="radar-badge"><span>D3.js Interactive Simulation</span></div>
+                    <h4 id="radarTitle">Target Role Benchmark vs. Candidate Skill Profile</h4>
+                    <p id="radarDesc">Select a target engineering discipline and click "Simulate Skill Upgrade" to visualize how closing skill gaps elevates your candidate match score.</p>
+                </div>
+
+                <!-- Role Filter & Simulation Controls -->
+                <div class="radar-controls">
+                    <label for="radarRoleSelect" class="radar-label">Target Discipline:</label>
+                    <select id="radarRoleSelect" class="radar-select" aria-label="Target Role">
+                        <option value="fullstack">Full Stack Software Engineer (Node + React + SQL)</option>
+                        <option value="backend">Backend &amp; Distributed Systems (Go + Microservices)</option>
+                        <option value="devops">Cloud DevOps &amp; SRE (Kubernetes + AWS)</option>
+                        <option value="frontend">Senior Frontend Engineer (TypeScript + Web Vitals)</option>
+                    </select>
+                    <button id="radarSimulateBtn" class="radar-toggle-btn" type="button" title="Simulate addressing identified skill gaps">
+                        ✨ Simulate Skill Upgrade
+                    </button>
+                </div>
+
+                <!-- D3 SVG Radar Canvas -->
+                <div class="radar-chart-wrapper" id="radarChartWrapper">
+                    <div id="radarChartSvgContainer" class="radar-svg-container"></div>
+                    <div id="radarTooltip" class="radar-tooltip" style="display: none;"></div>
+                </div>
+
+                <!-- Radar Legend -->
+                <div class="radar-legend">
+                    <div class="legend-item">
+                        <span class="legend-indicator legend-required"></span>
+                        <span>Company Mandatory Benchmark</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-indicator legend-candidate"></span>
+                        <span>Candidate Current Profile</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Improvement Recommendations Box -->
+                <div id="radarGapSummary" class="radar-gap-summary"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Action Banner -->
+    <section class="student-action-hub">
+        <div class="container">
+            <div class="action-hub-box student-action-box">
+                <div class="hub-text">
+                    <h2>Ready to Experience Transparent Hiring?</h2>
+                    <p>Launch an instant demo as Candidate Alex Morgan, inspect verified job openings, and take an ethical practice assessment today.</p>
+                </div>
+                <div class="hub-buttons">
+                    <button onclick="quickLaunchDemo('candidate')" class="btn-primary btn-large student-btn-accent">
+                        <span>🎯</span> Launch Candidate Portal (Instant Demo)
+                    </button>
+                    <a href="/register?role=applicant" class="btn-secondary btn-large">
+                        <span>📝</span> Create Candidate Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <h4>AIRIS Intelligence</h4>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Transparent, merit-based hiring for ambitious tech talent.</p>
+                </div>
+                <div>
+                    <h5>Student Guide</h5>
+                    <ul class="footer-links">
+                        <li><a href="#applicationPlaybook">Application Playbook</a></li>
+                        <li><a href="#transparencySimulator">What Recruiters See</a></li>
+                        <li><a href="#ethicalHiring">Ethical Facilities</a></li>
+                        <li><a href="#readinessChecklist">Readiness Checklist</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5>For Employers</h5>
+                    <ul class="footer-links">
+                        <li><a href="/recruiter">Recruiter Hub</a></li>
+                        <li><a href="/register?role=admin">Register Company</a></li>
+                        <li><a href="/admin">Recruiter Admin Suite</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h5>Navigation</h5>
+                    <ul class="footer-links">
+                        <li><a href="/">Unified Home</a></li>
+                        <li><a href="/login">Sign In</a></li>
+                        <li><a href="javascript:void(0)" onclick="quickLaunchDemo('candidate')">Instant Candidate Demo</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                <p>&copy; 2026 AIRIS Talent Intelligence. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- D3.js Library, Skill Radar Module & Student Guide Script -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="/js/skillRadar.js"></script>
+    <script src="/js/personaSwitcher.js"></script>
+    <script src="/js/studentGuide.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

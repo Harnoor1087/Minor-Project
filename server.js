@@ -34,6 +34,26 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/recruiter', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'recruiter.html'));
+});
+
+app.get('/recruiter.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'recruiter.html'));
+});
+
+app.get('/students', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'students.html'));
+});
+
+app.get('/students.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'students.html'));
+});
+
+app.get('/student', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'students.html'));
+});
+
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
