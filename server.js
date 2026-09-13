@@ -142,6 +142,18 @@ app.get('/admin-react', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-react.html'));
 });
 
+app.get('/applicant-react', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-react.html'));
+});
+
+app.get('/interview-react', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-react.html'));
+});
+
+app.get('/apply-react', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-react.html'));
+});
+
 app.get('/react', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin-react.html'));
 });

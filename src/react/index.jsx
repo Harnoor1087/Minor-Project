@@ -1,13 +1,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { AdminDashboard } from './AdminDashboard';
+import { App } from './App';
 
 function initReact() {
-  const adminRoot = document.getElementById('react-admin-root');
-  if (adminRoot) {
-    const root = createRoot(adminRoot);
-    root.render(<AdminDashboard />);
-    console.log('[AIRIS] React Admin Dashboard mounted successfully.');
+  const mountPoint = document.getElementById('react-admin-root') || document.getElementById('react-root');
+  if (mountPoint) {
+    const root = createRoot(mountPoint);
+    root.render(<App />);
+    console.log('[AIRIS] Unified React Application mounted successfully.');
   }
 }
 
@@ -16,3 +16,4 @@ if (document.readyState === 'loading') {
 } else {
   initReact();
 }
+
