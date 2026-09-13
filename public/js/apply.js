@@ -143,6 +143,30 @@ applyForm.addEventListener('submit', async (e) => {
         clearInterval(progressInterval);
         
         if (response.ok) {
+            // Integrate with Firestore candidate storage
+            if (typeof window.storeCandidateApplication === 'function') {
+                try {
+                    window.storeCandidateApplication({
+                        id: data.application?._id || data.application?.id,
+                        jobId: jobId,
+                        jobTitle: document.getElementById('jobTitle')?.textContent || '',
+                        applicantName: (user && user.name) ? user.name : document.getElementById('name').value,
+                        applicantEmail: (user && user.email) ? user.email : document.getElementById('email').value,
+                        scores: data.analysis?.scores,
+                        category: data.analysis?.category,
+                        eligibility: data.analysis?.eligibility,
+                        status: data.application?.status || 'pending',
+                        appliedAt: data.application?.appliedAt || new Date().toISOString()
+                    }).then(doc => {
+                        console.log('[Firestore] Application stored directly from apply.js:', doc?.id);
+                    }).catch(err => {
+                        console.warn('[Firestore] Application client sync notice:', err.message);
+                    });
+                } catch (storeErr) {
+                    console.warn('[Firestore] Integration notice:', storeErr.message);
+                }
+            }
+
             // Smooth reveal
             setTimeout(() => {
                 displayAnalysis(data.analysis, certFiles.length, data.intelligence, data.application);

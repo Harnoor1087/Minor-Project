@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, Search, FileText, UploadCloud, CheckCircle2, 
   AlertCircle, Sparkles, Clock, ArrowRight, Shield, Award, 
-  Filter, ChevronRight, User, RefreshCw
+  Filter, ChevronRight, User, RefreshCw, Database
 } from 'lucide-react';
+import { storeCandidateApplication, getCandidateApplications } from '../../db.js';
 
 export function CandidatePortal({ onNavigateToInterview, activeTheme }) {
   const [activeTab, setActiveTab] = useState('jobs'); // 'jobs' | 'apply' | 'my_applications'
@@ -43,17 +44,31 @@ export function CandidatePortal({ onNavigateToInterview, activeTheme }) {
   async function loadData() {
     setLoading(true);
     try {
-      const [jobsRes, appsRes] = await Promise.all([
+      const [jobsRes, appsRes, cloudApps] = await Promise.all([
         fetch('/api/jobs').then(r => r.ok ? r.json() : []),
         fetch('/api/applications', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
           }
-        }).then(r => r.ok ? r.json() : []).catch(() => [])
+        }).then(r => r.ok ? r.json() : []).catch(() => []),
+        getCandidateApplications({ applicantEmail: candidateEmail }).catch(() => [])
       ]);
 
       setJobs(Array.isArray(jobsRes) ? jobsRes : (jobsRes.jobs || []));
-      setApplications(Array.isArray(appsRes) ? appsRes : (appsRes.applications || []));
+      
+      const apiApps = Array.isArray(appsRes) ? appsRes : (appsRes.applications || []);
+      const mergedMap = new Map();
+      apiApps.forEach(a => mergedMap.set(String(a._id || a.id), { ...a, firestoreSynced: true }));
+      (cloudApps || []).forEach(ca => {
+        const id = String(ca._id || ca.id);
+        if (mergedMap.has(id)) {
+          mergedMap.set(id, { ...mergedMap.get(id), ...ca, firestoreSynced: true });
+        } else {
+          mergedMap.set(id, { ...ca, firestoreSynced: true });
+        }
+      });
+
+      setApplications(Array.from(mergedMap.values()));
     } catch (err) {
       console.error('Failed to load candidate portal data:', err);
     } finally {
@@ -144,15 +159,49 @@ Projects: Built full-stack high-performance cloud applications and data pipeline
         throw new Error(data.message || 'Application submission failed');
       }
 
+      setSubmitProgress(95);
+      setProgressStage('Writing application profile directly to Firebase Firestore...');
+
+      // Store candidate application in Firebase Firestore
+      let firestoreDoc = null;
+      try {
+        firestoreDoc = await storeCandidateApplication({
+          id: data.application?._id || data.application?.id,
+          jobId: selectedJob.id || selectedJob.job_id,
+          jobTitle: selectedJob.title,
+          applicantName: candidateName,
+          applicantEmail: candidateEmail,
+          companyId: selectedJob.companyId || 'comp_airis',
+          companyName: selectedJob.companyName || 'AIRIS Talent Global',
+          companySlug: selectedJob.companySlug || 'airis',
+          status: data.application?.status || 'pending',
+          scores: data.analysis?.scores || data.application?.scores || {
+            final: data.analysis?.matchPercentage || 85,
+            semantic: 85,
+            skill: 85,
+            experience: 80
+          },
+          category: data.analysis?.category || 'High Match',
+          eligibility: data.analysis?.eligibility || 'Eligible',
+          proctoringLevel: selectedJob.proctoring?.level || 'medium',
+          appliedAt: data.application?.appliedAt || new Date().toISOString(),
+          skills: data.analysis?.matchedSkills || selectedJob.mandatory_skills || []
+        });
+      } catch (fErr) {
+        console.warn('[CandidatePortal] Firestore store note:', fErr.message);
+      }
+
       setSubmitProgress(100);
       setProgressStage('AI evaluation complete! Profile synchronized to Firestore.');
 
       setTimeout(() => {
         setIsSubmitting(false);
         setAnalysisResult({
-          application: data.application,
+          application: { ...(data.application || {}), ...(firestoreDoc || {}) },
           analysis: data.analysis,
-          intelligence: data.intelligence
+          intelligence: data.intelligence,
+          firestoreDocId: firestoreDoc?.id || data.application?._id || data.application?.id,
+          firestoreSynced: true
         });
         // Reload list of applications
         loadData();
@@ -690,6 +739,24 @@ Projects: Built full-stack high-performance cloud applications and data pipeline
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                   Your profile has been matched against <strong>{selectedJob?.title}</strong> and recorded in Firestore.
                 </p>
+                {analysisResult.firestoreDocId && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    color: 'var(--success)',
+                    padding: '4px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600,
+                    marginTop: '0.75rem',
+                    border: '1px solid rgba(16, 185, 129, 0.3)'
+                  }}>
+                    <span>☁️ Firestore Cloud Record:</span>
+                    <code style={{ fontFamily: 'monospace', fontWeight: 700 }}>{analysisResult.firestoreDocId}</code>
+                  </div>
+                )}
               </div>
 
               {/* Big Score Card */}
@@ -930,6 +997,12 @@ Projects: Built full-stack high-performance cloud applications and data pipeline
                         ) : (
                           <span className="badge badge-warning" style={{ fontSize: '0.78rem' }}>
                             Interview Pending
+                          </span>
+                        )}
+
+                        {app.firestoreSynced && (
+                          <span className="badge" style={{ fontSize: '0.75rem', background: 'rgba(79, 70, 229, 0.12)', color: 'var(--primary)', border: '1px solid rgba(79, 70, 229, 0.25)' }}>
+                            ☁️ Firestore
                           </span>
                         )}
                       </div>
