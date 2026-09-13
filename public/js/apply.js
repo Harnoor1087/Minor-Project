@@ -58,56 +58,225 @@ async function loadJobDetails() {
             emailInput.addEventListener('paste', (e) => { e.preventDefault(); });
             emailInput.addEventListener('drop', (e) => { e.preventDefault(); });
         }
+
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput && user.phone) {
+            phoneInput.value = user.phone;
+        }
     } catch (error) {
         console.error('Error loading job:', error);
         alert('Error loading job details');
     }
 }
 
-// Handle form submission
+// Client-side validation utilities
+function setFieldError(elementId, errorId, message) {
+    const el = document.getElementById(elementId);
+    const errEl = document.getElementById(errorId);
+    if (el) {
+        el.style.borderColor = message ? '#ef4444' : 'var(--border-color, #e2e8f0)';
+        if (message) {
+            el.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.15)';
+        } else {
+            el.style.boxShadow = 'none';
+        }
+    }
+    if (errEl) {
+        errEl.textContent = message || '';
+        errEl.style.display = message ? 'block' : 'none';
+    }
+    return !message;
+}
+
+function validateFullName(name) {
+    const val = (name || '').trim();
+    if (!val) return 'Full Name is required.';
+    if (val.length < 2) return 'Full Name must be at least 2 characters.';
+    if (val.length > 80) return 'Full Name cannot exceed 80 characters.';
+    if (!/^[a-zA-Z\s.'\-]+$/.test(val)) return 'Name may only contain letters, spaces, hyphens, and apostrophes.';
+    return null;
+}
+
+function validateEmail(email) {
+    const val = (email || '').trim();
+    const pattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    if (!val) return 'Email address is required.';
+    if (!pattern.test(val)) return 'Please provide a valid email address.';
+    return null;
+}
+
+function validatePhone(phone) {
+    const val = (phone || '').trim();
+    if (!val) return 'Contact phone number is required.';
+    const digitsOnly = val.replace(/\D/g, '');
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+        return 'Phone number must contain between 7 and 15 digits.';
+    }
+    return null;
+}
+
+function validateResumeFile(file) {
+    if (!file) return 'Please upload a resume file (PDF, DOCX, or TXT).';
+    const allowedExts = ['.pdf', '.docx', '.doc', '.txt'];
+    const lowerName = file.name.toLowerCase();
+    const hasValidExt = allowedExts.some(ext => lowerName.endsWith(ext));
+    if (!hasValidExt) return 'Invalid file format. Accepted types: PDF, DOCX, or TXT.';
+    if (file.size === 0) return 'The uploaded resume file is empty (0 bytes).';
+    if (file.size > 10 * 1024 * 1024) return `Resume file exceeds 10MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB).`;
+    return null;
+}
+
+function validateCertificatesFiles(files) {
+    if (!files || files.length === 0) return null; // Optional
+    for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        if (!f.name.toLowerCase().endsWith('.pdf')) {
+            return `Certificate file "${f.name}" must be a PDF document.`;
+        }
+        if (f.size > 10 * 1024 * 1024) {
+            return `Certificate "${f.name}" exceeds 10MB limit.`;
+        }
+    }
+    return null;
+}
+
+// Attach real-time validation event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', () => {
+            setFieldError('phone', 'phoneError', validatePhone(phoneInput.value));
+        });
+        phoneInput.addEventListener('blur', () => {
+            setFieldError('phone', 'phoneError', validatePhone(phoneInput.value));
+        });
+    }
+
+    const resumeInput = document.getElementById('resume');
+    if (resumeInput) {
+        resumeInput.addEventListener('change', () => {
+            setFieldError('resume', 'resumeError', validateResumeFile(resumeInput.files[0]));
+        });
+    }
+
+    const certsInput = document.getElementById('certificates');
+    if (certsInput) {
+        certsInput.addEventListener('change', () => {
+            setFieldError('certificates', 'certificatesError', validateCertificatesFiles(certsInput.files));
+        });
+    }
+
+    const confirmJobIdEl = document.getElementById('confirmJobId');
+    if (confirmJobIdEl) {
+        confirmJobIdEl.addEventListener('change', () => {
+            setFieldError('confirmJobId', 'confirmJobIdError', confirmJobIdEl.checked ? null : 'You must confirm the Job ID.');
+        });
+    }
+
+    const confirmConsentEl = document.getElementById('confirmConsent');
+    if (confirmConsentEl) {
+        confirmConsentEl.addEventListener('change', () => {
+            setFieldError('confirmConsent', 'confirmConsentError', confirmConsentEl.checked ? null : 'You must certify information accuracy and Firestore storage consent.');
+        });
+    }
+});
+
+// Handle form submission with full client-side validation
 const applyForm = document.getElementById('applyForm');
 applyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const submitBtn = document.getElementById('submitBtn');
     const errorDiv = document.getElementById('applyError');
-    
-    // Validate
-    if (!document.getElementById('confirmJobId').checked) {
-        errorDiv.textContent = 'Please confirm that you have noted the Job ID';
-        errorDiv.classList.add('show');
-        return;
+    errorDiv.classList.remove('show');
+    errorDiv.innerHTML = '';
+
+    const nameVal = (user && user.name) ? user.name : (document.getElementById('name')?.value || '');
+    const emailVal = (user && user.email) ? user.email : (document.getElementById('email')?.value || '');
+    const phoneVal = document.getElementById('phone')?.value || '';
+    const resumeFile = document.getElementById('resume')?.files[0];
+    const certFiles = document.getElementById('certificates')?.files;
+    const confirmJobId = document.getElementById('confirmJobId')?.checked;
+    const confirmConsent = document.getElementById('confirmConsent')?.checked;
+
+    // Run client-side validations
+    const errors = [];
+    const nameErr = validateFullName(nameVal);
+    if (nameErr) { setFieldError('name', 'nameError', nameErr); errors.push(nameErr); }
+    else { setFieldError('name', 'nameError', null); }
+
+    const emailErr = validateEmail(emailVal);
+    if (emailErr) { setFieldError('email', 'emailError', emailErr); errors.push(emailErr); }
+    else { setFieldError('email', 'emailError', null); }
+
+    const phoneErr = validatePhone(phoneVal);
+    if (phoneErr) { setFieldError('phone', 'phoneError', phoneErr); errors.push(phoneErr); }
+    else { setFieldError('phone', 'phoneError', null); }
+
+    const resumeErr = validateResumeFile(resumeFile);
+    if (resumeErr) { setFieldError('resume', 'resumeError', resumeErr); errors.push(resumeErr); }
+    else { setFieldError('resume', 'resumeError', null); }
+
+    const certsErr = validateCertificatesFiles(certFiles);
+    if (certsErr) { setFieldError('certificates', 'certificatesError', certsErr); errors.push(certsErr); }
+    else { setFieldError('certificates', 'certificatesError', null); }
+
+    if (!confirmJobId) {
+        const msg = 'Please confirm that you have noted the Job ID.';
+        setFieldError('confirmJobId', 'confirmJobIdError', msg);
+        errors.push(msg);
+    } else {
+        setFieldError('confirmJobId', 'confirmJobIdError', null);
     }
-    
-    const resumeFile = document.getElementById('resume').files[0];
-    const isDoc = resumeFile && (
-        resumeFile.type.includes('pdf') ||
-        resumeFile.name.toLowerCase().endsWith('.pdf') ||
-        resumeFile.type.includes('text') ||
-        resumeFile.name.toLowerCase().endsWith('.txt')
-    );
-    if (!resumeFile || !isDoc) {
-        errorDiv.textContent = 'Please upload a valid PDF or text resume';
+
+    if (!confirmConsent) {
+        const msg = 'Please acknowledge and consent to Firestore profile evaluation.';
+        setFieldError('confirmConsent', 'confirmConsentError', msg);
+        errors.push(msg);
+    } else {
+        setFieldError('confirmConsent', 'confirmConsentError', null);
+    }
+
+    // Stop execution and do NOT contact Firestore or backend if validation fails
+    if (errors.length > 0) {
+        errorDiv.innerHTML = `
+            <div style="text-align: left;">
+                <strong style="color: #ef4444; display: block; margin-bottom: 4px;">⚠️ Please correct ${errors.length} validation ${errors.length === 1 ? 'error' : 'errors'} before submitting:</strong>
+                <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary, #64748b);">
+                    ${errors.map(err => `<li>${err}</li>`).join('')}
+                </ul>
+            </div>
+        `;
         errorDiv.classList.add('show');
+
+        // Focus first failing element
+        const firstFailingId = nameErr ? 'name' : emailErr ? 'email' : phoneErr ? 'phone' : resumeErr ? 'resume' : certsErr ? 'certificates' : !confirmJobId ? 'confirmJobId' : 'confirmConsent';
+        const target = document.getElementById(firstFailingId);
+        if (target) {
+            target.focus();
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
         return;
     }
     
     // Prepare form data - strictly bound to verified user credentials
     const formData = new FormData();
     formData.append('jobId', document.getElementById('job_id').value);
-    formData.append('name', (user && user.name) ? user.name : document.getElementById('name').value);
-    formData.append('email', (user && user.email) ? user.email : document.getElementById('email').value);
+    formData.append('name', nameVal);
+    formData.append('email', emailVal);
+    formData.append('phone', phoneVal);
     formData.append('resume', resumeFile);
     
     // Add certificates
-    const certFiles = document.getElementById('certificates').files;
-    for (let i = 0; i < certFiles.length; i++) {
-        formData.append('certificates', certFiles[i]);
+    if (certFiles) {
+        for (let i = 0; i < certFiles.length; i++) {
+            formData.append('certificates', certFiles[i]);
+        }
     }
     
     // Disable submit button
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Submitting...';
+    submitBtn.textContent = 'Submitting & Validating...';
     errorDiv.classList.remove('show');
     
     // Hide form and show analysis container
@@ -122,6 +291,7 @@ applyForm.addEventListener('submit', async (e) => {
         'Parsing resume structure and credentials...',
         'Scanning mandatory & optional skill proficiencies...',
         'Evaluating semantic alignment with role responsibilities...',
+        'Writing candidate application record to Firebase Firestore...',
         'Synthesizing AI candidate intelligence and recommendations...'
     ];
     let msgIdx = 0;

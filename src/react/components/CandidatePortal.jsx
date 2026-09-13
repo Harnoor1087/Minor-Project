@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Briefcase, Search, FileText, UploadCloud, CheckCircle2, 
   AlertCircle, Sparkles, Clock, ArrowRight, Shield, Award, 
-  Filter, ChevronRight, User, RefreshCw, Database
+  Filter, ChevronRight, User, RefreshCw, Database,
+  Phone, Globe, Check, X, Info
 } from 'lucide-react';
 import { storeCandidateApplication, getCandidateApplications } from '../../db.js';
 
@@ -18,7 +19,20 @@ export function CandidatePortal({ onNavigateToInterview, activeTheme }) {
   const [selectedJob, setSelectedJob] = useState(null);
   const [candidateName, setCandidateName] = useState('Alex Morgan');
   const [candidateEmail, setCandidateEmail] = useState('alex.morgan@example.com');
+  const [candidatePhone, setCandidatePhone] = useState('+1 (555) 019-2834');
+  const [candidateLinkedin, setCandidateLinkedin] = useState('https://linkedin.com/in/alex-morgan');
+  const [yearsExperience, setYearsExperience] = useState('3');
+  const [resumeMode, setResumeMode] = useState('upload'); // 'upload' | 'builder'
   const [resumeFile, setResumeFile] = useState(null);
+  const [structuredSummary, setStructuredSummary] = useState('');
+  const [structuredSkills, setStructuredSkills] = useState('');
+  const [consentChecked, setConsentChecked] = useState(false);
+
+  // Client-side validation state
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitProgress, setSubmitProgress] = useState(0);
   const [progressStage, setProgressStage] = useState('');
@@ -35,6 +49,7 @@ export function CandidatePortal({ onNavigateToInterview, activeTheme }) {
         const u = JSON.parse(storedUser);
         if (u.name) setCandidateName(u.name);
         if (u.email) setCandidateEmail(u.email);
+        if (u.phone) setCandidatePhone(u.phone);
       }
     } catch (e) {
       console.warn('Could not parse stored user');
@@ -87,26 +102,197 @@ export function CandidatePortal({ onNavigateToInterview, activeTheme }) {
     return matchesSearch && matchesDept;
   });
 
+  // Comprehensive Client-Side Form Validation
+  function validateForm(overrideValues = {}) {
+    const data = {
+      candidateName,
+      candidateEmail,
+      candidatePhone,
+      candidateLinkedin,
+      yearsExperience,
+      resumeMode,
+      resumeFile,
+      structuredSummary,
+      structuredSkills,
+      consentChecked,
+      ...overrideValues
+    };
+
+    const newErrors = {};
+
+    // 1. Full Name: required, min 2 chars, letters and allowed punctuation only
+    const name = (data.candidateName || '').trim();
+    if (!name) {
+      newErrors.candidateName = 'Full Name is required.';
+    } else if (name.length < 2) {
+      newErrors.candidateName = 'Full Name must be at least 2 characters.';
+    } else if (name.length > 80) {
+      newErrors.candidateName = 'Full Name cannot exceed 80 characters.';
+    } else if (!/^[a-zA-Z\s.'\-]+$/.test(name)) {
+      newErrors.candidateName = 'Name may only contain letters, spaces, hyphens, and apostrophes.';
+    }
+
+    // 2. Email: required, valid RFC 5322 standard format
+    const email = (data.candidateEmail || '').trim();
+    const emailPattern = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+    if (!email) {
+      newErrors.candidateEmail = 'Email address is required.';
+    } else if (!emailPattern.test(email)) {
+      newErrors.candidateEmail = 'Please provide a valid email address (e.g. name@domain.com).';
+    }
+
+    // 3. Contact Phone: required, valid phone number format with 7 to 15 digits
+    const phone = (data.candidatePhone || '').trim();
+    if (!phone) {
+      newErrors.candidatePhone = 'Contact phone number is required.';
+    } else {
+      const digitsOnly = phone.replace(/\D/g, '');
+      if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+        newErrors.candidatePhone = 'Phone number must contain between 7 and 15 digits.';
+      }
+    }
+
+    // 4. Portfolio / LinkedIn URL (optional, but if provided must be a valid http/https URL)
+    const url = (data.candidateLinkedin || '').trim();
+    if (url) {
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          newErrors.candidateLinkedin = 'URL must start with https:// or http://';
+        }
+      } catch (err) {
+        newErrors.candidateLinkedin = 'Please enter a valid web URL (e.g. https://linkedin.com/in/alex).';
+      }
+    }
+
+    // 5. Years of experience: required, integer between 0 and 50
+    const expStr = String(data.yearsExperience ?? '').trim();
+    if (expStr === '') {
+      newErrors.yearsExperience = 'Years of experience is required.';
+    } else {
+      const numExp = Number(expStr);
+      if (isNaN(numExp) || !Number.isInteger(numExp) || numExp < 0 || numExp > 50) {
+        newErrors.yearsExperience = 'Experience must be a whole number between 0 and 50 years.';
+      }
+    }
+
+    // 6. Resume: File upload vs Structured mode
+    if (data.resumeMode === 'upload') {
+      if (!data.resumeFile) {
+        newErrors.resumeFile = 'Please upload a resume file (PDF, DOCX, or TXT).';
+      } else {
+        const allowedExts = ['.pdf', '.docx', '.doc', '.txt'];
+        const fileName = data.resumeFile.name.toLowerCase();
+        const hasValidExt = allowedExts.some(ext => fileName.endsWith(ext));
+        const maxSizeBytes = 10 * 1024 * 1024; // 10MB
+
+        if (!hasValidExt) {
+          newErrors.resumeFile = 'Invalid file format. Only PDF, DOCX, or TXT documents are accepted.';
+        } else if (data.resumeFile.size === 0) {
+          newErrors.resumeFile = 'The selected file is empty (0 bytes). Please upload a valid document.';
+        } else if (data.resumeFile.size > maxSizeBytes) {
+          newErrors.resumeFile = `File size is ${(data.resumeFile.size / (1024 * 1024)).toFixed(1)}MB, exceeding the 10MB limit.`;
+        }
+      }
+    } else {
+      const skills = (data.structuredSkills || '').trim();
+      const summary = (data.structuredSummary || '').trim();
+      if (!skills || skills.length < 3) {
+        newErrors.structuredSkills = 'Please list at least 1-2 core skills or competencies.';
+      }
+      if (!summary || summary.length < 25) {
+        newErrors.structuredSummary = 'Please provide a professional summary (at least 25 characters).';
+      }
+    }
+
+    // 7. Consent: required certification
+    if (!data.consentChecked) {
+      newErrors.consentChecked = 'You must certify your information and consent to store your application in Firestore.';
+    }
+
+    return newErrors;
+  }
+
+  // Handle field blur for real-time feedback
+  function handleFieldBlur(field) {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    const currentErrors = validateForm();
+    setErrors(currentErrors);
+  }
+
+  // Handle field change with active re-validation if already touched
+  function handleFieldChange(field, value, setter) {
+    setter(value);
+    setSubmitError(null);
+    if (touched[field] || hasAttemptedSubmit) {
+      const currentErrors = validateForm({ [field]: value });
+      setErrors(currentErrors);
+    }
+  }
+
   // Start application for a specific job
   function handleStartApply(job) {
     setSelectedJob(job);
     setAnalysisResult(null);
     setSubmitError(null);
+    setErrors({});
+    setTouched({});
+    setHasAttemptedSubmit(false);
+    setConsentChecked(false);
+    if (job?.mandatory_skills) {
+      setStructuredSkills(job.mandatory_skills.slice(0, 4).join(', '));
+    }
     setActiveTab('apply');
   }
 
-  // Handle resume file selection
+  // Handle resume file selection with immediate validation
   function handleFileChange(e) {
     if (e.target.files && e.target.files[0]) {
-      setResumeFile(e.target.files[0]);
+      const file = e.target.files[0];
+      setResumeFile(file);
+      setTouched(prev => ({ ...prev, resumeFile: true }));
+      const currentErrors = validateForm({ resumeFile: file });
+      setErrors(currentErrors);
       setSubmitError(null);
     }
   }
 
-  // Submit application with live AI Resume Scanner animation
+  // Submit application with comprehensive client-side validation before writing to Firestore
   async function handleSubmitApplication(e) {
     e.preventDefault();
     if (!selectedJob) return;
+
+    // Mark all fields as touched to display inline errors
+    setHasAttemptedSubmit(true);
+    setTouched({
+      candidateName: true,
+      candidateEmail: true,
+      candidatePhone: true,
+      candidateLinkedin: true,
+      yearsExperience: true,
+      resumeFile: true,
+      structuredSkills: true,
+      structuredSummary: true,
+      consentChecked: true
+    });
+
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+
+    // Stop immediately if any client-side validation error is found
+    if (Object.keys(validationErrors).length > 0) {
+      const errorCount = Object.keys(validationErrors).length;
+      setSubmitError(`Please correct the ${errorCount} highlighted validation ${errorCount === 1 ? 'error' : 'errors'} before submitting.`);
+      
+      // Auto-focus and scroll to the first invalid field
+      const firstField = Object.keys(validationErrors)[0];
+      const targetElement = document.getElementById(`field-${firstField}`);
+      if (targetElement) {
+        targetElement.focus();
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -116,21 +302,27 @@ export function CandidatePortal({ onNavigateToInterview, activeTheme }) {
     try {
       const formData = new FormData();
       formData.append('job_id', selectedJob.id || selectedJob.job_id);
-      formData.append('name', candidateName);
-      formData.append('email', candidateEmail);
+      formData.append('name', candidateName.trim());
+      formData.append('email', candidateEmail.trim());
+      formData.append('phone', candidatePhone.trim());
+      formData.append('experience', yearsExperience);
+      formData.append('linkedin', candidateLinkedin.trim());
 
-      // If user provided a real file, append it; otherwise create a sample resume blob for seamless demonstration
-      if (resumeFile) {
+      // If user uploaded a real file, append it; otherwise generate structured profile file
+      if (resumeMode === 'upload' && resumeFile) {
         formData.append('resume', resumeFile);
       } else {
-        const demoResumeText = `${candidateName}
-Email: ${candidateEmail}
-Skills: ${(selectedJob.mandatory_skills || []).slice(0, 4).join(', ')}, ${selectedJob.optional_skills ? selectedJob.optional_skills.slice(0, 2).join(', ') : 'Git, Linux'}
-Experience: 3+ years in software engineering and web technologies.
-Education: B.S. in Computer Science.
-Projects: Built full-stack high-performance cloud applications and data pipelines.`;
-        const blob = new Blob([demoResumeText], { type: 'text/plain' });
-        formData.append('resume', blob, `${candidateName.replace(/\s+/g, '_')}_Resume.txt`);
+        const generatedResumeText = `Candidate: ${candidateName.trim()}
+Email: ${candidateEmail.trim()}
+Phone: ${candidatePhone.trim()}
+LinkedIn / Portfolio: ${candidateLinkedin.trim() || 'N/A'}
+Experience: ${yearsExperience} years
+Skills: ${structuredSkills.trim() || (selectedJob.mandatory_skills || []).join(', ')}
+
+Professional Summary:
+${structuredSummary.trim() || 'Experienced engineer with demonstrated background in building scalable web and software systems.'}`;
+        const blob = new Blob([generatedResumeText], { type: 'text/plain' });
+        formData.append('resume', blob, `${candidateName.trim().replace(/\s+/g, '_')}_Profile.txt`);
       }
 
       // Simulate realistic stage progression
@@ -160,7 +352,7 @@ Projects: Built full-stack high-performance cloud applications and data pipeline
       }
 
       setSubmitProgress(95);
-      setProgressStage('Writing application profile directly to Firebase Firestore...');
+      setProgressStage('Writing verified candidate profile directly to Firebase Firestore...');
 
       // Store candidate application in Firebase Firestore
       let firestoreDoc = null;
@@ -169,8 +361,11 @@ Projects: Built full-stack high-performance cloud applications and data pipeline
           id: data.application?._id || data.application?.id,
           jobId: selectedJob.id || selectedJob.job_id,
           jobTitle: selectedJob.title,
-          applicantName: candidateName,
-          applicantEmail: candidateEmail,
+          applicantName: candidateName.trim(),
+          applicantEmail: candidateEmail.trim(),
+          applicantPhone: candidatePhone.trim(),
+          applicantExperience: Number(yearsExperience) || 0,
+          applicantLinkedin: candidateLinkedin.trim() || undefined,
           companyId: selectedJob.companyId || 'comp_airis',
           companyName: selectedJob.companyName || 'AIRIS Talent Global',
           companySlug: selectedJob.companySlug || 'airis',
@@ -556,120 +751,437 @@ Projects: Built full-stack high-performance cloud applications and data pipeline
               {submitError && (
                 <div style={{
                   background: 'rgba(239, 68, 68, 0.08)',
-                  border: '1px solid var(--danger)',
+                  border: '1px solid var(--danger, #ef4444)',
                   borderRadius: '12px',
                   padding: '1rem 1.25rem',
                   marginBottom: '1.5rem',
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'flex-start',
                   gap: '0.75rem',
-                  color: 'var(--danger-text)'
+                  color: 'var(--danger-text, #ef4444)'
                 }}>
-                  <AlertCircle size={20} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-                  <div style={{ fontSize: '0.9rem' }}>{submitError}</div>
+                  <AlertCircle size={20} style={{ color: 'var(--danger, #ef4444)', flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <div style={{ fontSize: '0.92rem', fontWeight: 600 }}>{submitError}</div>
+                    {hasAttemptedSubmit && Object.keys(errors).length > 0 && (
+                      <ul style={{ margin: '6px 0 0 0', paddingLeft: '1.25rem', fontSize: '0.83rem', opacity: 0.9 }}>
+                        {Object.entries(errors).map(([key, msg]) => (
+                          <li key={key}>{msg}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Verified Identity Check */}
-              <form onSubmit={handleSubmitApplication}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                      Candidate Verified Name
-                    </label>
-                    <div style={{ position: 'relative' }}>
+              {/* Comprehensive Validated Candidate Form */}
+              <form onSubmit={handleSubmitApplication} noValidate>
+                {/* Section 1: Candidate Contact & Profile Details */}
+                <div style={{ marginBottom: '1.75rem' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: '0 0 1rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <User size={18} style={{ color: 'var(--primary)' }} />
+                    Candidate Profile & Contact Details
+                  </h3>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+                    {/* Full Name */}
+                    <div>
+                      <label htmlFor="field-candidateName" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                        <span>Full Name <strong style={{ color: '#ef4444' }}>*</strong></span>
+                        {touched.candidateName && !errors.candidateName && (
+                          <span style={{ color: 'var(--success, #10b981)', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Check size={13} /> Valid
+                          </span>
+                        )}
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          id="field-candidateName"
+                          type="text"
+                          value={candidateName}
+                          onChange={e => handleFieldChange('candidateName', e.target.value, setCandidateName)}
+                          onBlur={() => handleFieldBlur('candidateName')}
+                          placeholder="e.g. Alex Morgan"
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: `1px solid ${touched.candidateName && errors.candidateName ? '#ef4444' : touched.candidateName ? '#10b981' : 'var(--border-color)'}`,
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.9rem',
+                            outline: 'none',
+                            boxShadow: touched.candidateName && errors.candidateName ? '0 0 0 2px rgba(239, 68, 68, 0.15)' : 'none'
+                          }}
+                        />
+                      </div>
+                      {touched.candidateName && errors.candidateName && (
+                        <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <AlertCircle size={13} /> {errors.candidateName}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Email Address */}
+                    <div>
+                      <label htmlFor="field-candidateEmail" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                        <span>Email Address <strong style={{ color: '#ef4444' }}>*</strong></span>
+                        {touched.candidateEmail && !errors.candidateEmail && (
+                          <span style={{ color: 'var(--success, #10b981)', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Check size={13} /> Valid
+                          </span>
+                        )}
+                      </label>
                       <input
-                        type="text"
-                        value={candidateName}
-                        onChange={e => setCandidateName(e.target.value)}
-                        required
+                        id="field-candidateEmail"
+                        type="email"
+                        value={candidateEmail}
+                        onChange={e => handleFieldChange('candidateEmail', e.target.value, setCandidateEmail)}
+                        onBlur={() => handleFieldBlur('candidateEmail')}
+                        placeholder="e.g. alex.morgan@example.com"
                         style={{
                           width: '100%',
                           padding: '10px 12px',
                           borderRadius: '10px',
-                          border: '1px solid var(--border-color)',
+                          border: `1px solid ${touched.candidateEmail && errors.candidateEmail ? '#ef4444' : touched.candidateEmail ? '#10b981' : 'var(--border-color)'}`,
                           background: 'var(--bg-card)',
                           color: 'var(--text-primary)',
-                          fontSize: '0.9rem'
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          boxShadow: touched.candidateEmail && errors.candidateEmail ? '0 0 0 2px rgba(239, 68, 68, 0.15)' : 'none'
                         }}
                       />
-                      <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: 'var(--success)' }}>
-                        ✓ Verified
-                      </span>
+                      {touched.candidateEmail && errors.candidateEmail && (
+                        <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <AlertCircle size={13} /> {errors.candidateEmail}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Phone Number */}
+                    <div>
+                      <label htmlFor="field-candidatePhone" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                        <span>Phone Number <strong style={{ color: '#ef4444' }}>*</strong></span>
+                        {touched.candidatePhone && !errors.candidatePhone && (
+                          <span style={{ color: 'var(--success, #10b981)', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Check size={13} /> Valid
+                          </span>
+                        )}
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          id="field-candidatePhone"
+                          type="tel"
+                          value={candidatePhone}
+                          onChange={e => handleFieldChange('candidatePhone', e.target.value, setCandidatePhone)}
+                          onBlur={() => handleFieldBlur('candidatePhone')}
+                          placeholder="+1 (555) 019-2834"
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: `1px solid ${touched.candidatePhone && errors.candidatePhone ? '#ef4444' : touched.candidatePhone ? '#10b981' : 'var(--border-color)'}`,
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.9rem',
+                            outline: 'none',
+                            boxShadow: touched.candidatePhone && errors.candidatePhone ? '0 0 0 2px rgba(239, 68, 68, 0.15)' : 'none'
+                          }}
+                        />
+                      </div>
+                      {touched.candidatePhone && errors.candidatePhone && (
+                        <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <AlertCircle size={13} /> {errors.candidatePhone}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Years of Experience */}
+                    <div>
+                      <label htmlFor="field-yearsExperience" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                        <span>Years of Experience <strong style={{ color: '#ef4444' }}>*</strong></span>
+                        {touched.yearsExperience && !errors.yearsExperience && (
+                          <span style={{ color: 'var(--success, #10b981)', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Check size={13} /> Valid
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        id="field-yearsExperience"
+                        type="number"
+                        min="0"
+                        max="50"
+                        step="1"
+                        value={yearsExperience}
+                        onChange={e => handleFieldChange('yearsExperience', e.target.value, setYearsExperience)}
+                        onBlur={() => handleFieldBlur('yearsExperience')}
+                        placeholder="e.g. 3"
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          border: `1px solid ${touched.yearsExperience && errors.yearsExperience ? '#ef4444' : touched.yearsExperience ? '#10b981' : 'var(--border-color)'}`,
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          boxShadow: touched.yearsExperience && errors.yearsExperience ? '0 0 0 2px rgba(239, 68, 68, 0.15)' : 'none'
+                        }}
+                      />
+                      {touched.yearsExperience && errors.yearsExperience && (
+                        <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <AlertCircle size={13} /> {errors.yearsExperience}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                      Candidate Email
+                  {/* LinkedIn or Portfolio URL (Optional with format validation) */}
+                  <div style={{ marginTop: '1.25rem' }}>
+                    <label htmlFor="field-candidateLinkedin" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      <span>LinkedIn / Portfolio URL <span style={{ fontWeight: 400, opacity: 0.7 }}>(Optional)</span></span>
+                      {candidateLinkedin && touched.candidateLinkedin && !errors.candidateLinkedin && (
+                        <span style={{ color: 'var(--success, #10b981)', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Check size={13} /> Valid URL
+                        </span>
+                      )}
                     </label>
                     <input
-                      type="email"
-                      value={candidateEmail}
-                      onChange={e => setCandidateEmail(e.target.value)}
-                      required
+                      id="field-candidateLinkedin"
+                      type="url"
+                      value={candidateLinkedin}
+                      onChange={e => handleFieldChange('candidateLinkedin', e.target.value, setCandidateLinkedin)}
+                      onBlur={() => handleFieldBlur('candidateLinkedin')}
+                      placeholder="https://linkedin.com/in/alex-morgan"
                       style={{
                         width: '100%',
                         padding: '10px 12px',
                         borderRadius: '10px',
-                        border: '1px solid var(--border-color)',
+                        border: `1px solid ${touched.candidateLinkedin && errors.candidateLinkedin ? '#ef4444' : touched.candidateLinkedin && candidateLinkedin ? '#10b981' : 'var(--border-color)'}`,
                         background: 'var(--bg-card)',
                         color: 'var(--text-primary)',
-                        fontSize: '0.9rem'
+                        fontSize: '0.9rem',
+                        outline: 'none',
+                        boxShadow: touched.candidateLinkedin && errors.candidateLinkedin ? '0 0 0 2px rgba(239, 68, 68, 0.15)' : 'none'
                       }}
                     />
-                  </div>
-                </div>
-
-                {/* Drag-and-Drop Resume Upload Area */}
-                <div style={{ marginBottom: '1.75rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Upload Resume for AI Competency Analysis
-                  </label>
-                  
-                  <div 
-                    style={{
-                      border: '2px dashed var(--border-focus)',
-                      borderRadius: '16px',
-                      padding: '2.5rem 1.5rem',
-                      textAlign: 'center',
-                      background: resumeFile ? 'var(--primary-light)' : 'var(--bg-subtle)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      position: 'relative'
-                    }}
-                    onClick={() => document.getElementById('candidateResumeInput').click()}
-                  >
-                    <input
-                      id="candidateResumeInput"
-                      type="file"
-                      accept=".pdf,.docx,.txt"
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
-                    />
-
-                    <UploadCloud size={40} style={{ color: 'var(--primary)', margin: '0 auto 0.75rem' }} />
-
-                    {resumeFile ? (
-                      <div>
-                        <p style={{ margin: '0 0 4px 0', fontWeight: 700, color: 'var(--primary)', fontSize: '1rem' }}>
-                          📄 {resumeFile.name}
-                        </p>
-                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          {(resumeFile.size / 1024).toFixed(1)} KB • Click to change document
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p style={{ margin: '0 0 4px 0', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-                          Click or drag and drop your resume file here
-                        </p>
-                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          Supports PDF, DOCX, or Plain Text (up to 10MB). Or proceed directly to evaluate standard candidate profile.
-                        </p>
+                    {touched.candidateLinkedin && errors.candidateLinkedin && (
+                      <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertCircle size={13} /> {errors.candidateLinkedin}
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Section 2: Resume / Profile Submission */}
+                <div style={{ marginBottom: '1.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FileText size={18} style={{ color: 'var(--primary)' }} />
+                      Resume & Qualifications <strong style={{ color: '#ef4444' }}>*</strong>
+                    </h3>
+
+                    {/* Mode Toggle */}
+                    <div style={{ display: 'flex', background: 'var(--bg-subtle)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResumeMode('upload');
+                          setErrors(prev => ({ ...prev, structuredSkills: undefined, structuredSummary: undefined }));
+                        }}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: resumeMode === 'upload' ? 'var(--primary)' : 'transparent',
+                          color: resumeMode === 'upload' ? '#ffffff' : 'var(--text-secondary)'
+                        }}
+                      >
+                        Upload Document
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResumeMode('builder');
+                          setErrors(prev => ({ ...prev, resumeFile: undefined }));
+                        }}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: resumeMode === 'builder' ? 'var(--primary)' : 'transparent',
+                          color: resumeMode === 'builder' ? '#ffffff' : 'var(--text-secondary)'
+                        }}
+                      >
+                        Structured Builder
+                      </button>
+                    </div>
+                  </div>
+
+                  {resumeMode === 'upload' ? (
+                    <div>
+                      <div 
+                        id="field-resumeFile"
+                        tabIndex={0}
+                        style={{
+                          border: `2px dashed ${touched.resumeFile && errors.resumeFile ? '#ef4444' : resumeFile ? 'var(--primary)' : 'var(--border-focus)'}`,
+                          borderRadius: '16px',
+                          padding: '2.25rem 1.5rem',
+                          textAlign: 'center',
+                          background: resumeFile ? 'var(--primary-light)' : (touched.resumeFile && errors.resumeFile ? 'rgba(239, 68, 68, 0.04)' : 'var(--bg-subtle)'),
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          position: 'relative',
+                          outline: 'none'
+                        }}
+                        onClick={() => document.getElementById('candidateResumeInput').click()}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            document.getElementById('candidateResumeInput').click();
+                          }
+                        }}
+                      >
+                        <input
+                          id="candidateResumeInput"
+                          type="file"
+                          accept=".pdf,.docx,.doc,.txt"
+                          onChange={handleFileChange}
+                          style={{ display: 'none' }}
+                        />
+
+                        <UploadCloud size={38} style={{ color: touched.resumeFile && errors.resumeFile ? '#ef4444' : 'var(--primary)', margin: '0 auto 0.75rem' }} />
+
+                        {resumeFile ? (
+                          <div>
+                            <p style={{ margin: '0 0 4px 0', fontWeight: 700, color: 'var(--primary)', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                              <span>📄 {resumeFile.name}</span>
+                              <CheckCircle2 size={16} style={{ color: 'var(--success, #10b981)' }} />
+                            </p>
+                            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                              {(resumeFile.size / 1024).toFixed(1)} KB • Document validated • Click to replace file
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p style={{ margin: '0 0 4px 0', fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                              Click or drag and drop your resume file here
+                            </p>
+                            <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                              Supports PDF, DOCX, or Plain Text (maximum size 10MB)
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      {touched.resumeFile && errors.resumeFile && (
+                        <div style={{ color: '#ef4444', fontSize: '0.82rem', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <AlertCircle size={14} /> {errors.resumeFile}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {/* Structured Skills */}
+                      <div>
+                        <label htmlFor="field-structuredSkills" style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                          Core Skills & Competencies <strong style={{ color: '#ef4444' }}>*</strong>
+                        </label>
+                        <input
+                          id="field-structuredSkills"
+                          type="text"
+                          value={structuredSkills}
+                          onChange={e => handleFieldChange('structuredSkills', e.target.value, setStructuredSkills)}
+                          onBlur={() => handleFieldBlur('structuredSkills')}
+                          placeholder="e.g. React, Node.js, TypeScript, PostgreSQL, System Design"
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: `1px solid ${touched.structuredSkills && errors.structuredSkills ? '#ef4444' : touched.structuredSkills && structuredSkills ? '#10b981' : 'var(--border-color)'}`,
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.9rem',
+                            outline: 'none'
+                          }}
+                        />
+                        {touched.structuredSkills && errors.structuredSkills && (
+                          <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <AlertCircle size={13} /> {errors.structuredSkills}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Structured Summary */}
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <label htmlFor="field-structuredSummary" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                            Professional Background & Projects <strong style={{ color: '#ef4444' }}>*</strong>
+                          </label>
+                          <span style={{ fontSize: '0.78rem', color: structuredSummary.length < 25 ? 'var(--text-muted)' : 'var(--success, #10b981)' }}>
+                            {structuredSummary.length} characters (min 25)
+                          </span>
+                        </div>
+                        <textarea
+                          id="field-structuredSummary"
+                          rows={4}
+                          value={structuredSummary}
+                          onChange={e => handleFieldChange('structuredSummary', e.target.value, setStructuredSummary)}
+                          onBlur={() => handleFieldBlur('structuredSummary')}
+                          placeholder="Describe your engineering experience, notable projects, systems built, and architectural responsibilities..."
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            border: `1px solid ${touched.structuredSummary && errors.structuredSummary ? '#ef4444' : touched.structuredSummary && structuredSummary.length >= 25 ? '#10b981' : 'var(--border-color)'}`,
+                            background: 'var(--bg-card)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.9rem',
+                            outline: 'none',
+                            resize: 'vertical'
+                          }}
+                        />
+                        {touched.structuredSummary && errors.structuredSummary && (
+                          <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <AlertCircle size={13} /> {errors.structuredSummary}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Section 3: Legal Certification & Firestore Consent */}
+                <div style={{
+                  marginBottom: '1.75rem',
+                  padding: '1rem 1.25rem',
+                  borderRadius: '12px',
+                  background: touched.consentChecked && errors.consentChecked ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-subtle)',
+                  border: `1px solid ${touched.consentChecked && errors.consentChecked ? '#ef4444' : 'var(--border-color)'}`
+                }}>
+                  <label htmlFor="field-consentChecked" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                    <input
+                      id="field-consentChecked"
+                      type="checkbox"
+                      checked={consentChecked}
+                      onChange={e => handleFieldChange('consentChecked', e.target.checked, setConsentChecked)}
+                      onBlur={() => handleFieldBlur('consentChecked')}
+                      style={{ marginTop: '3px', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize: '0.86rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>
+                      <strong>Certification & Firestore Storage Consent <span style={{ color: '#ef4444' }}>*</span>:</strong> I certify that all details provided in this application are accurate and truthful. I authorize the system to evaluate my resume competencies and persist my verified candidate record in <strong>Firebase Firestore</strong>.
+                    </span>
+                  </label>
+                  {touched.consentChecked && errors.consentChecked && (
+                    <div style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px', marginLeft: '24px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <AlertCircle size={13} /> {errors.consentChecked}
+                    </div>
+                  )}
                 </div>
 
                 {/* Progress Animation during analysis */}
@@ -693,32 +1205,39 @@ Projects: Built full-stack high-performance cloud applications and data pipeline
                 )}
 
                 {/* Submit Action */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('jobs')}
-                    className="btn-secondary"
-                    disabled={isSubmitting}
-                    style={{ padding: '10px 18px', fontSize: '0.9rem' }}
-                  >
-                    Cancel
-                  </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    <Shield size={15} style={{ color: 'var(--primary)' }} />
+                    <span>Validated client-side prior to Firestore synchronization</span>
+                  </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn-primary"
-                    style={{
-                      padding: '10px 24px',
-                      fontSize: '0.9rem',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                  >
-                    <Sparkles size={16} />
-                    <span>{isSubmitting ? 'Analyzing Resume...' : 'Analyze & Submit Application'}</span>
-                  </button>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('jobs')}
+                      className="btn-secondary"
+                      disabled={isSubmitting}
+                      style={{ padding: '10px 18px', fontSize: '0.9rem' }}
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="btn-primary"
+                      style={{
+                        padding: '10px 24px',
+                        fontSize: '0.9rem',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <Sparkles size={16} />
+                      <span>{isSubmitting ? 'Analyzing & Saving...' : 'Validate & Submit to Firestore'}</span>
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

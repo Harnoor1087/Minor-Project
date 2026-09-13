@@ -420,6 +420,7 @@
                     </label>
                     <input type="text" id="name" name="name" readonly class="input-locked" required>
                     <small class="field-locked-note">🔒 Locked to your authenticated credentials to prevent candidate identity tampering.</small>
+                    <div class="field-error" id="nameError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: none;"></div>
                 </div>
                 
                 <div class="form-group">
@@ -429,30 +430,51 @@
                     </label>
                     <input type="email" id="email" name="email" readonly class="input-locked" required>
                     <small class="field-locked-note">🔒 Locked to your authenticated credentials to prevent candidate identity tampering.</small>
+                    <div class="field-error" id="emailError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">
+                        Phone Number *
+                    </label>
+                    <input type="tel" id="phone" name="phone" placeholder="+1 (555) 019-2834" required style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0); background: var(--bg-card, #ffffff); color: var(--text-primary, #0f172a);">
+                    <small style="color: var(--text-secondary, #64748b);">Primary contact number for interview invitations</small>
+                    <div class="field-error" id="phoneError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: none;"></div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="resume">Upload Resume (PDF) *</label>
-                    <input type="file" id="resume" name="resume" accept=".pdf" required>
-                    <small>Only PDF files are accepted</small>
+                    <label for="resume">Upload Resume (PDF, DOCX, TXT) *</label>
+                    <input type="file" id="resume" name="resume" accept=".pdf,.docx,.txt" required>
+                    <small>Accepted formats: PDF, DOCX, or TXT (up to 10MB)</small>
+                    <div class="field-error" id="resumeError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: none;"></div>
                 </div>
                 
                 <div class="form-group">
                     <label for="certificates">Upload Certificates (Optional, PDF)</label>
                     <input type="file" id="certificates" name="certificates" accept=".pdf" multiple>
-                    <small>You can upload multiple certificate files</small>
+                    <small>You can upload multiple certificate files (up to 10MB each)</small>
+                    <div class="field-error" id="certificatesError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: none;"></div>
                 </div>
                 
                 <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="confirmJobId" required>
-                        I have noted the Job ID: <strong><span id="confirmJobIdText"></span></strong>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="confirmJobId" required style="cursor: pointer;">
+                        <span>I have noted the Job ID: <strong><span id="confirmJobIdText"></span></strong> *</span>
                     </label>
+                    <div class="field-error" id="confirmJobIdError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="confirmConsent" required style="margin-top: 3px; cursor: pointer;">
+                        <span>I certify that my information is accurate and give consent for AI resume evaluation and Firestore profile storage. *</span>
+                    </label>
+                    <div class="field-error" id="confirmConsentError" style="color: #ef4444; font-size: 0.8rem; margin-top: 4px; display: none;"></div>
                 </div>
                 
                 <div id="applyError" class="error-message"></div>
                 
-                <button type="submit" class="btn-primary" id="submitBtn">Submit Application</button>
+                <button type="submit" class="btn-primary" id="submitBtn">Validate & Submit Application</button>
             </form>
         </div>
 
