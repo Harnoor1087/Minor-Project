@@ -5,7 +5,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const { sanitizeInputMiddleware } = require('./middleware/sanitizeInput');
+const { buildReact } = require('./build');
 require('dotenv').config();
+
+// Ensure React bundle is built on startup
+buildReact().catch(err => console.warn('[Server] Initial React build warning:', err.message));
 
 const app = express();
 const PORT = 3000;
@@ -132,6 +136,14 @@ app.get('/register', (req, res) => {
 
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/admin-react', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-react.html'));
+});
+
+app.get('/react', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin-react.html'));
 });
 
 app.get('/applicant', (req, res) => {

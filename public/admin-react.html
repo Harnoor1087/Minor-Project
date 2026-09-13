@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS - React Talent Intelligence Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme.js"></script>
+    <style>
+      /* Smooth transitions for React UI */
+      #react-admin-root {
+        min-height: 100vh;
+      }
+      .fade-in {
+        animation: fadeIn 0.25s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+</head>
+<body>
+    <div id="react-admin-root">
+      <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg-primary);">
+        <div style="text-align: center;">
+          <div style="font-size: 2.5rem; margin-bottom: 1rem;">⚡</div>
+          <h3 style="margin: 0; font-weight: 600;">Starting AIRIS React Engine...</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Loading verified talent matrix</p>
+        </div>
+      </div>
+    </div>
+    <script src="/dist/app.bundle.js"></script>
+</body>
+</html>
