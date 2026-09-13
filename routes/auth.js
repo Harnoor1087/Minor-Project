@@ -2,18 +2,69 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { users, otps, companies } = require('../db/store');
+const crypto = require('crypto');
+const { users, otps, companies, refreshTokens, auditLogs } = require('../db/store');
 const { generateOtpCode, sendOtpEmail, isSmtpConfigured } = require('../services/emailService');
+const mfaService = require('../services/mfaService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'airis_secret_jwt_key_2026';
 
-// Verify token middleware
+// Helper to issue short-lived access token + rotating refresh token + HttpOnly cookies
+function issueTokens(user, comp, req, res) {
+  const payload = {
+    id: user._id,
+    role: user.role,
+    name: user.name,
+    email: user.email,
+    companyId: comp?.id || user.companyId || '',
+    companySlug: comp?.slug || ''
+  };
+
+  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });
+  const refreshTokenString = crypto.randomBytes(40).toString('hex');
+  const ip = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '';
+  const userAgent = req.headers['user-agent'] || '';
+
+  refreshTokens.create({
+    userId: user._id,
+    token: refreshTokenString,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    ip,
+    userAgent
+  });
+
+  const isProd = process.env.NODE_ENV === 'production';
+
+  // Set HttpOnly secure cookies
+  res.cookie('airis_access_token', accessToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    maxAge: 15 * 60 * 1000 // 15 minutes
+  });
+
+  res.cookie('airis_refresh_token', refreshTokenString, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
+
+  return { accessToken, refreshToken: refreshTokenString };
+}
+
+// Verify token middleware (reads from HttpOnly cookie first, then Authorization Bearer header)
 const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
+  let token = req.cookies?.airis_access_token;
 
   if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+    const authHeader = req.headers.authorization;
+    token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: 'No session token provided in cookie or authorization header' });
   }
 
   try {
@@ -21,7 +72,7 @@ const verifyToken = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    return res.status(401).json({ message: 'Invalid or expired session token' });
   }
 };
 
@@ -175,23 +226,23 @@ router.post('/register/verify-otp', async (req, res) => {
     });
 
     const comp = newUser.companyId ? companies.getById(newUser.companyId) : null;
+    const { accessToken, refreshToken } = issueTokens(newUser, comp, req, res);
 
-    const token = jwt.sign(
-      {
-        id: newUser._id,
-        role: newUser.role,
-        name: newUser.name,
-        email: newUser.email,
-        companyId: newUser.companyId || '',
-        companySlug: comp?.slug || ''
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    auditLogs.record({
+      actorId: newUser._id,
+      actorEmail: newUser.email,
+      actorRole: newUser.role,
+      action: 'USER_REGISTER_SUCCESS',
+      targetType: 'user',
+      targetId: newUser._id,
+      tenantId: newUser.companyId || '',
+      ip: req.ip
+    });
 
     res.status(201).json({
       message: 'Email verified and account registered successfully',
-      token,
+      token: accessToken,
+      refreshToken,
       user: {
         id: newUser._id,
         name: newUser.name,
@@ -209,10 +260,10 @@ router.post('/register/verify-otp', async (req, res) => {
   }
 });
 
-// Login: Step 1 - Check credentials & send Two-Factor OTP
+// Login: Step 1 - Check credentials, check account lockout, support TOTP MFA, or dispatch Email 2FA OTP
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, mfaCode, backupCode } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
@@ -224,12 +275,120 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    const isMatch = await users.verifyPassword(user, password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    // Check account lockout status
+    if (users.isLocked(user)) {
+      const lockoutTime = new Date(user.lockoutUntil).toLocaleTimeString();
+      auditLogs.record({
+        actorEmail: normalizedEmail,
+        action: 'LOGIN_BLOCKED_LOCKOUT',
+        targetType: 'user',
+        targetId: user._id,
+        tenantId: user.companyId || '',
+        ip: req.ip,
+        details: { lockoutUntil: user.lockoutUntil }
+      });
+      return res.status(423).json({
+        error: 'ACCOUNT_LOCKED',
+        message: `Account is temporarily locked due to excessive failed attempts. Please try again after ${lockoutTime}.`
+      });
     }
 
-    // Generate login OTP
+    // Validate password
+    const isMatch = await users.verifyPassword(user, password);
+    if (!isMatch) {
+      users.recordFailedLogin(user);
+      const remaining = 5 - (user.failedLoginAttempts || 0);
+
+      auditLogs.record({
+        actorEmail: normalizedEmail,
+        action: 'LOGIN_FAILED_BAD_PASSWORD',
+        targetType: 'user',
+        targetId: user._id,
+        tenantId: user.companyId || '',
+        ip: req.ip,
+        details: { failedAttempts: user.failedLoginAttempts }
+      });
+
+      if (remaining <= 0) {
+        return res.status(423).json({
+          error: 'ACCOUNT_LOCKED',
+          message: 'Account locked for 15 minutes due to 5 consecutive failed login attempts.'
+        });
+      }
+
+      return res.status(400).json({
+        message: `Invalid email or password. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining before lockout.`
+      });
+    }
+
+    // Reset failed logins counter on valid password
+    users.resetFailedLogins(user);
+
+    // If User has TOTP MFA Enabled, authenticate via Authenticator Code or Backup Code
+    if (user.mfaEnabled && user.mfaSecret) {
+      if (!mfaCode && !backupCode) {
+        return res.status(200).json({
+          requiresMfa: true,
+          email: normalizedEmail,
+          message: 'Multi-factor authentication required. Please provide your 6-digit authenticator code or backup recovery code.'
+        });
+      }
+
+      let mfaValid = false;
+      let usedBackup = false;
+
+      if (mfaCode) {
+        mfaValid = mfaService.verifyTOTP(user.mfaSecret, mfaCode);
+      } else if (backupCode) {
+        mfaValid = users.consumeBackupCode(user, backupCode);
+        usedBackup = true;
+      }
+
+      if (!mfaValid) {
+        auditLogs.record({
+          actorId: user._id,
+          actorEmail: user.email,
+          action: 'LOGIN_FAILED_MFA',
+          tenantId: user.companyId || '',
+          ip: req.ip
+        });
+        return res.status(400).json({
+          error: 'MFA_FAILED',
+          message: 'Invalid authenticator code or backup recovery code.'
+        });
+      }
+
+      const comp = user.companyId ? companies.getById(user.companyId) : null;
+      const { accessToken, refreshToken } = issueTokens(user, comp, req, res);
+
+      auditLogs.record({
+        actorId: user._id,
+        actorEmail: user.email,
+        actorRole: user.role,
+        action: usedBackup ? 'LOGIN_SUCCESS_MFA_BACKUP' : 'LOGIN_SUCCESS_MFA_TOTP',
+        tenantId: user.companyId || '',
+        ip: req.ip
+      });
+
+      return res.json({
+        message: 'Two-factor authenticator verification successful. Logged in.',
+        token: accessToken,
+        refreshToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          company: user.company,
+          companyId: user.companyId || '',
+          companySlug: comp?.slug || '',
+          companyLogo: comp?.logo || '🏢',
+          mfaEnabled: true
+        }
+      });
+    }
+
+    // Default 2FA via Email OTP
     const code = generateOtpCode();
 
     await otps.create({
@@ -278,7 +437,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Verify Login OTP & Issue JWT Session Token
+// Verify Login OTP & Issue JWT Session Token + HttpOnly Cookies
 router.post('/login/verify-otp', async (req, res) => {
   try {
     const { email, code } = req.body;
@@ -303,23 +462,21 @@ router.post('/login/verify-otp', async (req, res) => {
     }
 
     const comp = user.companyId ? companies.getById(user.companyId) : null;
+    const { accessToken, refreshToken } = issueTokens(user, comp, req, res);
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-        name: user.name,
-        email: user.email,
-        companyId: user.companyId || '',
-        companySlug: comp?.slug || ''
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    auditLogs.record({
+      actorId: user._id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: 'LOGIN_SUCCESS_EMAIL_OTP',
+      tenantId: user.companyId || '',
+      ip: req.ip
+    });
 
     res.json({
       message: 'Two-factor verification successful. Logged in.',
-      token,
+      token: accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -328,7 +485,8 @@ router.post('/login/verify-otp', async (req, res) => {
         company: user.company,
         companyId: user.companyId || '',
         companySlug: comp?.slug || '',
-        companyLogo: comp?.logo || '🏢'
+        companyLogo: comp?.logo || '🏢',
+        mfaEnabled: !!user.mfaEnabled
       }
     });
   } catch (error) {
@@ -447,8 +605,215 @@ router.get('/me', verifyToken, (req, res) => {
     companySlug: comp?.slug || '',
     companyLogo: comp?.logo || '🏢',
     tenant: comp || null,
-    isSuperAdmin: user.role === 'super_admin'
+    isSuperAdmin: user.role === 'super_admin',
+    mfaEnabled: !!user.mfaEnabled
   });
+});
+
+// Refresh Access Token using secure HttpOnly cookie or body token
+router.post('/refresh', async (req, res) => {
+  try {
+    let token = req.cookies?.airis_refresh_token || req.body?.refreshToken;
+
+    if (!token) {
+      return res.status(401).json({
+        error: 'REFRESH_TOKEN_REQUIRED',
+        message: 'No refresh token provided.'
+      });
+    }
+
+    const record = refreshTokens.find(token);
+    if (!record || new Date(record.expiresAt) < new Date()) {
+      res.clearCookie('airis_access_token');
+      res.clearCookie('airis_refresh_token');
+      return res.status(401).json({
+        error: 'REFRESH_TOKEN_EXPIRED',
+        message: 'Session expired. Please log in again.'
+      });
+    }
+
+    // Revoke old refresh token (Strict Token Rotation)
+    refreshTokens.revoke(token);
+
+    const user = users.findById(record.userId);
+    if (!user) {
+      return res.status(401).json({ message: 'User account no longer exists.' });
+    }
+
+    const comp = user.companyId ? companies.getById(user.companyId) : null;
+    const { accessToken, refreshToken } = issueTokens(user, comp, req, res);
+
+    auditLogs.record({
+      actorId: user._id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: 'TOKEN_REFRESH_SUCCESS',
+      tenantId: user.companyId || '',
+      ip: req.ip
+    });
+
+    res.json({
+      message: 'Token refreshed successfully.',
+      token: accessToken,
+      refreshToken
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Secure Logout - Invalidate Refresh Token & Clear Cookies
+router.post('/logout', verifyToken, (req, res) => {
+  try {
+    const token = req.cookies?.airis_refresh_token || req.body?.refreshToken;
+    if (token) {
+      refreshTokens.revoke(token);
+    }
+    if (req.user?.id) {
+      refreshTokens.revokeAllForUser(req.user.id);
+    }
+
+    res.clearCookie('airis_access_token');
+    res.clearCookie('airis_refresh_token');
+
+    auditLogs.record({
+      actorId: req.user?.id,
+      actorEmail: req.user?.email,
+      actorRole: req.user?.role,
+      action: 'USER_LOGOUT',
+      tenantId: req.user?.companyId || '',
+      ip: req.ip
+    });
+
+    res.json({ success: true, message: 'Logged out successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Logout error', error: error.message });
+  }
+});
+
+// MFA: Check user MFA status
+router.get('/mfa/status', verifyToken, (req, res) => {
+  const user = users.findById(req.user.id);
+  if (!user) return res.status(404).json({ message: 'User not found' });
+  res.json({
+    mfaEnabled: !!user.mfaEnabled,
+    backupCodesRemaining: Array.isArray(user.mfaBackupCodes) ? user.mfaBackupCodes.length : 0
+  });
+});
+
+// MFA: Initiate TOTP MFA Setup (Generate secret, OTPAuth URI, backup codes)
+router.post('/mfa/setup', verifyToken, (req, res) => {
+  try {
+    const user = users.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const secret = mfaService.generateSecret();
+    const uri = mfaService.generateTOTPUri(secret, user.email, 'AIRIS Enterprise');
+    const backupCodes = mfaService.generateBackupCodes(8);
+
+    // Save pending setup on user
+    user._pendingMfaSecret = secret;
+    user._pendingBackupCodes = backupCodes;
+
+    res.json({
+      secret,
+      otpauthUri: uri,
+      backupCodes,
+      message: 'Scan the QR code in Google Authenticator or enter the secret key manually, then submit a 6-digit code to finalize setup.'
+    });
+  } catch (error) {
+    console.error('MFA setup error:', error);
+    res.status(500).json({ message: 'MFA setup error', error: error.message });
+  }
+});
+
+// MFA: Confirm and Enable TOTP Setup
+router.post('/mfa/verify-setup', verifyToken, (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ message: '6-digit verification token from authenticator app is required.' });
+    }
+
+    const user = users.findById(req.user.id);
+    if (!user || !user._pendingMfaSecret) {
+      return res.status(400).json({ message: 'No pending MFA setup found. Please initiate setup first.' });
+    }
+
+    const isValid = mfaService.verifyTOTP(user._pendingMfaSecret, token);
+    if (!isValid) {
+      return res.status(400).json({ message: 'Invalid 6-digit verification code. Ensure your device time is synchronized.' });
+    }
+
+    // Activate MFA
+    users.updateMfa(user._id, {
+      enabled: true,
+      secret: user._pendingMfaSecret,
+      backupCodes: user._pendingBackupCodes || []
+    });
+
+    delete user._pendingMfaSecret;
+    delete user._pendingBackupCodes;
+
+    auditLogs.record({
+      actorId: user._id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: 'MFA_ENABLED_TOTP',
+      tenantId: user.companyId || '',
+      ip: req.ip
+    });
+
+    res.json({
+      success: true,
+      message: 'Two-Factor Authenticator successfully enabled on your account!'
+    });
+  } catch (error) {
+    console.error('MFA verify setup error:', error);
+    res.status(500).json({ message: 'MFA verification error', error: error.message });
+  }
+});
+
+// MFA: Disable TOTP (Requires current password confirmation)
+router.post('/mfa/disable', verifyToken, async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ message: 'Password confirmation is required to disable MFA.' });
+    }
+
+    const user = users.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await users.verifyPassword(user, password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid password. MFA remains enabled.' });
+    }
+
+    users.updateMfa(user._id, {
+      enabled: false,
+      secret: null,
+      backupCodes: []
+    });
+
+    auditLogs.record({
+      actorId: user._id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: 'MFA_DISABLED',
+      tenantId: user.companyId || '',
+      ip: req.ip
+    });
+
+    res.json({
+      success: true,
+      message: 'Multi-factor authentication has been disabled.'
+    });
+  } catch (error) {
+    console.error('MFA disable error:', error);
+    res.status(500).json({ message: 'MFA disable error', error: error.message });
+  }
 });
 
 // Quick Demo Login endpoint for interactive persona switching and 1-click portal access
@@ -492,22 +857,22 @@ router.post('/demo-login', async (req, res) => {
       if (specifiedComp) comp = specifiedComp;
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-        name: user.name,
-        email: user.email,
-        companyId: comp?.id || user.companyId || '',
-        companySlug: comp?.slug || ''
-      },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const { accessToken, refreshToken } = issueTokens(user, comp, req, res);
+
+    auditLogs.record({
+      actorId: user._id,
+      actorEmail: user.email,
+      actorRole: user.role,
+      action: 'DEMO_LOGIN_SUCCESS',
+      tenantId: comp?.id || user.companyId || '',
+      ip: req.ip,
+      details: { persona }
+    });
 
     res.json({
       message: `Demo authentication successful as ${user.name} (${user.role})`,
-      token,
+      token: accessToken,
+      refreshToken,
       targetUrl: user.role === 'admin' ? '/admin' : '/applicant',
       user: {
         id: user._id,

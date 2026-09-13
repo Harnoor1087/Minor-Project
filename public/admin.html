@@ -98,6 +98,7 @@
             <button class="tab-btn" id="tabBtnApplications" onclick="showTab('applications')">📋 Candidate Applications</button>
             <button class="tab-btn" id="tabBtnMatrix" onclick="showTab('matrix')">🏆 Talent Matrix & Calibration</button>
             <button class="tab-btn" id="tabBtnCreate" onclick="showTab('create')">➕ Create Job</button>
+            <button class="tab-btn" id="tabBtnAudit" onclick="showTab('audit')">🛡️ Security & Audit Trail</button>
         </div>
 
         <!-- Jobs Tab -->
@@ -117,8 +118,16 @@
         <!-- Applications Tab -->
         <div id="applicationsTab" class="tab-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                <h2>Candidate Applications</h2>
+                <div>
+                    <h2 style="margin: 0 0 0.25rem 0;">Candidate Applications</h2>
+                    <span id="blindModeIndicatorBadge" style="display: none; font-size: 0.76rem; background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.3); padding: 2px 8px; border-radius: 9999px; font-weight: 600;">
+                        🕶️ Blind Screening Active: PII Hidden for Unbiased Assessment
+                    </span>
+                </div>
                 <div class="dashboard-filters" style="margin-bottom: 0;">
+                    <button id="blindReviewToggleBtn" class="btn-secondary" onclick="toggleBlindReviewMode()" style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.84rem; padding: 0.45rem 0.85rem; border-radius: 8px;">
+                        <span>🕶️</span> <span id="blindReviewBtnLabel">Blind Review: OFF</span>
+                    </button>
                     <select id="appCompanyFilter" class="filter-select" onchange="filterApplicationsList()">
                         <option value="all">All Companies</option>
                     </select>
@@ -463,6 +472,86 @@
                     <button class="btn-secondary" onclick="clearSelectedComparisons()" style="background: rgba(255,255,255,0.15); color: #fff; border: none;">Clear</button>
                     <button class="btn-primary" id="launchCompareBtn" onclick="openHeadToHeadComparison()" style="background: var(--accent); color: #0f172a; font-weight: 700;">Compare Head-to-Head ➔</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Security & Audit Trail Tab -->
+        <div id="auditTab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 style="margin: 0 0 0.25rem 0;">🛡️ Enterprise Security & Audit Trail</h2>
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
+                        Immutable compliance logs, multi-factor authentication, cryptographic anti-tampering, and GDPR data governance.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <select id="auditActionFilter" class="filter-select" onchange="filterAuditLogs()">
+                        <option value="all">All Security Events</option>
+                        <option value="LOGIN">Logins & Auth</option>
+                        <option value="MFA">MFA / 2FA Events</option>
+                        <option value="ASSESSMENT">Assessment Verifications</option>
+                        <option value="TAMPER">Tampering Alerts</option>
+                        <option value="GDPR">GDPR Data Erasures</option>
+                    </select>
+                    <button class="btn-secondary" onclick="loadAuditLogs()" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <span>🔄</span> Refresh Logs
+                    </button>
+                </div>
+            </div>
+
+            <!-- Security Posture Health Cards -->
+            <div class="stats-overview-grid" style="margin-bottom: 1.75rem;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">🛡️</div>
+                    <div class="stat-info">
+                        <div class="stat-number" style="font-size: 1.25rem; color: #10b981;">Enforced</div>
+                        <div class="stat-label">Tenant Isolation & RBAC</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">🔑</div>
+                    <div class="stat-info">
+                        <div class="stat-number" style="font-size: 1.25rem; color: #6366f1;">HMAC-SHA256</div>
+                        <div class="stat-label">Assessment Anti-Tampering</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">🔒</div>
+                    <div class="stat-info">
+                        <div class="stat-number" style="font-size: 1.25rem; color: #f59e0b;">5 Fails / 15m</div>
+                        <div class="stat-label">Brute-Force Account Lockout</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">📄</div>
+                    <div class="stat-info">
+                        <div class="stat-number" style="font-size: 1.25rem; color: #8b5cf6;">Magic-Bytes</div>
+                        <div class="stat-label">File Upload Binary Inspection</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Trail Table -->
+            <div class="card" style="padding: 1.5rem; overflow-x: auto;">
+                <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                            <th style="padding: 0.75rem 1rem;">Timestamp</th>
+                            <th style="padding: 0.75rem 1rem;">Event Action</th>
+                            <th style="padding: 0.75rem 1rem;">Actor</th>
+                            <th style="padding: 0.75rem 1rem;">Role</th>
+                            <th style="padding: 0.75rem 1rem;">IP / Target</th>
+                            <th style="padding: 0.75rem 1rem;">Security Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                Loading enterprise audit trail...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 

@@ -3,7 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { applications, jobs, users } = require('../db/store');
+const { applications, jobs, users, auditLogs } = require('../db/store');
 const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 const {
   createSkillVerificationTest,
@@ -12,6 +12,7 @@ const {
   normalizeSkillKey
 } = require('../services/skillVerificationService');
 const { extractTextFromFile, extractSkillsFromText } = require('../services/analyzer');
+const assessmentTokenService = require('../services/assessmentTokenService');
 
 // Multer for master resume upload
 const uploadDir = path.join(__dirname, '../uploads');
@@ -147,9 +148,20 @@ router.get('/session/:appId', verifyToken, async (req, res) => {
       startedAt: new Date().toISOString()
     });
 
+    // Issue cryptographic HMAC tamper-proof session token for anti-cheating validation
+    const assessmentToken = assessmentTokenService.issueSessionToken({
+      applicationId: app._id,
+      applicantId: app.applicantId,
+      jobId: app.jobId,
+      type: 'skill_verification',
+      cutoffScore: passingCutoff,
+      durationMinutes: (preGate.durationMinutes || 5) + 5 // grace period
+    });
+
     res.json({
       alreadyCompleted: false,
       test: sanitizeTestForClient(generatedTest),
+      assessmentToken,
       job: {
         id: job.id,
         title: job.title,
@@ -179,6 +191,34 @@ router.post('/submit/:appId', verifyToken, async (req, res) => {
 
     if (req.user.role !== 'admin' && app.applicantId !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Cryptographic anti-tampering verification of assessment session
+    const submittedToken = req.headers['x-assessment-token'] || req.body.assessmentToken;
+    const tokenVerification = assessmentTokenService.verifySessionToken(submittedToken, {
+      applicationId: app._id,
+      applicantId: app.applicantId,
+      jobId: app.jobId,
+      type: 'skill_verification'
+    });
+
+    if (!tokenVerification.valid) {
+      auditLogs.record({
+        actorId: req.user.id,
+        actorEmail: req.user.email,
+        actorRole: req.user.role,
+        action: 'ASSESSMENT_TAMPER_DETECTED',
+        targetType: 'assessment',
+        targetId: app._id,
+        tenantId: app.companyId || '',
+        ip: req.ip,
+        details: { error: tokenVerification.error }
+      });
+
+      return res.status(403).json({
+        error: 'TAMPER_DETECTED',
+        message: `Assessment session integrity violation: ${tokenVerification.error}. Submission rejected.`
+      });
     }
 
     const { answers, tabSwitches = 0 } = req.body;

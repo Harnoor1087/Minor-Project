@@ -280,6 +280,8 @@ function showTab(tabName) {
         loadApplications();
     } else if (tabName === 'matrix') {
         loadTalentMatrix();
+    } else if (tabName === 'audit') {
+        loadAuditLogs();
     }
 }
 

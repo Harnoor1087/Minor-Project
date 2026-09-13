@@ -1,15 +1,82 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const { sanitizeInputMiddleware } = require('./middleware/sanitizeInput');
 require('dotenv').config();
 
 const app = express();
 const PORT = 3000;
 
+// Security Headers with Helmet (Customized for AI Studio iframe & Tailwind CDN compatibility)
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          'https://cdn.tailwindcss.com',
+          'https://cdnjs.cloudflare.com',
+          'https://unpkg.com'
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'https://fonts.googleapis.com',
+          'https://cdnjs.cloudflare.com'
+        ],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'data:'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        connectSrc: ["'self'", 'https:', 'wss:', 'ws:'],
+        frameAncestors: ['*'] // Essential for AI Studio iframe live preview
+      }
+    },
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginEmbedderPolicy: false
+  })
+);
+
+// Rate Limiting to prevent brute-force & denial of service
+const globalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'RATE_LIMIT_EXCEEDED',
+    message: 'Too many requests from this client. Please slow down and try again after 15 minutes.'
+  }
+});
+
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'AUTH_RATE_LIMIT_EXCEEDED',
+    message: 'Too many authentication attempts. Please wait 15 minutes before retrying.'
+  }
+});
+
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
+app.use(express.json({ limit: '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+
+// Anti-XSS & Prototype Pollution Recursive Input Sanitizer
+app.use(sanitizeInputMiddleware);
+
+// Apply rate limits
+app.use('/api/', globalApiLimiter);
+app.use('/api/auth/login', authRateLimiter);
+app.use('/api/auth/register', authRateLimiter);
 
 // Serve static assets from public
 app.use(express.static(path.join(__dirname, 'public')));
@@ -23,6 +90,7 @@ app.use('/api/applications', require('./routes/applications'));
 app.use('/api/skill-verification', require('./routes/skillVerification'));
 app.use('/api/interview', require('./routes/interview'));
 app.use('/api/decisions', require('./routes/decisions'));
+app.use('/api/audit-logs', require('./routes/audit'));
 
 // Health check route
 app.get('/api/health', (req, res) => {

@@ -3,10 +3,12 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { applications, jobs, users } = require('../db/store');
-const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
+const { applications, jobs, users, auditLogs } = require('../db/store');
+const { verifyToken, requireAdmin, requireRole, requirePermission, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
 const { analyzeResume, generateCandidateIntelligence, extractTextFromFile } = require('../services/analyzer');
 const { generateScreeningRecommendations, generateOptimizedResume } = require('../services/resumeOptimizer');
+const { validateUploadedFiles } = require('../middleware/fileValidator');
+const piiRedactor = require('../services/piiRedactor');
 
 // Configure multer for file uploads
 const uploadDir = path.join(__dirname, '../uploads');
@@ -29,7 +31,7 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-// Submit application
+// Submit application with magic byte file validation & tamper checks
 router.post(
   '/submit',
   verifyToken,
@@ -37,6 +39,7 @@ router.post(
     { name: 'resume', maxCount: 1 },
     { name: 'certificates', maxCount: 10 }
   ]),
+  validateUploadedFiles,
   async (req, res) => {
     try {
       const { jobId } = req.body;
@@ -235,7 +238,7 @@ router.get('/my-applications', verifyToken, (req, res) => {
   }
 });
 
-// Get all applications (Admin only, strictly tenant isolated)
+// Get all applications (Admin only, strictly tenant isolated, supports blind recruitment mode)
 router.get('/all', verifyToken, requireAdmin, requireTenant, (req, res) => {
   try {
     const filter = {};
@@ -246,10 +249,94 @@ router.get('/all', verifyToken, requireAdmin, requireTenant, (req, res) => {
       filter.companyId = req.tenantId;
     }
 
-    const allApps = applications.getAll(filter);
+    let allApps = applications.getAll(filter);
+
+    // Blind Candidate Evaluation Mode: Strip all PII (names, emails, phone, gender, university markers)
+    if (req.query.blind === 'true') {
+      allApps = allApps.map(app => piiRedactor.redactCandidateProfile(app));
+    }
+
     res.json(allApps);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching applications', error: error.message });
+  }
+});
+
+// Blind Evaluation View for a Single Application
+router.get('/:id/blind', verifyToken, requireAdmin, requireTenant, (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    if (!assertTenantAccess(req, res, app.companyId, 'Candidate application')) {
+      return;
+    }
+
+    const blindProfile = piiRedactor.redactCandidateProfile(app);
+    let blindIntelligence = null;
+    if (app.intelligence) {
+      blindIntelligence = piiRedactor.redactCandidateIntelligence(app.intelligence, app.applicantName);
+    }
+
+    res.json({
+      application: blindProfile,
+      intelligence: blindIntelligence,
+      blindModeActive: true,
+      protectionNotice: 'All personally identifiable information (PII) has been stripped to eliminate unconscious bias in technical evaluation.'
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching blind evaluation profile', error: error.message });
+  }
+});
+
+// GDPR Right-to-be-Forgotten: Permanent data erasure and document shredding
+router.delete('/:id/purge', verifyToken, async (req, res) => {
+  try {
+    const app = applications.getById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Permission: Candidate owner purging their own data OR Admin of current tenant
+    const isOwner = app.applicantId ? (app.applicantId === req.user.id) : (app.applicantEmail === req.user.email);
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({ message: 'Access denied. You do not have permission to purge this candidate application.' });
+    }
+
+    if (isAdmin && !req.isSuperAdmin && app.companyId !== req.user.companyId) {
+      return res.status(403).json({ message: 'Cannot purge data belonging to another tenant organization.' });
+    }
+
+    const purgedApp = applications.purge(app._id);
+
+    auditLogs.record({
+      actorId: req.user.id,
+      actorEmail: req.user.email,
+      actorRole: req.user.role,
+      action: 'GDPR_DATA_PURGED',
+      targetType: 'application',
+      targetId: app._id,
+      tenantId: app.companyId || '',
+      ip: req.ip,
+      details: {
+        reason: 'GDPR Right-to-be-Forgotten Data Erasure',
+        applicantEmail: app.applicantEmail,
+        jobTitle: app.jobTitle
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Candidate application, resume files, and assessment artifacts have been permanently and securely erased in compliance with GDPR standards.',
+      purgedId: app._id
+    });
+  } catch (error) {
+    console.error('[Applications] Purge error:', error);
+    res.status(500).json({ message: 'Error purging candidate data', error: error.message });
   }
 });
 

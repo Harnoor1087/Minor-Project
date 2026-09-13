@@ -2,6 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
+let firestoreBridge = null;
+try {
+  firestoreBridge = require('../services/firestoreBridge');
+} catch (err) {
+  console.warn('[Store] Firestore bridge could not be loaded:', err.message);
+}
+
 const DB_FILE = path.join(__dirname, '../data/database.json');
 
 // Default initial state
@@ -199,7 +206,10 @@ const defaultData = {
       preInterviewGate: normalizePreInterviewGateConfig({ enabled: true, cutoffScore: 70 })
     }
   ],
-  applications: []
+  applications: [],
+  otps: [],
+  refreshTokens: [],
+  auditLogs: []
 };
 
 // In-memory state initialized from file if present
@@ -216,6 +226,16 @@ function loadFromDisk() {
         // Ensure otps collection exists
         if (!state.otps || !Array.isArray(state.otps)) {
           state.otps = [];
+        }
+
+        // Ensure refreshTokens collection exists
+        if (!state.refreshTokens || !Array.isArray(state.refreshTokens)) {
+          state.refreshTokens = [];
+        }
+
+        // Ensure auditLogs collection exists
+        if (!state.auditLogs || !Array.isArray(state.auditLogs)) {
+          state.auditLogs = [];
         }
 
         // Ensure companies exist
@@ -282,7 +302,7 @@ function loadFromDisk() {
   saveToDisk();
 }
 
-function saveToDisk() {
+function saveToDisk(collectionName, docId, docData, isDelete = false) {
   try {
     const dir = path.dirname(DB_FILE);
     if (!fs.existsSync(dir)) {
@@ -292,9 +312,31 @@ function saveToDisk() {
   } catch (err) {
     console.warn('[Store] Could not persist to database.json:', err.message);
   }
+
+  // Asynchronous cloud persistence sync to Firebase Firestore
+  if (firestoreBridge) {
+    try {
+      if (collectionName && docId) {
+        if (isDelete) {
+          firestoreBridge.deleteDocument(collectionName, docId);
+        } else {
+          firestoreBridge.syncDocument(collectionName, docId, docData);
+        }
+      }
+    } catch (syncErr) {
+      console.warn('[Store] Firestore sync warning:', syncErr.message);
+    }
+  }
 }
 
 loadFromDisk();
+
+// Initialize Firestore cloud hydration asynchronously in the background
+if (firestoreBridge) {
+  firestoreBridge.hydrateStore(state).catch(err => {
+    console.warn('[Store] Firestore background hydration notice:', err.message);
+  });
+}
 
 // Company methods
 const companies = {
@@ -343,7 +385,7 @@ const companies = {
       createdAt: new Date().toISOString()
     };
     state.companies.push(newCompany);
-    saveToDisk();
+    saveToDisk('companies', newCompany.id, newCompany);
     return newCompany;
   },
   update(id, data) {
@@ -361,14 +403,14 @@ const companies = {
       tagline: data.tagline ?? existing.tagline,
       description: data.description ?? existing.description
     };
-    saveToDisk();
+    saveToDisk('companies', id, state.companies[idx]);
     return state.companies[idx];
   },
   delete(id) {
     const idx = state.companies.findIndex(c => c.id === id);
     if (idx === -1) return false;
     state.companies.splice(idx, 1);
-    saveToDisk();
+    saveToDisk('companies', id, null, true);
     return true;
   }
 };
@@ -431,7 +473,7 @@ const users = {
       createdAt: new Date().toISOString()
     };
     state.users.push(newUser);
-    saveToDisk();
+    saveToDisk('users', newUser._id, newUser);
     return newUser;
   },
   async verifyPassword(user, plainPassword) {
@@ -461,7 +503,7 @@ const users = {
         user.verifiedSkills.push(badgeObj);
       }
     }
-    saveToDisk();
+    saveToDisk('users', id, user);
     return user;
   },
   updateMasterResume(id, resumeData) {
@@ -472,8 +514,59 @@ const users = {
       ...resumeData,
       updatedAt: new Date().toISOString()
     };
-    saveToDisk();
+    saveToDisk('users', id, user);
     return user;
+  },
+  recordFailedLogin(user) {
+    if (!user) return null;
+    const now = Date.now();
+    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+    user.lastFailedLoginAt = new Date(now).toISOString();
+
+    // Lockout after 5 failed attempts for 15 minutes
+    if (user.failedLoginAttempts >= 5) {
+      user.lockoutUntil = new Date(now + 15 * 60 * 1000).toISOString();
+    }
+    saveToDisk('users', user._id, user);
+    return user;
+  },
+  resetFailedLogins(user) {
+    if (!user) return null;
+    user.failedLoginAttempts = 0;
+    user.lockoutUntil = null;
+    saveToDisk('users', user._id, user);
+    return user;
+  },
+  isLocked(user) {
+    if (!user || !user.lockoutUntil) return false;
+    const isStillLocked = new Date(user.lockoutUntil) > new Date();
+    if (!isStillLocked && user.lockoutUntil) {
+      user.lockoutUntil = null;
+      user.failedLoginAttempts = 0;
+      saveToDisk('users', user._id, user);
+      return false;
+    }
+    return isStillLocked;
+  },
+  updateMfa(id, { enabled, secret, backupCodes }) {
+    const user = state.users.find(u => u._id === id);
+    if (!user) return null;
+    if (enabled !== undefined) user.mfaEnabled = Boolean(enabled);
+    if (secret !== undefined) user.mfaSecret = secret;
+    if (backupCodes !== undefined) user.mfaBackupCodes = backupCodes;
+    saveToDisk('users', id, user);
+    return user;
+  },
+  consumeBackupCode(user, code) {
+    if (!user || !Array.isArray(user.mfaBackupCodes) || !code) return false;
+    const cleanCode = code.trim().toUpperCase();
+    const idx = user.mfaBackupCodes.findIndex(c => c.toUpperCase() === cleanCode);
+    if (idx !== -1) {
+      user.mfaBackupCodes.splice(idx, 1);
+      saveToDisk('users', user._id, user);
+      return true;
+    }
+    return false;
   }
 };
 
@@ -532,7 +625,7 @@ const jobs = {
       createdAt: new Date().toISOString()
     };
     state.jobs.push(newJob);
-    saveToDisk();
+    saveToDisk('jobs', newJob.id, newJob);
     return newJob;
   },
   update(id, data) {
@@ -581,7 +674,7 @@ const jobs = {
       proctoring,
       preInterviewGate
     };
-    saveToDisk();
+    saveToDisk('jobs', id, state.jobs[idx]);
     return state.jobs[idx];
   },
   delete(id) {
@@ -589,7 +682,7 @@ const jobs = {
     const idx = state.jobs.findIndex(j => j.id === numId);
     if (idx === -1) return false;
     state.jobs.splice(idx, 1);
-    saveToDisk();
+    saveToDisk('jobs', id, null, true);
     return true;
   }
 };
@@ -659,28 +752,28 @@ const applications = {
       appliedAt: new Date().toISOString()
     };
     state.applications.push(newApp);
-    saveToDisk();
+    saveToDisk('applications', newApp._id, newApp);
     return newApp;
   },
   updateStatus(id, status) {
     const app = state.applications.find(a => a._id === id);
     if (!app) return null;
     app.status = status;
-    saveToDisk();
+    saveToDisk('applications', id, app);
     return app;
   },
   update(id, data) {
     const app = state.applications.find(a => a._id === id);
     if (!app) return null;
     Object.assign(app, data);
-    saveToDisk();
+    saveToDisk('applications', id, app);
     return app;
   },
   updateIntelligence(id, intelligence) {
     const app = state.applications.find(a => a._id === id);
     if (!app) return null;
     app.intelligence = intelligence;
-    saveToDisk();
+    saveToDisk('applications', id, app);
     return app;
   },
   updateSkillVerification(id, verificationData) {
@@ -695,7 +788,7 @@ const applications = {
       ...verificationData,
       updatedAt: new Date().toISOString()
     };
-    saveToDisk();
+    saveToDisk('applications', id, app);
     return app;
   },
   updateInterview(id, interviewUpdate) {
@@ -715,7 +808,7 @@ const applications = {
       }),
       ...interviewUpdate
     };
-    saveToDisk();
+    saveToDisk('applications', id, app);
     return app;
   },
   recordInfraction(id, infraction) {
@@ -763,7 +856,7 @@ const applications = {
       report.integrityStatus = 'FLAGGED';
     }
 
-    saveToDisk();
+    saveToDisk('applications', id, app);
     return { app, infraction: newInfraction, report };
   },
   updateDecision(id, decisionData) {
@@ -785,7 +878,38 @@ const applications = {
     } else if (decisionData.verdict === 'REJECT') {
       app.status = 'rejected';
     }
-    saveToDisk();
+    saveToDisk('applications', id, app);
+    return app;
+  },
+  purge(id) {
+    const idx = state.applications.findIndex(a => a._id === id);
+    if (idx === -1) return null;
+    const app = state.applications[idx];
+
+    // Securely shred candidate resume file from disk
+    if (app.resumePath && fs.existsSync(app.resumePath)) {
+      try {
+        fs.unlinkSync(app.resumePath);
+      } catch (e) {
+        console.warn('[Store] Could not delete resume file during purge:', e.message);
+      }
+    }
+
+    // Securely shred candidate certificate files from disk
+    if (Array.isArray(app.certificates)) {
+      for (const certPath of app.certificates) {
+        if (certPath && fs.existsSync(certPath)) {
+          try {
+            fs.unlinkSync(certPath);
+          } catch (e) {
+            console.warn('[Store] Could not delete certificate file during purge:', e.message);
+          }
+        }
+      }
+    }
+
+    state.applications.splice(idx, 1);
+    saveToDisk('applications', id, null, true);
     return app;
   }
 };
@@ -958,11 +1082,109 @@ const otps = {
   }
 };
 
+// Cryptographically secure refresh tokens store
+const refreshTokens = {
+  create({ userId, token, expiresAt, ip = '', userAgent = '' }) {
+    if (!state.refreshTokens) state.refreshTokens = [];
+    const record = {
+      id: 'rft_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      userId,
+      token,
+      expiresAt: expiresAt || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      ip,
+      userAgent,
+      revoked: false,
+      createdAt: new Date().toISOString()
+    };
+    state.refreshTokens.push(record);
+    saveToDisk();
+    return record;
+  },
+  find(token) {
+    if (!state.refreshTokens || !token) return null;
+    return state.refreshTokens.find(r => r.token === token && !r.revoked) || null;
+  },
+  revoke(token) {
+    if (!state.refreshTokens || !token) return false;
+    const r = state.refreshTokens.find(item => item.token === token);
+    if (r) {
+      r.revoked = true;
+      r.revokedAt = new Date().toISOString();
+      saveToDisk();
+      return true;
+    }
+    return false;
+  },
+  revokeAllForUser(userId) {
+    if (!state.refreshTokens || !userId) return 0;
+    let count = 0;
+    state.refreshTokens.forEach(r => {
+      if (r.userId === userId && !r.revoked) {
+        r.revoked = true;
+        r.revokedAt = new Date().toISOString();
+        count++;
+      }
+    });
+    if (count > 0) saveToDisk();
+    return count;
+  }
+};
+
+// Immutable append-only enterprise security audit log
+const auditLogs = {
+  record({
+    actorId = 'system',
+    actorEmail = 'system@airis.ai',
+    actorRole = 'system',
+    action,
+    targetType = 'system',
+    targetId = '',
+    tenantId = '',
+    ip = '',
+    details = {}
+  }) {
+    if (!state.auditLogs) state.auditLogs = [];
+    const logEntry = {
+      id: 'aud_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      timestamp: new Date().toISOString(),
+      actorId,
+      actorEmail,
+      actorRole,
+      action,
+      targetType,
+      targetId,
+      tenantId,
+      ip,
+      details
+    };
+    state.auditLogs.unshift(logEntry); // newest first
+    if (state.auditLogs.length > 2000) {
+      state.auditLogs = state.auditLogs.slice(0, 2000);
+    }
+    saveToDisk('auditLogs', logEntry.id, logEntry);
+    return logEntry;
+  },
+  getAll(filter = {}) {
+    if (!state.auditLogs) return [];
+    let list = [...state.auditLogs];
+    if (filter.tenantId && filter.tenantId !== 'all') {
+      list = list.filter(l => l.tenantId === filter.tenantId || !l.tenantId);
+    }
+    if (filter.action) {
+      list = list.filter(l => l.action.toLowerCase() === filter.action.toLowerCase());
+    }
+    const limit = filter.limit ? parseInt(filter.limit, 10) : 100;
+    return list.slice(0, limit);
+  }
+};
+
 module.exports = {
   companies,
   users,
   jobs,
   applications,
   otps,
+  refreshTokens,
+  auditLogs,
   normalizeProctoringConfig
 };
