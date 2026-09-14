@@ -3,6 +3,7 @@ const path = require('path');
 const pdfParse = require('pdf-parse');
 const { scanAndVerifyCertificate } = require('./certificateVerification');
 const { matchResumeToJobSemantic } = require('./vectorMatcher');
+const { classifyResumeDomain } = require('./domainClassifier');
 
 // Lazy initialization of Gemini client
 let geminiClient = null;
@@ -724,6 +725,7 @@ async function analyzeResume({ resumePath, certificatePaths = [], job, candidate
       missingHighValueTerms: vectorAnalysis.missingHighValueTerms,
       engine: vectorAnalysis.engine
     },
+    domainClassification: classifyResumeDomain(resumeText),
     explanation
   };
 }

@@ -67,6 +67,25 @@
 
         <!-- Browse Jobs Tab -->
         <div id="browseTab" class="tab-content active">
+            <!-- Local ML Career Recommender Box -->
+            <div id="aiCareerRecommendationsBox" style="display: none; background: var(--bg-card); border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(99, 102, 241, 0.3); box-shadow: 0 4px 18px rgba(99, 102, 241, 0.06);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.3rem;">🎯</span>
+                        <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-primary); font-weight: 800;">
+                            Recommended For Your Skill Profile
+                        </h3>
+                    </div>
+                    <span style="font-size: 0.75rem; font-weight: 700; background: rgba(99, 102, 241, 0.15); color: var(--primary); padding: 3px 10px; border-radius: 9999px;">
+                        In-Engine Jaccard & TF-IDF Vector Fit
+                    </span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Computed locally from your uploaded resume and verified skill tokens (Zero external APIs).
+                </p>
+                <div id="aiRecommendationsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;"></div>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
                 <h2>Available Jobs</h2>
                 <div class="dashboard-filters" style="margin-bottom: 0;">

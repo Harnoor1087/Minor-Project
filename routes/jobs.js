@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { jobs } = require('../db/store');
+const { jobs, applications } = require('../db/store');
 const { verifyToken, requireAdmin, requireTenant, assertTenantAccess } = require('../middleware/tenantIsolation');
+const { recommendJobsForCandidate } = require('../services/careerRecommender');
 
 // Helper to optionally extract authenticated user if token is present
 function optionalAuth(req, res, next) {
@@ -194,6 +195,46 @@ router.delete('/:id', verifyToken, requireAdmin, requireTenant, (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting job', error: error.message });
+  }
+});
+
+// Recommendations endpoint: Local ML Jaccard & TF-IDF Vector match
+router.get('/recommendations/for-me', verifyToken, (req, res) => {
+  try {
+    const candidateApps = applications.getAll().filter(
+      a => a.applicantId === req.user.id || a.applicantEmail === req.user.email
+    );
+
+    // Aggregate candidate skills and resume text from past submissions
+    let combinedResumeText = '';
+    const collectedSkills = new Set();
+
+    candidateApps.forEach(app => {
+      if (app.resumeText) combinedResumeText += ' ' + app.resumeText;
+      if (app.skills?.extracted) {
+        app.skills.extracted.forEach(s => collectedSkills.add(s));
+      }
+      if (app.skills?.matched) {
+        app.skills.matched.forEach(s => collectedSkills.add(s));
+      }
+    });
+
+    const allActiveJobs = jobs.getAll() || [];
+    const recommendations = recommendJobsForCandidate({
+      resumeText: combinedResumeText,
+      candidateSkills: Array.from(collectedSkills),
+      allJobs: allActiveJobs,
+      topK: 4
+    });
+
+    res.json({
+      success: true,
+      recommendations,
+      detectedSkillsCount: collectedSkills.size
+    });
+  } catch (error) {
+    console.error('[Jobs] Error generating recommendations:', error);
+    res.status(500).json({ message: 'Failed to compute job recommendations', error: error.message });
   }
 });
 

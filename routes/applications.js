@@ -10,6 +10,7 @@ const { analyzeResume, generateCandidateIntelligence, extractTextFromFile } = re
 const { generateScreeningRecommendations, generateOptimizedResume } = require('../services/resumeOptimizer');
 const { validateUploadedFiles } = require('../middleware/fileValidator');
 const piiRedactor = require('../services/piiRedactor');
+const { auditScreeningAdverseImpact } = require('../services/biasAuditor');
 
 // Configure multer for file uploads
 const uploadDir = path.join(__dirname, '../uploads');
@@ -846,6 +847,28 @@ router.get('/:id/optimized-resume-html', verifyToken, (req, res) => {
     res.send(app.optimizedResume.styledHtml);
   } catch (err) {
     res.status(500).send('Error retrieving resume HTML: ' + err.message);
+  }
+});
+
+/**
+ * GET /api/applications/audit/adverse-impact
+ * Computes EEOC 4/5ths Rule & Statistical Bias Disparity Audit across applicant cohorts
+ */
+router.get('/audit/adverse-impact', verifyToken, requireRole('admin', 'recruiter', 'compliance_auditor', 'hiring_manager'), (req, res) => {
+  try {
+    const allApps = applications.getAll() || [];
+    const tenantApps = req.user.tenantId
+      ? allApps.filter(a => a.tenantId === req.user.tenantId)
+      : allApps;
+
+    const auditReport = auditScreeningAdverseImpact(tenantApps);
+    res.json({
+      success: true,
+      auditReport
+    });
+  } catch (err) {
+    console.error('[Applications] Error computing adverse impact audit:', err);
+    res.status(500).json({ message: 'Failed to run adverse impact audit', error: err.message });
   }
 });
 

@@ -163,6 +163,23 @@ export function CandidateApplications({ applications = [], jobs = [], onRefresh,
                     <td style={{ padding: '12px' }}>
                       <div style={{ fontWeight: 600 }}>{app.applicantName}</div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{app.applicantEmail}</div>
+                      {app.domainClassification?.predictedDomain && (
+                        <div style={{ marginTop: '3px' }}>
+                          <span style={{ 
+                            fontSize: '0.68rem', 
+                            padding: '1px 6px', 
+                            borderRadius: '4px', 
+                            background: 'rgba(99, 102, 241, 0.12)', 
+                            color: 'var(--primary)',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px'
+                          }}>
+                            <span>🏷️</span> {app.domainClassification.predictedDomain} ({app.domainClassification.confidenceScore}%)
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '12px' }}>
                       <div>{app.jobTitle}</div>

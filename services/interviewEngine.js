@@ -1,5 +1,6 @@
 const { extractTextFromFile } = require('./analyzer');
 const { analyzeAnswerSpeechAndSentiment } = require('./sentimentAnalyzer');
+const { selectNextAdaptiveQuestion, estimateLatentAbility } = require('./adaptiveIrtEngine');
 
 // Lazy initialization of Gemini client
 let geminiClient = null;
@@ -555,5 +556,7 @@ function compileInterviewReport({ questions = [], infractions = [], proctoringCo
 module.exports = {
   generateInterviewQuestions,
   evaluateAnswer,
-  compileInterviewReport
+  compileInterviewReport,
+  selectNextAdaptiveQuestion,
+  estimateLatentAbility
 };

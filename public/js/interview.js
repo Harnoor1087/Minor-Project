@@ -247,6 +247,17 @@ function renderCurrentQuestion() {
 
     document.getElementById('questionTitleText').textContent = q.question;
 
+    const irtPill = document.getElementById('questionIrtPill');
+    if (irtPill) {
+        if (q.level || q.difficulty !== undefined) {
+            irtPill.style.display = 'inline-block';
+            const levelName = q.level || (q.difficulty > 0.8 ? 'Staff / Principal' : (q.difficulty > 0 ? 'Senior Systems' : 'Core Foundations'));
+            irtPill.textContent = `🎯 IRT Level: ${levelName}`;
+        } else {
+            irtPill.style.display = 'none';
+        }
+    }
+
     const rationaleBox = document.getElementById('questionRationaleBox');
     const rationaleHeader = document.getElementById('questionRationaleHeader');
     if (q.rationale) {

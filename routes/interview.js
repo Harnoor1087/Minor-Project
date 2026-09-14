@@ -7,7 +7,9 @@ const { extractTextFromFile } = require('../services/analyzer');
 const {
   generateInterviewQuestions,
   evaluateAnswer,
-  compileInterviewReport
+  compileInterviewReport,
+  selectNextAdaptiveQuestion,
+  estimateLatentAbility
 } = require('../services/interviewEngine');
 
 /**
@@ -164,8 +166,19 @@ router.post('/session/:appId/submit-answer', verifyToken, async (req, res) => {
     const questionsList = [...app.interview.questions];
     questionsList[questionIndex] = question;
 
+    // Item Response Theory (IRT) Adaptive Latent Ability Update
+    const currentTheta = app.interview.latentAbilityTheta || 0.0;
+    const history = (app.interview.irtHistory || []).concat([{
+      difficulty: question.difficulty || 0.0,
+      discrimination: question.discrimination || 1.4,
+      scoreRatio: (evaluation.score || 70) / 100
+    }]);
+    const updatedTheta = estimateLatentAbility(currentTheta, history);
+
     applications.updateInterview(app._id, {
-      questions: questionsList
+      questions: questionsList,
+      latentAbilityTheta: updatedTheta,
+      irtHistory: history
     });
 
     const isLastQuestion = questionIndex === questionsList.length - 1;
@@ -174,6 +187,8 @@ router.post('/session/:appId/submit-answer', verifyToken, async (req, res) => {
       message: 'Answer evaluated successfully',
       questionIndex,
       evaluation,
+      latentAbilityTheta: updatedTheta,
+      adaptiveTier: updatedTheta > 1.2 ? 'Principal Track' : (updatedTheta > 0.2 ? 'Senior Track' : 'Foundations Track'),
       isLastQuestion,
       nextQuestionIndex: isLastQuestion ? null : questionIndex + 1
     });

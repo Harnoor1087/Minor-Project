@@ -161,9 +161,59 @@ async function loadJobs() {
         allJobs = data.jobs || [];
         updateApplicantStats();
         filterApplicantJobs();
+        loadCareerRecommendations();
     } catch (error) {
         console.error('Error loading jobs:', error);
         jobsList.innerHTML = '<p class="error-message show">Error loading jobs. Please refresh.</p>';
+    }
+}
+
+// Load ML Career Recommendations
+async function loadCareerRecommendations() {
+    const box = document.getElementById('aiCareerRecommendationsBox');
+    const grid = document.getElementById('aiRecommendationsGrid');
+    if (!box || !grid) return;
+
+    try {
+        const res = await fetch('/api/jobs/recommendations/for-me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const recs = data.recommendations || [];
+
+        if (recs.length > 0) {
+            box.style.display = 'block';
+            grid.innerHTML = recs.map(rec => `
+                <div style="background: var(--bg-subtle); border-radius: 10px; padding: 1rem; border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">${rec.jobTitle}</h4>
+                            <span style="font-size: 0.8rem; font-weight: 800; color: ${rec.matchScore >= 75 ? '#10b981' : 'var(--primary)'}; background: rgba(99, 102, 241, 0.1); padding: 2px 7px; border-radius: 6px;">
+                                ${rec.matchScore}% Match
+                            </span>
+                        </div>
+                        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            🏢 ${rec.companyName} • 📍 ${rec.location}
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 0.5rem;">
+                            ${(rec.matchedSkills || []).slice(0, 3).map(s => `
+                                <span style="font-size: 0.7rem; background: rgba(16, 185, 129, 0.12); color: var(--success); padding: 1px 6px; border-radius: 4px; font-weight: 600;">
+                                    ✓ ${s}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="margin-top: 0.5rem; padding: 0.4rem 0.8rem; font-size: 0.8rem; width: 100%;" onclick="window.location.href='/apply.html?jobId=${rec.jobId}'">
+                        Apply Now →
+                    </button>
+                </div>
+            `).join('');
+        } else {
+            box.style.display = 'none';
+        }
+    } catch (e) {
+        console.warn('Could not load career recommendations:', e);
+        box.style.display = 'none';
     }
 }
 
@@ -486,6 +536,10 @@ async function viewDetails(appId) {
         } else {
             vectorBox.style.display = 'none';
         }
+    }
+
+    if (app.domainClassification && subtitleEl) {
+        subtitleEl.innerHTML = `Application ID: #${app.jobId} • <span style="color: var(--primary); font-weight: 600;">🏷️ Classified Archetype: ${app.domainClassification.predictedDomain} (${app.domainClassification.confidenceScore}% confidence)</span>`;
     }
 
     if (summaryEl) {
