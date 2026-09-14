@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const pdfParse = require('pdf-parse');
 const { scanAndVerifyCertificate } = require('./certificateVerification');
+const { matchResumeToJobSemantic } = require('./vectorMatcher');
 
 // Lazy initialization of Gemini client
 let geminiClient = null;
@@ -605,9 +606,10 @@ async function analyzeResume({ resumePath, certificatePaths = [], job, candidate
   const optionalSkills = (job.optional_skills || []).map(s => s.toLowerCase().trim());
   const allJobSkills = [...mandatorySkills, ...optionalSkills];
 
-  // Semantic matching
+  // Semantic matching via Local Vector Space Machine (TF-IDF + Cosine)
   const jobText = `${job.title} ${job.description} ${allJobSkills.join(' ')}`;
-  const semanticScore = calculateCosineSimilarity(resumeText, jobText);
+  const vectorAnalysis = matchResumeToJobSemantic(resumeText, jobText, allJobSkills);
+  const semanticScore = vectorAnalysis.vectorMatchScore / 100;
 
   // Skill matching
   const matchedMandatory = mandatorySkills.filter(s =>
@@ -713,6 +715,14 @@ async function analyzeResume({ resumePath, certificatePaths = [], job, candidate
       relevant: verifiedRelevantCertsCount,
       rejected_mismatches: rejectedNameMismatchCount,
       audits: certificateAudits
+    },
+    vectorAnalysis: {
+      cosineSimilarity: vectorAnalysis.cosineSimilarity,
+      vectorMatchScore: vectorAnalysis.vectorMatchScore,
+      keywordCoverage: vectorAnalysis.keywordCoverage,
+      sharedKeywords: vectorAnalysis.sharedKeywords,
+      missingHighValueTerms: vectorAnalysis.missingHighValueTerms,
+      engine: vectorAnalysis.engine
     },
     explanation
   };

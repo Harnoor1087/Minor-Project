@@ -184,6 +184,30 @@
                             </div>
                         </div>
 
+                        <!-- Local ML Speech & Sentiment Analysis Strip -->
+                        <div id="evalSpeechSentimentBox" style="display: none; background: var(--bg-card); border-radius: 10px; padding: 0.85rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+                                    🎙️ In-Engine Speech & Sentiment NLP
+                                </span>
+                                <span id="evalSentimentLabelBadge" class="badge badge-success" style="font-size: 0.75rem;">Positive</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; text-align: center;">
+                                <div style="background: var(--bg-subtle); padding: 6px; border-radius: 6px;">
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);" id="evalConfidenceScore">--</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Conviction</div>
+                                </div>
+                                <div style="background: var(--bg-subtle); padding: 6px; border-radius: 6px;">
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);" id="evalClarityIndex">--</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Clarity Index</div>
+                                </div>
+                                <div style="background: var(--bg-subtle); padding: 6px; border-radius: 6px;">
+                                    <div style="font-size: 0.95rem; font-weight: 800; color: var(--text-primary);" id="evalHesitationRate">--</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-muted);">Hesitation</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div style="background: var(--bg-surface); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
                             <p id="evalFeedbackText" style="margin: 0; line-height: 1.6; font-size: 0.92rem; color: var(--text-primary);"></p>
                         </div>

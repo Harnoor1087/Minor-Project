@@ -233,6 +233,34 @@
                 <!-- Scores -->
                 <div class="score-grid" id="detailScoreGrid" style="margin-bottom: 1.5rem;"></div>
 
+                <!-- Local ML Vector Space & Keyword Gap Analysis -->
+                <div id="detailVectorAnalysisBox" style="display: none; background: var(--bg-card); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h3 style="margin: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <span>📐</span> In-Engine Vector Space & Keyword Gaps
+                        </h3>
+                        <span id="detailVectorScoreBadge" class="badge badge-primary" style="font-size: 0.8rem;">TF-IDF: 85%</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                        Sublinear TF-IDF vector space mapping between your resume and job description (Zero external APIs).
+                    </p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <strong style="font-size: 0.8rem; text-transform: uppercase; color: var(--success); display: block; margin-bottom: 6px;">
+                                Top Shared Semantic Terminology
+                            </strong>
+                            <div id="detailSharedKeywords" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                        </div>
+                        <div>
+                            <strong style="font-size: 0.8rem; text-transform: uppercase; color: var(--danger); display: block; margin-bottom: 6px;">
+                                High-Priority Keyword Gaps
+                            </strong>
+                            <div id="detailMissingTerms" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- AI Overview -->
                 <div style="background: var(--bg-subtle); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; border: 1px solid var(--border-color);">
                     <h3 style="margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">

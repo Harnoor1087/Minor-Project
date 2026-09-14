@@ -458,6 +458,36 @@ async function viewDetails(appId) {
         `;
     }
 
+    // Populate In-Engine Vector Analysis & Gaps
+    const vectorBox = document.getElementById('detailVectorAnalysisBox');
+    if (vectorBox) {
+        const v = app.vectorAnalysis;
+        if (v && (v.sharedKeywords?.length || v.missingHighValueTerms?.length)) {
+            vectorBox.style.display = 'block';
+            document.getElementById('detailVectorScoreBadge').textContent = `Vector Match: ${v.vectorMatchScore || semanticPct}%`;
+            
+            const sharedEl = document.getElementById('detailSharedKeywords');
+            if (sharedEl) {
+                sharedEl.innerHTML = (v.sharedKeywords || []).map(item => `
+                    <span style="background: rgba(16, 185, 129, 0.12); color: var(--success); font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                        ✓ ${item.term}
+                    </span>
+                `).join('') || '<span style="color: var(--text-muted); font-size: 0.8rem;">None detected</span>';
+            }
+
+            const missingEl = document.getElementById('detailMissingTerms');
+            if (missingEl) {
+                missingEl.innerHTML = (v.missingHighValueTerms || []).map(item => `
+                    <span style="background: rgba(239, 68, 68, 0.12); color: var(--danger); font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                        + ${item.term}
+                    </span>
+                `).join('') || '<span style="color: var(--text-muted); font-size: 0.8rem;">No critical gaps</span>';
+            }
+        } else {
+            vectorBox.style.display = 'none';
+        }
+    }
+
     if (summaryEl) {
         summaryEl.innerHTML = '<div style="color: var(--text-secondary);">⏳ Loading personalized AI assessment...</div>';
     }

@@ -844,6 +844,54 @@ export function InterviewRoom({ initialAppId, onBackToPortal, onNavigateToRecrui
                   </div>
                 )}
 
+                {/* In-Engine Speech & Sentiment NLP Analytics */}
+                {currentEvaluation.speechSentiment && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '0.85rem',
+                    background: 'var(--bg-card)',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border-color)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                        🎙️ In-Engine Speech & Sentiment NLP
+                      </span>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: currentEvaluation.speechSentiment.confidenceScore >= 75 ? 'var(--success-light)' : 'var(--warning-light)',
+                        color: currentEvaluation.speechSentiment.confidenceScore >= 75 ? 'var(--success-text)' : 'var(--warning-text)'
+                      }}>
+                        {currentEvaluation.speechSentiment.sentimentLabel}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+                      <div style={{ background: 'var(--bg-subtle)', padding: '6px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                          {currentEvaluation.speechSentiment.confidenceScore}%
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Conviction</div>
+                      </div>
+                      <div style={{ background: 'var(--bg-subtle)', padding: '6px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                          {currentEvaluation.speechSentiment.communicationClarity}%
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Clarity Index</div>
+                      </div>
+                      <div style={{ background: 'var(--bg-subtle)', padding: '6px', borderRadius: '6px' }}>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                          {currentEvaluation.speechSentiment.hesitationRate}
+                        </div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Hesitation</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
                   <button
                     onClick={handleNextQuestion}
@@ -975,7 +1023,7 @@ export function InterviewRoom({ initialAppId, onBackToPortal, onNavigateToRecrui
             padding: '2rem',
             color: 'white',
             maxWidth: '560px',
-            margin: '0 auto 2rem',
+            margin: '0 auto 1.5rem',
             boxShadow: '0 12px 30px -8px rgba(79, 70, 229, 0.4)'
           }}>
             <div style={{ fontSize: '3.75rem', fontWeight: 800, lineHeight: 1, marginBottom: '0.5rem' }}>
@@ -1001,6 +1049,53 @@ export function InterviewRoom({ initialAppId, onBackToPortal, onNavigateToRecrui
               </div>
             </div>
           </div>
+
+          {/* Local ML Speech & Sentiment Analytics Debrief */}
+          {finalReport?.speechSentiment && (
+            <div style={{
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '16px',
+              padding: '1.5rem',
+              maxWidth: '560px',
+              margin: '0 auto 2rem',
+              textAlign: 'left'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🎙️</span> In-Engine Candidate Speech & Sentiment Index
+                </span>
+                <span className="badge badge-success" style={{ fontSize: '0.75rem' }}>
+                  {finalReport.speechSentiment.overallSentimentLabel}
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>
+                <div style={{ background: 'var(--bg-card)', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                    {finalReport.speechSentiment.averageConfidenceScore}%
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Speaking Conviction</div>
+                </div>
+                <div style={{ background: 'var(--bg-card)', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                    {finalReport.speechSentiment.averageClarityScore}%
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Clarity & Structure</div>
+                </div>
+                <div style={{ background: 'var(--bg-card)', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)' }}>
+                    {finalReport.speechSentiment.totalWordsSpokenOrTyped}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Words Delivered</div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Powered by 100% In-Engine Local Lexicon NLP (Hesitation Markers: {finalReport.speechSentiment.totalHesitationMarkers || 0} • Rating: {finalReport.speechSentiment.hesitationRate}).
+              </div>
+            </div>
+          )}
 
           {/* Action CTAs */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>

@@ -179,9 +179,14 @@ export function CandidateApplications({ applications = [], jobs = [], onRefresh,
                           {finalScore}%
                         </span>
                         <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                          (Sem: {app.scores?.semantic || 0}% | Sk: {app.scores?.skill || 0}%)
+                          (Vector: {app.vectorAnalysis?.vectorMatchScore || app.scores?.semantic || 0}% | Sk: {app.scores?.skill || 0}%)
                         </div>
                       </div>
+                      {app.interview?.speechSentiment && (
+                        <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>🎙️</span> {app.interview.speechSentiment.overallSentimentLabel} ({app.interview.speechSentiment.averageConfidenceScore}% Conviction)
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '12px' }}>
                       {app.skillVerification ? (

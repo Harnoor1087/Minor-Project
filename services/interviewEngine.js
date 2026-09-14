@@ -1,4 +1,5 @@
 const { extractTextFromFile } = require('./analyzer');
+const { analyzeAnswerSpeechAndSentiment } = require('./sentimentAnalyzer');
 
 // Lazy initialization of Gemini client
 let geminiClient = null;
@@ -325,6 +326,9 @@ async function evaluateAnswer({ question, candidateAnswer, job, candidateName = 
     };
   }
 
+  // Run Local In-Engine Sentiment, Conviction, and Communication Clarity Analysis
+  const speechSentiment = analyzeAnswerSpeechAndSentiment(candidateAnswer);
+
   const client = getGeminiClient();
   if (client) {
     try {
@@ -374,9 +378,10 @@ Return ONLY valid JSON:
           score: Math.min(100, Math.max(0, Math.round(parsed.score))),
           technicalAccuracy: Math.min(100, Math.max(0, Math.round(parsed.technicalAccuracy || parsed.score))),
           depthAndPracticality: Math.min(100, Math.max(0, Math.round(parsed.depthAndPracticality || parsed.score))),
-          clarityAndCommunication: Math.min(100, Math.max(0, Math.round(parsed.clarityAndCommunication || parsed.score))),
-          strengths: Array.isArray(parsed.strengths) && parsed.strengths.length > 0 ? parsed.strengths : ['Demonstrated relevant subject familiarity.'],
-          improvements: Array.isArray(parsed.improvements) && parsed.improvements.length > 0 ? parsed.improvements : ['Provide more quantitative production metrics.'],
+          clarityAndCommunication: Math.min(100, Math.max(0, Math.round(parsed.clarityAndCommunication || speechSentiment.communicationClarity || parsed.score))),
+          speechSentiment,
+          strengths: Array.isArray(parsed.strengths) && parsed.strengths.length > 0 ? parsed.strengths : speechSentiment.strengths,
+          improvements: Array.isArray(parsed.improvements) && parsed.improvements.length > 0 ? parsed.improvements : speechSentiment.recommendations,
           feedback: parsed.feedback || 'Solid technical demonstration with coherent structure.'
         };
       }
@@ -385,8 +390,13 @@ Return ONLY valid JSON:
     }
   }
 
-  // Fallback deterministic evaluation
-  return evaluateHeuristicAnswer({ question, candidateAnswer });
+  // Fallback deterministic evaluation enriched with Local ML Sentiment
+  const heuristicResult = evaluateHeuristicAnswer({ question, candidateAnswer });
+  heuristicResult.speechSentiment = speechSentiment;
+  if (speechSentiment.communicationClarity) {
+    heuristicResult.clarityAndCommunication = speechSentiment.communicationClarity;
+  }
+  return heuristicResult;
 }
 
 function evaluateHeuristicAnswer({ question, candidateAnswer }) {
@@ -481,6 +491,31 @@ function compileInterviewReport({ questions = [], infractions = [], proctoringCo
     ? Math.round(answered.reduce((sum, q) => sum + q.evaluation.score, 0) / answered.length)
     : 0;
 
+  // Aggregate candidate speech, sentiment, and communication analytics across questions
+  const sentimentReports = answered
+    .map(q => q.evaluation?.speechSentiment)
+    .filter(Boolean);
+
+  let aggregateSentiment = null;
+  if (sentimentReports.length > 0) {
+    const avgPolarity = sentimentReports.reduce((s, r) => s + (r.sentimentPolarity || 0), 0) / sentimentReports.length;
+    const avgConfidence = Math.round(sentimentReports.reduce((s, r) => s + (r.confidenceScore || 70), 0) / sentimentReports.length);
+    const avgClarity = Math.round(sentimentReports.reduce((s, r) => s + (r.communicationClarity || 70), 0) / sentimentReports.length);
+    const totalHesitations = sentimentReports.reduce((s, r) => s + (r.hesitationMarkersCount || 0), 0);
+    const totalWords = sentimentReports.reduce((s, r) => s + (r.wordsCount || 0), 0);
+
+    aggregateSentiment = {
+      averageConfidenceScore: avgConfidence,
+      averageClarityScore: avgClarity,
+      overallSentimentPolarity: Math.round(avgPolarity * 100) / 100,
+      overallSentimentLabel: avgPolarity >= 0.2 ? 'Positive & Confident' : (avgPolarity >= 0 ? 'Composed / Objective' : 'Hesitant'),
+      totalHesitationMarkers: totalHesitations,
+      hesitationRate: totalHesitations > 4 ? 'Moderate' : 'Minimal / Clean',
+      totalWordsSpokenOrTyped: totalWords,
+      engine: 'AIRIS Local NLP Lexicon Sentiment & Speech Clarity Engine'
+    };
+  }
+
   const maxInfractions = proctoringConfig.max_infractions || 3;
   const infractionCount = infractions.length;
 
@@ -512,6 +547,7 @@ function compileInterviewReport({ questions = [], infractions = [], proctoringCo
     integrityStatus,
     infractionCount,
     maxInfractions,
+    speechSentiment: aggregateSentiment,
     completedAt: new Date().toISOString()
   };
 }

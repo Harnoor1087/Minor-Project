@@ -464,6 +464,18 @@ function renderEvaluationResult(evalData, isLast) {
     document.getElementById('evalClarityScore').textContent = `${evalData.clarityAndCommunication || evalData.score}%`;
     document.getElementById('evalFeedbackText').textContent = evalData.feedback || 'Comprehensive evaluation complete.';
 
+    // Populate In-Engine Speech & Sentiment NLP metrics
+    const sentimentBox = document.getElementById('evalSpeechSentimentBox');
+    if (evalData.speechSentiment && sentimentBox) {
+        sentimentBox.style.display = 'block';
+        document.getElementById('evalSentimentLabelBadge').textContent = evalData.speechSentiment.sentimentLabel || 'Composed';
+        document.getElementById('evalConfidenceScore').textContent = `${evalData.speechSentiment.confidenceScore || 75}%`;
+        document.getElementById('evalClarityIndex').textContent = `${evalData.speechSentiment.communicationClarity || 80}%`;
+        document.getElementById('evalHesitationRate').textContent = evalData.speechSentiment.hesitationRate || 'Low';
+    } else if (sentimentBox) {
+        sentimentBox.style.display = 'none';
+    }
+
     const nextBtn = document.getElementById('nextQuestionBtn');
     if (isLast) {
         nextBtn.textContent = '🏁 Finish Assessment & View Final Report';
