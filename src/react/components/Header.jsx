@@ -10,7 +10,7 @@ export function Header({ user, onLogout, theme, onToggleTheme }) {
               <span>🤖</span>
               <span>AIRIS</span>
               <span className="brand-badge" style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '6px' }}>
-                React Enterprise
+                Talent Intelligence Suite
               </span>
             </a>
           </h2>

@@ -5,9 +5,10 @@ import { KpiMetrics } from './components/KpiMetrics';
 import { TalentMatrix } from './components/TalentMatrix';
 import { CandidateApplications } from './components/CandidateApplications';
 import { JobManager } from './components/JobManager';
+import { RecruiterAnalytics } from './components/RecruiterAnalytics';
 
 export function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('matrix');
+  const [activeTab, setActiveTab] = useState('analytics');
   const [user, setUser] = useState(null);
   const [company, setCompany] = useState(null);
   const [jobs, setJobs] = useState([]);
@@ -18,45 +19,68 @@ export function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
       // 1. Get user profile
-      const userRes = await fetch('/api/auth/me');
-      if (userRes.ok) {
-        const u = await userRes.json();
-        setUser(u.user);
-      } else {
-        // Fallback to localStorage if cookie-only or token in storage
-        const stored = localStorage.getItem('user');
-        if (stored) {
-          try { setUser(JSON.parse(stored)); } catch (e) {}
+      try {
+        const userRes = await fetch('/api/auth/me', { headers: authHeaders });
+        if (userRes.ok) {
+          const u = await userRes.json();
+          setUser(u.user || u);
+        } else {
+          const stored = localStorage.getItem('user');
+          if (stored) {
+            try { setUser(JSON.parse(stored)); } catch (e) {}
+          }
         }
+      } catch (e) {
+        console.warn('Could not fetch user profile', e);
       }
 
       // 2. Get current company
-      const compRes = await fetch('/api/companies/current');
-      if (compRes.ok) {
-        const c = await compRes.json();
-        setCompany(c);
+      try {
+        const compRes = await fetch('/api/companies/current', { headers: authHeaders });
+        if (compRes.ok) {
+          const c = await compRes.json();
+          setCompany(c.company || c);
+        }
+      } catch (e) {
+        console.warn('Could not fetch company', e);
       }
 
       // 3. Get jobs
-      const jobsRes = await fetch('/api/jobs');
-      if (jobsRes.ok) {
-        const jData = await jobsRes.json();
-        setJobs(jData.jobs || []);
+      try {
+        const jobsRes = await fetch('/api/jobs', { headers: authHeaders });
+        if (jobsRes.ok) {
+          const jData = await jobsRes.json();
+          setJobs(jData.jobs || (Array.isArray(jData) ? jData : []));
+        }
+      } catch (e) {
+        console.warn('Could not fetch jobs', e);
       }
 
       // 4. Get applications
-      const appsRes = await fetch('/api/applications');
-      if (appsRes.ok) {
-        const aData = await appsRes.json();
-        setApplications(aData.applications || []);
+      try {
+        const appsRes = await fetch('/api/applications', { headers: authHeaders });
+        if (appsRes.ok) {
+          const aData = await appsRes.json();
+          const list = Array.isArray(aData) ? aData : (aData.applications || []);
+          setApplications(list);
+        }
+      } catch (e) {
+        console.warn('Could not fetch applications', e);
       }
 
       // 5. Get audit logs
-      const auditRes = await fetch('/api/audit-logs?limit=50');
-      if (auditRes.ok) {
-        const audData = await auditRes.json();
-        setAuditLogs(audData.logs || []);
+      try {
+        const auditRes = await fetch('/api/audit-logs?limit=50', { headers: authHeaders });
+        if (auditRes.ok) {
+          const audData = await auditRes.json();
+          setAuditLogs(audData.logs || []);
+        }
+      } catch (e) {
+        console.warn('Could not fetch audit logs', e);
       }
     } catch (err) {
       console.error('[React Admin] Failed to load data:', err);
@@ -90,7 +114,7 @@ export function AdminDashboard() {
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem', animation: 'pulse 1.5s infinite' }}>⚡</div>
-          <h3 style={{ margin: 0, fontWeight: 600 }}>Loading React Talent Engine...</h3>
+          <h3 style={{ margin: 0, fontWeight: 600 }}>Loading Talent Intelligence Engine...</h3>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>
             Synchronizing live state from Firebase Firestore
           </p>
@@ -116,6 +140,15 @@ export function AdminDashboard() {
         {/* Navigation Tabs */}
         <div className="tabs" style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', flexWrap: 'wrap' }}>
           <button 
+            id="tabBtnAnalytics"
+            className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+            style={{ padding: '8px 18px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 600, fontSize: '0.9rem' }}
+          >
+            📊 Analytics & Trends
+          </button>
+          <button 
+            id="tabBtnMatrix"
             className={`tab-btn ${activeTab === 'matrix' ? 'active' : ''}`}
             onClick={() => setActiveTab('matrix')}
             style={{ padding: '8px 18px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 600, fontSize: '0.9rem' }}
@@ -123,6 +156,7 @@ export function AdminDashboard() {
             🏆 Talent Matrix & Calibration
           </button>
           <button 
+            id="tabBtnApplications"
             className={`tab-btn ${activeTab === 'applications' ? 'active' : ''}`}
             onClick={() => setActiveTab('applications')}
             style={{ padding: '8px 18px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 600, fontSize: '0.9rem' }}
@@ -130,6 +164,7 @@ export function AdminDashboard() {
             📋 Candidate Applications ({applications.length})
           </button>
           <button 
+            id="tabBtnJobs"
             className={`tab-btn ${activeTab === 'jobs' ? 'active' : ''}`}
             onClick={() => setActiveTab('jobs')}
             style={{ padding: '8px 18px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 600, fontSize: '0.9rem' }}
@@ -137,6 +172,7 @@ export function AdminDashboard() {
             💼 Job Listings ({jobs.length})
           </button>
           <button 
+            id="tabBtnAudit"
             className={`tab-btn ${activeTab === 'audit' ? 'active' : ''}`}
             onClick={() => setActiveTab('audit')}
             style={{ padding: '8px 18px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 600, fontSize: '0.9rem' }}
@@ -146,6 +182,13 @@ export function AdminDashboard() {
         </div>
 
         {/* Tab Views */}
+        {activeTab === 'analytics' && (
+          <RecruiterAnalytics 
+            applications={applications} 
+            jobs={jobs} 
+          />
+        )}
+
         {activeTab === 'matrix' && (
           <TalentMatrix 
             applications={applications} 

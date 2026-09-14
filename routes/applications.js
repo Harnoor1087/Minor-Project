@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -233,6 +234,48 @@ router.get('/my-applications', verifyToken, (req, res) => {
   try {
     const userApps = applications.getByApplicant(req.user.id);
     res.json(userApps);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching applications', error: error.message });
+  }
+});
+
+// Primary GET / route for applications (supports dashboard, filters, and role-based views)
+router.get('/', (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.jobId) filter.jobId = req.query.jobId;
+    if (req.query.companyId) filter.companyId = req.query.companyId;
+
+    // Optional token inspection
+    let token = req.cookies?.airis_access_token;
+    if (!token && req.headers.authorization) {
+      const authHeader = req.headers.authorization;
+      token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
+    }
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'airis_secret_jwt_key_2026');
+        if (decoded.role === 'applicant') {
+          const userApps = applications.getByApplicant(decoded.id);
+          return res.json({ applications: userApps, total: userApps.length });
+        } else if (decoded.role === 'admin' && !decoded.isSuperAdmin && decoded.companyId) {
+          filter.companyId = decoded.companyId;
+        }
+      } catch (e) {
+        // Continue with default filter if token invalid
+      }
+    }
+
+    let allApps = applications.getAll(filter);
+    if (req.query.blind === 'true') {
+      allApps = allApps.map(app => piiRedactor.redactCandidateProfile(app));
+    }
+
+    res.json({
+      applications: allApps,
+      total: allApps.length
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching applications', error: error.message });
   }

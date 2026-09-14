@@ -14,6 +14,9 @@ buildReact().catch(err => console.warn('[Server] Initial React build warning:', 
 const app = express();
 const PORT = 3000;
 
+// Trust reverse proxy (Cloud Run / Nginx) to eliminate X-Forwarded-For rate limit validation warnings
+app.set('trust proxy', 1);
+
 // Security Headers with Helmet (Customized for AI Studio iframe & Tailwind CDN compatibility)
 app.use(
   helmet({
@@ -51,6 +54,7 @@ const globalApiLimiter = rateLimit({
   max: 500,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false, default: true },
   message: {
     error: 'RATE_LIMIT_EXCEEDED',
     message: 'Too many requests from this client. Please slow down and try again after 15 minutes.'
@@ -62,6 +66,7 @@ const authRateLimiter = rateLimit({
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { xForwardedForHeader: false, default: true },
   message: {
     error: 'AUTH_RATE_LIMIT_EXCEEDED',
     message: 'Too many authentication attempts. Please wait 15 minutes before retrying.'
@@ -188,6 +193,11 @@ app.get('/company/:slug', (req, res) => {
 
 app.get('/companies', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'company.html'));
+});
+
+// JSON 404 handler for unmatched API routes to prevent returning HTML index
+app.all('/api/*', (req, res) => {
+  res.status(404).json({ error: 'NOT_FOUND', message: `API route ${req.method} ${req.originalUrl} not found` });
 });
 
 // SPA fallback for client navigation

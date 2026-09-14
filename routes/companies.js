@@ -52,6 +52,29 @@ router.put('/me/workspace', verifyToken, requireAdmin, requireTenant, (req, res)
   }
 });
 
+// Get current active company for recruiter/admin dashboards
+router.get('/current', (req, res) => {
+  try {
+    const all = companies.getAll();
+    const primary = all.find(c => c.id === 'comp_airis') || all[0] || {
+      id: 'comp_airis',
+      name: 'AIRIS Talent Global',
+      slug: 'airis',
+      industry: 'Technology & AI',
+      tagline: 'Enterprise Automated Talent Intelligence',
+      location: 'San Francisco, CA & Global'
+    };
+    const companyJobs = jobs.getAll({ companyId: primary.id });
+    res.json({
+      company: primary,
+      total_jobs: companyJobs.length,
+      jobs: companyJobs
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching current company', error: err.message });
+  }
+});
+
 // Get company profile by slug or ID with its open jobs
 router.get('/:slugOrId', (req, res) => {
   try {

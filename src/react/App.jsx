@@ -123,7 +123,7 @@ export function App() {
                 🤖
               </div>
               <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--navbar-text)', letterSpacing: '-0.02em' }}>
-                AIRIS <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'rgba(79, 70, 229, 0.25)', color: '#818cf8', border: '1px solid rgba(129, 140, 248, 0.3)' }}>React v3</span>
+                AIRIS <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: 'rgba(79, 70, 229, 0.25)', color: '#818cf8', border: '1px solid rgba(129, 140, 248, 0.3)' }}>Talent Suite</span>
               </span>
             </a>
 
@@ -340,7 +340,7 @@ export function App() {
           gap: '0.75rem'
         }}>
           <div>
-            <strong>AIRIS</strong> Enterprise Talent & AI Assessment Suite • Powered by Google Cloud Firestore & React 19
+            <strong>AIRIS</strong> Enterprise Talent &amp; AI Assessment Suite • Real-time Candidate Intelligence &amp; Skill Verification
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <a href="/admin" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Classic Admin</a>
