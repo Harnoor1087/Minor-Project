@@ -15,9 +15,9 @@ import {
 
 // Authoritative Firebase Configuration from firebase-applet-config.json
 export const firebaseConfig = {
-  apiKey: "AIzaSyA5lNJuzYlmywBmPlRIoTXMKoZV8QOZQ24",
-  authDomain: "my-project-496502.firebaseapp.com",
-  projectId: "my-project-496502",
+  apiKey: (typeof process !== 'undefined' && process.env?.VITE_FIREBASE_API_KEY) || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_API_KEY) || "AIzaSyA5lNJuzYlmywBmPlRIoTXMKoZV8QOZQ24",
+  authDomain: (typeof process !== 'undefined' && process.env?.VITE_FIREBASE_AUTH_DOMAIN) || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN) || "my-project-496502.firebaseapp.com",
+  projectId: (typeof process !== 'undefined' && process.env?.VITE_FIREBASE_PROJECT_ID) || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_FIREBASE_PROJECT_ID) || "my-project-496502",
   storageBucket: "my-project-496502.firebasestorage.app",
   messagingSenderId: "1017843763599",
   appId: "1:1017843763599:web:56ec6e2c4274d4d8d863fa",
